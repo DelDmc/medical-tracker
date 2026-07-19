@@ -7,8 +7,7 @@ This document is the single source of truth for the testable requirements of the
 Each requirement contains:
 
 - a unique identifier;
-- one requirement statement using `shall`;
-- one verification method describing how the requirement will be tested.
+- a verification method describing how the requirement will be tested.
 
 Verification statements identify the primary verification method. Detailed fixtures, test data, endpoint paths, and assertions belong in the test plan and test code.
 
@@ -19,144 +18,180 @@ Verification statements identify the primary verification method. Detailed fixtu
 **FR-001** — The application shall allow a new user to create an account using an email address, password, and timezone.
 **Verification:** An API integration test shall submit valid registration data and confirm that the account is created.
 
-**FR-002** — The application shall reject registration when the email address is missing, incorrectly formatted, or already registered; when the password is missing or shorter than eight characters; or when the timezone is unsupported.
-**Verification:** An API validation test shall submit each defined invalid registration case and confirm that the account is not created and the corresponding field error is returned.
+**FR-002** — The application shall reject registration when the email address is missing, incorrectly formatted, or already registered.
+**Verification:** An API validation test shall confirm that registration is rejected when the email address is missing, incorrectly formatted, or already associated with an existing account.
 
-**FR-003** — The application shall allow a registered user to log in using valid credentials.
+**FR-003** — The application shall reject registration when the password is missing or contains fewer than eight characters.
+**Verification:** An API validation test shall confirm that registration is rejected when the password is missing or contains fewer than eight characters.
+
+**FR-004** — The application shall reject registration when the selected timezone is unsupported.
+**Verification:** An API validation test shall confirm that registration is rejected when the submitted timezone is not included in the supported timezone set.
+
+**FR-005** — The application shall allow a registered user to log in using valid credentials.
 **Verification:** An API integration test shall confirm that valid credentials return authentication tokens and invalid credentials are rejected.
 
-**FR-004** — The application shall allow an authenticated user to log out.
+**FR-006** — The application shall allow an authenticated user to log out.
 **Verification:** A frontend integration test shall confirm that logout clears the active client session and redirects the user to the login page.
 
-**FR-005** — The application shall issue a new access token when a valid refresh token is submitted.
+**FR-007** — The application shall issue a new access token when a valid refresh token is submitted.
 **Verification:** An API integration test shall confirm that a valid refresh token returns a new access token and that an expired or invalid refresh token is rejected.
 
-**FR-006** — The application shall inform the user when their session has expired and cannot be refreshed.
+**FR-008** — The application shall inform the user when their session has expired and cannot be refreshed.
 **Verification:** A frontend integration test shall simulate a failed token refresh and confirm that the user is redirected to the login page with a session-expired message.
 
-**FR-007** — The application shall allow an authenticated user to update the timezone associated with their account.
+**FR-009** — The application shall allow an authenticated user to update the timezone associated with their account.
 **Verification:** An API integration test shall update the account with a supported IANA timezone identifier and confirm that the selected timezone is saved.
 
 ### 2.2 Examination Records
 
-**FR-008** — The application shall allow an authenticated user to create an examination record with a title, category, and scheduled date and time.
-**Verification:** An API integration test shall submit valid examination data and confirm that the record is created for the authenticated user.
+**FR-010** — The application shall allow an authenticated user to create a draft examination record by providing a title and any available optional examination information.
+**Verification:** An API integration test shall create a draft with a title and scheduled date but without a category or scheduled time and confirm that all submitted values are preserved.
 
-**FR-009** — The application shall support the examination statuses `planned`, `completed`, `cancelled`, and `missed`.
+**FR-011** — The application shall allow an authenticated user to create a planned examination record by providing a title and scheduled date.
+**Verification:** An API integration test shall create a planned examination with a title and scheduled date but without a category or scheduled time and confirm that the record is saved with the `planned` status.
+
+**FR-012** — The application shall support the examination statuses `draft`, `planned`, `completed`, `cancelled`, and `missed`.
 **Verification:** A serializer validation test shall confirm that every supported status is accepted and that any other status is rejected.
 
-**FR-010** — The application shall assign the `planned` status when an examination record is created without an explicitly selected status.
-**Verification:** An API integration test shall create an examination without a status and confirm that the returned record has the `planned` status.
-
-**FR-011** — The application shall allow an authenticated user to store an optional medical specialty, completion date, location, and general notes for an examination record.
+**FR-013** — The application shall allow an authenticated user to store an optional medical specialty, location, and general notes for an examination record.
 **Verification:** An API integration test shall save and retrieve an examination containing each optional field and confirm that the values are preserved.
 
-**FR-012** — The application shall reject an examination record when the title, category, or scheduled date and time is missing, when the category does not exist, or when the status is unsupported.
-**Verification:** An API validation test shall submit each defined invalid examination case and confirm that the record is not created and the corresponding field error is returned.
+**FR-014** — The application shall require a title for every examination record, a scheduled date for `planned`, `cancelled`, and `missed` records, and a completion date for `completed` records.
+**Verification:** An API validation test shall submit each status without its required title or date field and confirm that the record is rejected with the corresponding field error.
 
-**FR-013** — The application shall require a completion date when an examination is marked as `completed`.
-**Verification:** An API validation test shall confirm that a completed examination without a completion date is rejected and that a completed examination with a completion date is accepted.
+**FR-015** — The application shall reject an examination record when a supplied category does not exist or when its status is unsupported.
+**Verification:** An API validation test shall submit a nonexistent category and an unsupported status and confirm that each value is rejected.
 
-**FR-014** — The application shall display the authenticated user's examination records.
+**FR-016** — The application shall allow an authenticated user to change a draft examination record to `planned` after providing a scheduled date.
+**Verification:** An API integration test shall add a scheduled date to a draft without adding a category or scheduled time and confirm that its status changes to `planned`.
+
+**FR-017** — The application shall reject reminder configuration for draft examination records.
+**Verification:** An API validation test shall attempt to configure a reminder for a draft record and confirm that the request is rejected.
+
+**FR-018** — The application shall reject recurrence configuration for draft examination records.
+**Verification:** An API validation test shall attempt to configure a recurrence rule for a draft record and confirm that the request is rejected.
+
+**FR-019** — The application shall exclude draft examination records from upcoming, overdue, and calendar results.
+**Verification:** An API integration test shall create a draft record and confirm that it is absent from the upcoming, overdue, and calendar responses.
+
+**FR-020** — The application shall display the authenticated user's examination records.
 **Verification:** Frontend tests shall confirm that the examination list displays a loading indicator while records are being retrieved, an empty message when no records exist, the returned records after a successful request, and an error message when the request fails.
 
-**FR-015** — The application shall allow an authenticated user to view the details of an examination record they own.
+**FR-021** — The application shall allow an authenticated user to view the details of an examination record they own.
 **Verification:** An API integration test shall retrieve a user-owned examination and confirm that its stored fields are returned.
 
-**FR-016** — The application shall allow an authenticated user to update an examination record they own.
+**FR-022** — The application shall allow an authenticated user to update an examination record they own.
 **Verification:** An API integration test shall update a user-owned examination and confirm that the changes are saved.
 
-**FR-017** — The application shall allow an authenticated user to delete an examination record they own.
+**FR-023** — The application shall allow an authenticated user to delete an examination record they own.
 **Verification:** An API integration test shall delete a user-owned examination and confirm that the record can no longer be retrieved.
 
-**FR-018** — The application shall request confirmation before deleting an examination record through the user interface.
+**FR-024** — The application shall request confirmation before deleting an examination record through the user interface.
 **Verification:** A frontend integration test shall select the delete action and confirm that the record is not deleted until the user confirms the operation.
 
-**FR-019** — The application shall allow an authenticated user to assign one system-defined category to an examination record.
+**FR-025** — The application shall allow an authenticated user to assign one system-defined category to an examination record.
 **Verification:** An API integration test shall assign an available category to an examination and confirm that the category is returned with the saved record.
 
-**FR-020** — The application shall provide the system-defined categories Dentist, General practitioner, Specialist, Laboratory test, Vaccination, Preventive examination, Follow-up, and Other.
+**FR-026** — The application shall provide the system-defined categories General medical appointment, Dental appointment, Specialist consultation, Laboratory test, Vaccination, Preventive examination, Follow-up, and Other.
 **Verification:** An API integration test shall confirm that all required system-defined categories are available and that no category appears more than once.
 
-**FR-021** — The application shall allow an authenticated user to search their examination records by title.
+**FR-027** — The application shall display an examination record without an assigned category as Uncategorized.
+**Verification:** A frontend component test shall render an examination record without an assigned category and confirm that Uncategorized is displayed.
+
+**FR-028** — The application shall allow an authenticated user to search their examination records by title.
 **Verification:** An API integration test shall create examinations with different titles and confirm that a title search returns only matching records.
 
-**FR-022** — The application shall allow an authenticated user to filter their examination records by status and category.
+**FR-029** — The application shall allow an authenticated user to filter their examination records by status and category.
 **Verification:** An API integration test shall create examinations with different statuses and categories and confirm that each filter returns the expected records.
 
-**FR-023** — The application shall allow an authenticated user to order examination records by scheduled date in ascending or descending order.
-**Verification:** An API integration test shall create examinations with different scheduled dates and confirm both supported ordering directions.
+**FR-030** — The application shall allow an authenticated user to order examination records by scheduled date in ascending or descending order, with records without a scheduled date placed after dated records.
+**Verification:** An API integration test shall create dated and undated examinations and confirm both supported ordering directions and the placement of undated records.
 
 ### 2.3 Past, Upcoming, and Overdue Examinations
 
-**FR-024** — The application shall allow an authenticated user to view past examinations.
-**Verification:** An API integration test shall confirm that the past-examinations response contains records with scheduled dates earlier than the current time and excludes future records.
+**FR-031** — The application shall allow an authenticated user to view completed, cancelled, and missed examinations whose relevant date is not later than the current date.
+**Verification:** An API integration test shall confirm that the past-examinations response contains completed examinations by completion date and cancelled or missed examinations by scheduled date, and excludes future, planned, and draft records.
 
-**FR-025** — The application shall allow an authenticated user to view upcoming examinations.
-**Verification:** An API integration test shall confirm that the upcoming-examinations response contains planned records with scheduled dates later than the current time and excludes past or non-planned records.
+**FR-032** — The application shall allow an authenticated user to view planned examinations that are not overdue.
+**Verification:** An API integration test shall confirm that the upcoming-examinations response contains planned records scheduled for the future and date-only records scheduled for the current date, and excludes overdue and non-planned records.
 
-**FR-026** — The application shall identify a planned examination as overdue when its scheduled date and time is earlier than the current time.
-**Verification:** An API integration test shall confirm that a past planned examination is returned as overdue and a future planned examination is not.
+**FR-033** — The application shall identify a planned examination as overdue when its scheduled date is before the current date, or when its scheduled date is the current date and its specified scheduled time has passed.
+**Verification:** An API integration test shall confirm that a past-date examination and a current-date examination with a past time are overdue, while a current-date examination without a scheduled time is not overdue.
 
-**FR-027** — The application shall exclude completed, cancelled, and missed examinations from the overdue examinations response.
+**FR-034** — The application shall exclude completed, cancelled, missed, and draft examinations from the overdue examinations response.
 **Verification:** An API integration test shall create past examinations with each supported status and confirm that only the `planned` examination is returned as overdue.
 
 ### 2.4 In-Application Reminders
 
-**FR-028** — The application shall allow an authenticated user to enable, update, and disable an in-application reminder using a positive whole-number offset in days before a planned examination.
+**FR-035** — The application shall allow an authenticated user to enable, update, and disable an in-application reminder using a positive whole-number offset in days before a planned examination.
 **Verification:** An API integration test shall create, update, and disable a reminder and shall confirm that zero, negative, and non-whole-number offsets are rejected.
 
-**FR-029** — The application shall calculate a reminder due time from the examination date and the configured reminder offset.
-**Verification:** An API integration test shall use fixed examination dates and reminder offsets and confirm the calculated due times.
+**FR-036** — The application shall calculate a reminder due date from the examination scheduled date and the configured reminder offset.
+**Verification:** An API integration test shall use fixed scheduled dates and reminder offsets and confirm the calculated reminder due dates.
 
-**FR-030** — The application shall display active reminders whose due time has been reached.
+**FR-037** — The application shall display active reminders whose due date has been reached.
 **Verification:** A frontend integration test shall provide due and non-due reminders and confirm that only due reminders are displayed.
 
-**FR-031** — The application shall deactivate an examination reminder when the examination is marked as `completed`, `cancelled`, or `missed`.
+**FR-038** — The application shall deactivate an examination reminder when the examination is marked as `completed`, `cancelled`, or `missed`.
 **Verification:** An API integration test shall change an examination to each defined terminal status and confirm that its reminder is inactive.
 
 ### 2.5 Recurring Examinations
 
-**FR-032** — The application shall allow an authenticated user to configure a recurrence interval of monthly, every six months, or yearly for an examination.
-**Verification:** An API validation test shall confirm that each supported recurrence interval is accepted and any other interval is rejected.
+**FR-039** — The application shall allow an authenticated user to configure a recurrence interval of monthly, every six months, or yearly for a planned examination.
+**Verification:** An API validation test shall confirm that each supported recurrence interval is accepted for a planned examination and any other interval is rejected.
 
-**FR-033** — The application shall calculate the next due date for a recurring examination.
+**FR-040** — The application shall calculate the next due date for a recurring examination.
 **Verification:** An API integration test shall confirm the calculated next due date for each supported recurrence interval, including month-end and leap-year cases.
 
-**FR-034** — The application shall create one next occurrence of a recurring examination when requested by the user.
+**FR-041** — The application shall create one next occurrence of a recurring examination when requested by the user.
 **Verification:** An API integration test shall request the next occurrence and confirm that exactly one planned examination is created with the calculated date.
 
 ### 2.6 Calendar
 
-**FR-035** — The application shall allow an authenticated user to view their examinations in a monthly calendar.
-**Verification:** A frontend integration test shall provide examination records for a selected month and confirm that each record appears on its scheduled date.
+**FR-042** — The application shall display planned, cancelled, and missed examinations on their scheduled date and completed examinations on their completion date in a monthly calendar.
+**Verification:** A frontend integration test shall provide dated examinations for a selected month and confirm that each record appears on the date defined for its status.
 
-**FR-036** — The application shall visually distinguish examinations in the calendar according to their current state.
-**Verification:** A frontend component test shall render examinations in each supported state and confirm that each state has a distinct indicator.
+**FR-043** — The application shall visually distinguish planned, completed, cancelled, missed, and overdue examinations in the calendar.
+**Verification:** A frontend component test shall render examinations in each calendar state and confirm that each state has a distinct indicator.
 
 ### 2.7 Dashboard
 
-**FR-037** — The application shall display upcoming examinations, overdue examinations, and recently completed examinations on the dashboard
-**Verification:** A frontend integration test shall provide representative examination data and confirm that each record appears in the appropriate dashboard section.
+**FR-044** — The application shall display upcoming examinations, overdue examinations, and recently completed examinations on the dashboard.
+**Verification:** A frontend integration test shall confirm that the dashboard displays each required examination section using the data returned by the API.
 
-**FR-038** — The application shall display examination counts by category and totals for planned and completed examinations on the dashboard.
-**Verification:** A frontend integration test shall provide known dashboard totals and confirm that every returned value is displayed in the corresponding dashboard section.
+**FR-045** — The application shall display examination counts for each supported status on the dashboard.
+**Verification:** An API integration test shall confirm that the dashboard response contains the correct count for draft, planned, completed, cancelled, and missed examinations.
+
+**FR-046** — The application shall display examination counts for each system-defined category and for examinations without an assigned category on the dashboard.
+**Verification:** An API integration test shall confirm that the dashboard response contains the correct count for each system-defined category and for uncategorized examinations.
+
+**FR-047** — The application shall display the number of overdue examinations on the dashboard.
+**Verification:** An API integration test shall confirm that the dashboard response contains the correct overdue examination count.
 
 ## 3. User Experience Requirements
 
 **UX-001** — The application shall use a mobile-first responsive layout on phone, tablet, and desktop screen sizes.
 **Verification:** A documented responsive-browser review shall confirm that registration, login, examination list, examination form, calendar, and dashboard pages remain usable at the approved mobile, tablet, and desktop viewport widths.
 
-**UX-002** — The registration form shall display a field-level error for a missing or invalid email address, a duplicate email address, a missing or short password, and a missing or unsupported timezone.
-**Verification:** A frontend component test shall submit each defined invalid registration case and confirm that the corresponding field-level error is displayed.
+**UX-002** — The registration form shall display a field-level error when the email address is missing, incorrectly formatted, or already registered.
+**Verification:** Frontend tests shall confirm that each email validation condition displays an error next to the email field.
 
-**UX-003** — The examination form shall display a field-level error for a missing title, missing category, missing scheduled date and time, unsupported status, and missing completion date for a completed examination.
-**Verification:** A frontend component test shall submit each defined invalid examination case and confirm that the corresponding field-level error is displayed.
+**UX-003** — The registration form shall display a field-level error when the password is missing or contains fewer than eight characters.
+**Verification:** Frontend tests shall confirm that each password validation condition displays an error next to the password field.
 
-**UX-004** — The application shall display examination dates and times using the timezone configured for the authenticated user.
+**UX-004** — The registration form shall display a field-level error when the timezone is missing or unsupported.
+**Verification:** Frontend tests shall confirm that each timezone validation condition displays an error next to the timezone field.
+
+**UX-005** — The examination form shall allow a draft examination record to be saved with a title and any available optional information.
+**Verification:** A frontend integration test shall submit a draft with a title and without a category, scheduled date, or scheduled time and confirm that the record is saved.
+
+**UX-006** — The examination form shall allow a planned examination record to be saved with a title and scheduled date without requiring a category or scheduled time.
+**Verification:** A frontend integration test shall submit a planned examination with a title and scheduled date only and confirm that the record is saved.
+
+**UX-007** — The application shall display examination dates and times using the timezone configured for the authenticated user.
 **Verification:** A frontend test shall render a fixed UTC timestamp for a configured timezone and confirm that the expected local date and time are displayed.
 
-**UX-005** — The application's primary navigation, forms, dialogs, and examination actions shall be operable using touch, mouse, and keyboard input.
+**UX-008** — The application's primary navigation, forms, dialogs, and examination actions shall be operable using touch, mouse, and keyboard input.
 **Verification:** A documented interaction review shall confirm that each primary action can be completed with touch, mouse, and keyboard input.
 
 ## 4. Security Requirements
@@ -195,8 +230,8 @@ Verification statements identify the primary verification method. Detailed fixtu
 **TECH-001** — The application shall expose documented JSON REST API endpoints for authentication and domain data independently of the frontend interface.
 **Verification:** An API contract test shall confirm that every documented MVP endpoint accepts and returns the defined JSON structures without requiring browser-specific behavior.
 
-**TECH-002** — The application shall store examination, reminder, and recurrence dates and times as timezone-aware values.
-**Verification:** A backend model test shall save timezone-aware values and confirm that they remain timezone-aware when retrieved.
+**TECH-002** — The application shall store scheduled dates separately from optional scheduled times and shall store timestamps that represent an instant as timezone-aware values.
+**Verification:** A backend model test shall save and retrieve a date-only examination, an examination with an optional scheduled time, and a timezone-aware timestamp and confirm that each value retains its intended type and value.
 
 **TECH-003** — The application shall load environment-specific configuration from environment variables.
 **Verification:** A configuration test shall run the application with defined development and production environment values and confirm that the corresponding settings are applied.
