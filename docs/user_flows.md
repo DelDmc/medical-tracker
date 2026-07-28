@@ -63,7 +63,7 @@ The requirements specification is authoritative. This document applies the accep
 1. The user selects **Log out**.
 2. The frontend sends `POST /api/v1/auth/logout/`.
 3. The backend invalidates or revokes the active refresh token when supported by the selected authentication mechanism.
-4. The frontend clears all locally held authentication state.
+4. Regardless of whether the logout request succeeds, fails, or cannot reach the backend, the frontend clears all locally held authentication state.
 5. The application redirects the user to the login page.
 
 ## 5. Update Account Timezone
@@ -75,14 +75,15 @@ The requirements specification is authoritative. This document applies the accep
 - the user is authenticated.
 
 1. The user opens account settings.
-2. The application displays the account's current timezone.
-3. The user selects a supported IANA timezone identifier.
-4. The frontend sends `PATCH /api/v1/account/` with the new `timezone` value.
-5. The backend validates the value and updates only the authenticated user's account.
-6. The application updates the timezone held in client state.
-7. Timezone-aware timestamps are subsequently converted to the selected timezone for presentation.
-8. Date-only values remain the stored calendar dates and are not shifted through UTC conversion.
-9. Upcoming, overdue, past, and due-reminder calculations use the updated timezone's current local date and time.
+2. The frontend requests `GET /api/v1/account/`.
+3. The application displays the account's current timezone.
+4. The user selects a supported IANA timezone identifier.
+5. The frontend sends `PATCH /api/v1/account/` with the new `timezone` value.
+6. The backend validates the value and updates only the authenticated user's account.
+7. The application updates the timezone held in client state.
+8. Timezone-aware timestamps are subsequently converted to the selected timezone for presentation.
+9. Date-only values remain the stored calendar dates and are not shifted through UTC conversion.
+10. Upcoming, overdue, past, and due-reminder calculations use the updated timezone's current local date and time.
 
 ### Failure behavior
 
@@ -93,7 +94,7 @@ The requirements specification is authoritative. This document applies the accep
 
 **Requirement references:** FR-025–FR-027
 
-1. The examination form requests the read-only system-defined category collection.
+1. The examination form requests `GET /api/v1/categories/`.
 2. The application provides exactly these categories:
    - General medical appointment;
    - Dental appointment;
@@ -110,7 +111,7 @@ The requirements specification is authoritative. This document applies the accep
 
 ## 7. Save a Draft Examination
 
-**Requirement references:** FR-010, FR-017–FR-019, UX-005
+**Requirement references:** FR-010, FR-013, FR-017–FR-019, UX-005
 
 ### Preconditions
 
@@ -136,12 +137,11 @@ The requirements specification is authoritative. This document applies the accep
 - an invalid optional value displays the corresponding validation error;
 - reminder configuration for the draft is rejected;
 - recurrence configuration for the draft is rejected;
-- expired authentication follows the session-expiration flow;
-- network failure preserves entered form data where practical and displays an error.
+- expired authentication follows the session-expiration flow.
 
 ## 8. Create a Planned Examination
 
-**Requirement references:** FR-011, FR-014, FR-015, UX-006
+**Requirement references:** FR-011, FR-013–FR-015, UX-006
 
 ### Preconditions
 
@@ -278,7 +278,7 @@ Invalid filter or ordering values are rejected with a validation error.
 
 ## 13. Edit an Examination
 
-**Requirement references:** FR-022, FR-014–FR-016
+**Requirement references:** FR-013–FR-016, FR-022
 
 1. The user opens an examination they own.
 2. The user changes one or more fields.
@@ -310,7 +310,7 @@ Invalid filter or ordering values are rejected with a validation error.
 1. The user opens an examination they own.
 2. The user sets the status to `cancelled` or `missed`.
 3. The resulting record must contain a scheduled date.
-4. The frontend submits the update.
+4. The frontend sends `PATCH /api/v1/examinations/{id}/`.
 5. The backend validates and saves the record.
 6. Within the same database transaction, the backend deactivates the associated reminder when one exists.
 7. The examination is excluded from overdue results.
@@ -345,17 +345,18 @@ Invalid filter or ordering values are rejected with a validation error.
 
 1. The user opens reminder settings for the planned examination.
 2. The user enters a positive whole-number offset in days before the scheduled date.
-3. The frontend submits the reminder through the documented reminder API operation.
-4. The backend verifies examination ownership and planned status.
-5. The backend enforces at most one reminder for the examination.
-6. The backend calculates `due_date` as `scheduled_date - offset_days` using calendar-date arithmetic.
-7. The backend stores or updates the reminder as active.
-8. When the examination scheduled date or reminder offset changes, the backend recalculates the due date.
+3. When no reminder exists, the frontend sends `POST /api/v1/examinations/{id}/reminder/` with `offset_days`.
+4. When a reminder already exists, the frontend sends `PATCH /api/v1/examinations/{id}/reminder/` with the updated `offset_days` and, when needed, `is_active` set to `true`.
+5. The backend verifies examination ownership and planned status.
+6. The backend enforces at most one reminder for the examination.
+7. The backend calculates `due_date` as `scheduled_date - offset_days` using calendar-date arithmetic.
+8. The backend stores or updates the reminder as active.
+9. When the examination scheduled date or reminder offset changes, the backend recalculates the due date.
 
 ### Disable flow
 
 1. The user disables the reminder.
-2. The frontend submits the documented disable operation.
+2. The frontend sends `PATCH /api/v1/examinations/{id}/reminder/` with `is_active` set to `false`.
 3. The backend sets the reminder to inactive.
 4. The inactive reminder no longer appears in due-reminder results.
 
@@ -370,7 +371,7 @@ Invalid filter or ordering values are rejected with a validation error.
 **Requirement reference:** FR-037
 
 1. The user opens the due-reminders area.
-2. The frontend requests due reminder data for the authenticated user.
+2. The frontend requests `GET /api/v1/reminders/?state=due`.
 3. The backend uses the user's current local date.
 4. The response includes reminders for which `is_active` is true and `due_date` is on or before the current local date.
 5. Future and inactive reminders are excluded.
@@ -388,16 +389,17 @@ Invalid filter or ordering values are rejected with a validation error.
 
 1. The user opens recurrence settings for the planned examination.
 2. The user selects `monthly`, `six_months`, or `yearly`.
-3. The frontend submits the recurrence configuration through the documented recurrence API operation.
-4. The backend verifies examination ownership and planned status.
-5. The backend enforces at most one recurrence rule for the examination.
-6. The backend stores the supported interval.
-7. The backend calculates the next due date from the source examination's scheduled date:
+3. When no recurrence rule exists, the frontend sends `POST /api/v1/examinations/{id}/recurrence/` with the selected `interval`.
+4. When a recurrence rule already exists, the frontend sends `PATCH /api/v1/examinations/{id}/recurrence/` with the updated `interval`.
+5. The backend verifies examination ownership and planned status.
+6. The backend enforces at most one recurrence rule for the examination.
+7. The backend stores the supported interval.
+8. The backend calculates the next due date from the source examination's scheduled date:
    - one calendar month for `monthly`;
    - six calendar months for `six_months`;
    - one calendar year for `yearly`.
-8. When the target month does not contain the source day, the calculation uses the target month's last valid day.
-9. A February 29 yearly recurrence resolves to the last valid February day in a non-leap year.
+9. When the target month does not contain the source day, the calculation uses the target month's last valid day.
+10. A February 29 yearly recurrence resolves to the last valid February day in a non-leap year.
 
 ### Failure behavior
 
@@ -428,7 +430,7 @@ Invalid filter or ordering values are rejected with a validation error.
 **Requirement references:** FR-019, FR-042, FR-043
 
 1. The user opens the monthly calendar and selects a month.
-2. The frontend requests examination data through the accepted date-range API query.
+2. The frontend requests `GET /api/v1/calendar/?start_date={date}&end_date={date}` for the selected month's inclusive date range.
 3. The backend returns owned records applicable to the requested date range.
 4. The calendar places:
    - planned, cancelled, and missed examinations on `scheduled_date`;
@@ -449,7 +451,7 @@ Invalid filter or ordering values are rejected with a validation error.
 5. The frontend renders a separate section for each collection, including an empty presentation when that collection has no records.
 6. The response contains `status_counts` with explicit keys for `draft`, `planned`, `completed`, `cancelled`, and `missed`.
 7. A status with no matching records is returned with a zero count rather than being omitted.
-8. The response contains one count for every system-defined category and a separate `uncategorized` count.
+8. The response contains `category_counts` with one count for every system-defined category and a separate `uncategorized_count` for records whose category is `null`.
 9. A category with no matching records is returned with a zero count.
 10. The response contains `overdue_count`, calculated with the same shared overdue logic used by the examination list.
 

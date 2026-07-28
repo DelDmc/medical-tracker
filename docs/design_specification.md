@@ -465,9 +465,9 @@ Each design decision contains:
 #### ADS-FR-046-01 — Dashboard category counts
 **Status:** Accepted  
 **Requirement reference:** FR-046  
-**Decision:** It is decided that the dashboard response will contain one count for every system-defined category and a separate `uncategorized` count for records whose category is null. Categories with no examinations will still be returned with zero.  
-**Rationale:** Returning the full category set provides predictable grouping and explicitly represents null categories.  
-**Verification impact:** The API integration test will verify every category key, zero-filled categories, and the uncategorized total.
+**Decision:** It is decided that the dashboard response will contain `category_counts` with one count for every system-defined category and a separate `uncategorized_count` for records whose category is null. Categories with no examinations will still be returned with zero.  
+**Rationale:** Returning the full category set and a stable `uncategorized_count` field provides predictable grouping and explicitly represents null categories.  
+**Verification impact:** The API integration test will verify every category entry, zero-filled categories, and the `uncategorized_count` value.
 
 ---
 

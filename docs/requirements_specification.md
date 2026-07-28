@@ -250,9 +250,11 @@ Verification statements identify the primary verification method. Detailed fixtu
 
 ## 7. Requirement Maintenance
 
-- `requirements-specification.md` is the canonical requirements document.
+- `requirements_specification.md` is the canonical requirements document.
 - Requirement identifiers shall remain stable after implementation tasks or tests reference them.
 - A changed requirement shall be edited in this file rather than duplicated in another document.
-- Design documents, API contracts, implementation tasks, and tests shall reference the applicable requirement identifiers.
+- Traceability between requirements, design decisions, and API operations shall be maintained in `traceability_matrix.md`.
+- Implementation tasks and tests shall reference the applicable requirement identifiers.
+- Detailed design documents and API contracts are not required to reproduce requirement or design-decision identifiers.
 - New requirements shall receive the next available identifier within their category.
 - Architecture decisions, technology selections, and release-governance rules shall be documented outside this requirements specification.
