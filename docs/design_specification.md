@@ -1,0 +1,725 @@
+# Medical Tracker Application — Application Design Specification
+
+## 1. Purpose
+
+This document records proposed and accepted implementation design decisions for the Medical Tracker Application MVP.
+
+`requirements_specification.md` remains the source of truth for required behavior and verification. This document references requirement identifiers for traceability but does not reproduce requirement statements or verification criteria. A design decision must not change, weaken, combine, or replace a requirement.
+
+## 2. Document Status
+
+**Status:** Accepted
+
+No design decision in this document is accepted merely because it is recorded here. Each decision must be reviewed before the affected implementation begins.
+
+## 3. Traceability Rules
+
+The following traceability rules apply throughout this document:
+
+1. Each design decision references exactly one requirement.
+2. One requirement may have more than one separate design decision when its implementation requires several decisions.
+3. A design decision must not reference or combine multiple requirements.
+4. Every decision statement begins with the words **“It is decided …”**.
+5. Requirement statements and verification criteria are not reproduced in this document; they remain only in `requirements_specification.md`.
+6. When a requirement changes, the design decisions referencing that requirement are reviewed for direct impact. Secondary impacts on other requirements must be handled through separate design decisions under those requirements.
+
+Each design decision contains:
+
+- a unique `ADS` identifier;
+- status;
+- exactly one requirement identifier;
+- decision;
+- rationale;
+- verification impact.
+
+## 4. Functional Design Decisions
+
+### 4.1 Account and Session Management
+
+#### ADS-FR-001-01 — Registration endpoint and account fields
+**Status:** Accepted  
+**Requirement reference:** FR-001  
+**Decision:** It is decided that account registration will be provided through `POST /api/v1/auth/register/`. The request will accept `email`, `password`, and `timezone`; successful validation will create a user through the Django user manager and return a successful registration response without returning the password.  
+**Rationale:** A dedicated registration endpoint makes the required inputs and account-creation boundary explicit.  
+**Verification impact:** The API integration test will submit the three required fields and confirm that a user record is created.
+
+---
+
+#### ADS-FR-002-01 — Email validation during registration
+**Status:** Accepted  
+**Requirement reference:** FR-002  
+**Decision:** It is decided that the registration serializer will require `email`, validate its format with Django REST Framework email validation, normalize it before comparison, and enforce case-insensitive uniqueness against existing accounts.  
+**Rationale:** Validation must reject all three cases in the requirement while preventing differently cased versions of the same address from being registered twice.  
+**Verification impact:** Validation tests will cover missing, malformed, and already-registered email addresses and will assert an `email` field error.
+
+---
+
+#### ADS-FR-003-01 — Password validation during registration
+**Status:** Accepted  
+**Requirement reference:** FR-003  
+**Decision:** It is decided that the registration serializer will define `password` as a required, write-only field with a minimum length of eight characters and will create the account by calling Django's password-setting API.  
+**Rationale:** This enforces the stated minimum without exposing or directly storing the submitted password.  
+**Verification impact:** Validation tests will cover a missing password and passwords shorter than eight characters.
+
+---
+
+#### ADS-FR-004-01 — Supported timezone validation
+**Status:** Accepted  
+**Requirement reference:** FR-004  
+**Decision:** It is decided that registration will accept only IANA timezone identifiers present in the backend's supported timezone set, obtained through Python's timezone database. The submitted identifier will be stored exactly as the canonical supported value.  
+**Rationale:** Using IANA identifiers supports reliable date and time conversion and avoids project-specific abbreviations.  
+**Verification impact:** Validation tests will submit a supported identifier and an unsupported value and will assert a `timezone` field error for the unsupported value.
+
+---
+
+#### ADS-FR-005-01 — Login endpoint
+**Status:** Accepted  
+**Requirement reference:** FR-005  
+**Decision:** It is decided that login will be provided through `POST /api/v1/auth/login/` using `email` and `password`. Valid credentials will produce an access token and establish the refresh-token mechanism selected for the application; invalid credentials will return one generic authentication error.  
+**Rationale:** A single generic error avoids exposing whether an email address exists while satisfying the required credential flow.  
+**Verification impact:** Integration tests will verify successful token issuance and rejection of invalid credentials.
+
+---
+
+#### ADS-FR-006-01 — Logout operation
+**Status:** Accepted  
+**Requirement reference:** FR-006  
+**Decision:** It is decided that logout will be initiated through `POST /api/v1/auth/logout/`. The backend will invalidate or revoke the active refresh token when supported, and the frontend will clear all locally held authentication state before redirecting to the login page.  
+**Rationale:** Both server-side refresh invalidation and client-side state clearing are needed to end the active session consistently.  
+**Verification impact:** The frontend integration test will confirm that authentication state is cleared and navigation ends on the login page.
+
+---
+
+#### ADS-FR-007-01 — Access-token refresh endpoint
+**Status:** Accepted  
+**Requirement reference:** FR-007  
+**Decision:** It is decided that access-token renewal will be provided through `POST /api/v1/auth/refresh/`. A valid refresh token will return a new access token; expired, revoked, malformed, or otherwise invalid refresh tokens will be rejected without issuing credentials.  
+**Rationale:** A dedicated refresh endpoint keeps access-token renewal separate from login.  
+**Verification impact:** Integration tests will cover valid, expired, revoked, and malformed refresh tokens.
+
+---
+
+#### ADS-FR-008-01 — Expired-session handling
+**Status:** Accepted  
+**Requirement reference:** FR-008  
+**Decision:** It is decided that the frontend API client will attempt at most one refresh after an access-token authentication failure. When refresh fails, it will clear authentication state, redirect to the login page, and display a session-expired message carried through navigation state.  
+**Rationale:** Limiting the retry prevents refresh loops and gives the user an explicit explanation for the redirect.  
+**Verification impact:** The frontend integration test will simulate failed refresh and verify the cleared session, redirect, and message.
+
+---
+
+#### ADS-FR-009-01 — Account timezone update
+**Status:** Accepted  
+**Requirement reference:** FR-009  
+**Decision:** It is decided that the authenticated account resource will expose `PATCH /api/v1/account/` for updating `timezone`. The endpoint will accept only supported IANA identifiers and will permit the authenticated user to modify only their own account.  
+**Rationale:** A partial-update account endpoint is sufficient for the single editable account preference in the MVP.  
+**Verification impact:** The API integration test will update the timezone and then retrieve the account to confirm persistence.
+
+---
+
+### 4.2 Examination Records
+
+#### ADS-FR-010-01 — Draft examination creation
+**Status:** Accepted  
+**Requirement reference:** FR-010  
+**Decision:** It is decided that `POST /api/v1/examinations/` will create a draft when `status` is `draft`. The serializer will require `title`, allow all other examination fields to be omitted, and preserve every valid optional value that is supplied.  
+**Rationale:** Draft creation must support incomplete records without discarding information already known by the user.  
+**Verification impact:** The integration test will create a draft with a title and selected optional values and confirm that the saved response preserves them.
+
+---
+
+#### ADS-FR-011-01 — Planned examination creation
+**Status:** Accepted  
+**Requirement reference:** FR-011  
+**Decision:** It is decided that `POST /api/v1/examinations/` will create a planned examination when `status` is `planned`, `title` is present, and `scheduled_date` is present. `category` and `scheduled_time` will remain optional.  
+**Rationale:** This directly implements the minimum data required for a planned record.  
+**Verification impact:** The integration test will create a planned record with title and scheduled date only and confirm the stored status and values.
+
+---
+
+#### ADS-FR-012-01 — Examination status enumeration
+**Status:** Accepted  
+**Requirement reference:** FR-012  
+**Decision:** It is decided that examination status will be stored in one constrained field using the values `draft`, `planned`, `completed`, `cancelled`, and `missed`.  
+**Rationale:** A constrained enumeration provides one consistent representation of the examination lifecycle across the database, API, and user interface.  
+**Verification impact:** Serializer validation tests will accept each listed value and reject every unlisted value.
+
+---
+
+#### ADS-FR-013-01 — Optional examination metadata
+**Status:** Accepted  
+**Requirement reference:** FR-013  
+**Decision:** It is decided that `medical_specialty`, `location`, and `notes` will be nullable or blank optional fields on the examination record and writable through examination create and update serializers.  
+**Rationale:** These fields store general organizational metadata without making any of them mandatory.  
+**Verification impact:** The integration test will save, retrieve, update, and clear each optional field.
+
+---
+
+#### ADS-FR-014-01 — Status-dependent required fields
+**Status:** Accepted  
+**Requirement reference:** FR-014  
+**Decision:** It is decided that examination validation will always require `title`; require `scheduled_date` when status is `planned`, `cancelled`, or `missed`; and require `completed_date` when status is `completed`. These rules will be enforced in backend serializer or domain validation for both create and update operations.  
+**Rationale:** Central backend validation prevents clients from creating states that violate the requirement.  
+**Verification impact:** Validation tests will omit each required field for each applicable status and assert the corresponding field error.
+
+---
+
+#### ADS-FR-015-01 — Category and status reference validation
+**Status:** Accepted  
+**Requirement reference:** FR-015  
+**Decision:** It is decided that a supplied category identifier will be resolved only against existing system-defined category records and that status will be validated by the examination status enumeration before persistence.  
+**Rationale:** Reference and enumeration validation prevent dangling categories and unsupported statuses.  
+**Verification impact:** Validation tests will submit an unknown category identifier and an unsupported status and confirm rejection.
+
+---
+
+#### ADS-FR-016-01 — Draft-to-planned transition
+**Status:** Accepted  
+**Requirement reference:** FR-016  
+**Decision:** It is decided that a draft will be changed to planned through the normal examination update endpoint. The update will succeed only when the resulting record contains a `scheduled_date`; category and scheduled time will not be required.  
+**Rationale:** Using the standard update operation avoids a special transition endpoint for a simple MVP state change.  
+**Verification impact:** The integration test will patch a draft with `status: planned` and a scheduled date and confirm the transition.
+
+---
+
+#### ADS-FR-017-01 — Draft reminder prohibition
+**Status:** Accepted  
+**Requirement reference:** FR-017  
+**Decision:** It is decided that reminder creation and update validation will load the related examination and reject the operation when its status is `draft`.  
+**Rationale:** The rule must be enforced by the backend rather than hidden only in the interface.  
+**Verification impact:** The API validation test will attempt reminder creation for a draft and assert a business-rule error.
+
+---
+
+#### ADS-FR-018-01 — Draft recurrence prohibition
+**Status:** Accepted  
+**Requirement reference:** FR-018  
+**Decision:** It is decided that recurrence creation and update validation will load the related examination and reject the operation when its status is `draft`.  
+**Rationale:** The backend must prevent recurrence configuration regardless of the client used.  
+**Verification impact:** The API validation test will attempt recurrence creation for a draft and assert a business-rule error.
+
+---
+
+#### ADS-FR-019-01 — Draft exclusion from time-based views
+**Status:** Accepted  
+**Requirement reference:** FR-019  
+**Decision:** It is decided that upcoming, overdue, and calendar query builders will explicitly exclude records whose status is `draft` before applying date conditions.  
+**Rationale:** An explicit exclusion prevents draft records with partially entered dates from leaking into scheduled views.  
+**Verification impact:** Integration tests will create dated and undated drafts and verify that neither appears in the three affected results.
+
+---
+
+#### ADS-FR-020-01 — Examination list page states
+**Status:** Accepted  
+**Requirement reference:** FR-020  
+**Decision:** It is decided that the examination list page will request the authenticated user's examination collection from `GET /api/v1/examinations/` and will render four mutually exclusive states: loading, empty, populated, and error.  
+**Rationale:** Explicit states prevent ambiguous blank screens and satisfy the required frontend behavior.  
+**Verification impact:** Frontend tests will independently render and verify each state.
+
+---
+
+#### ADS-FR-021-01 — Owned examination detail retrieval
+**Status:** Accepted  
+**Requirement reference:** FR-021  
+**Decision:** It is decided that `GET /api/v1/examinations/{id}/` will retrieve an examination only from a queryset already restricted to the authenticated user and will return all approved stored fields plus approved derived fields.  
+**Rationale:** Ownership filtering at query level prevents detail retrieval across accounts.  
+**Verification impact:** The integration test will retrieve an owned record and compare the returned fields with stored values.
+
+---
+
+#### ADS-FR-022-01 — Owned examination update
+**Status:** Accepted  
+**Requirement reference:** FR-022  
+**Decision:** It is decided that `PATCH /api/v1/examinations/{id}/` will be the primary edit operation, with optional full replacement through `PUT` only if retained in the documented API contract. The writable queryset will be restricted to the authenticated user and the resulting record will pass complete status-dependent validation.  
+**Rationale:** Partial updates suit form editing while final-state validation preserves record consistency.  
+**Verification impact:** The integration test will update an owned record and confirm persistence after a new retrieval.
+
+---
+
+#### ADS-FR-023-01 — Permanent examination deletion
+**Status:** Accepted  
+**Requirement reference:** FR-023  
+**Decision:** It is decided that deleting an owned examination through `DELETE /api/v1/examinations/{id}/` will permanently remove the examination and its associated reminder and recurrence configuration through cascading deletion.  
+**Rationale:** This keeps deletion behavior consistent and prevents dependent records from remaining after their examination is removed.  
+**Verification impact:** An integration test will confirm that the examination, reminder, and recurrence configuration can no longer be retrieved after deletion.
+
+---
+
+#### ADS-FR-024-01 — Delete confirmation dialog
+**Status:** Accepted  
+**Requirement reference:** FR-024  
+**Decision:** It is decided that the frontend will open a modal confirmation dialog before sending an examination delete request. The destructive action will not be executed on dialog opening or cancellation and will execute only after explicit confirmation.  
+**Rationale:** A separate confirmation step reduces accidental permanent deletion.  
+**Verification impact:** The frontend integration test will verify cancel and confirm paths and the number of delete requests sent.
+
+---
+
+#### ADS-FR-025-01 — Single system category relationship
+**Status:** Accepted  
+**Requirement reference:** FR-025  
+**Decision:** It is decided that an examination will have one nullable foreign key to `ExaminationCategory`. The field will accept at most one category and category management endpoints will be read-only for MVP users.  
+**Rationale:** A nullable many-to-one relationship supports one optional system category without introducing user-managed taxonomy.  
+**Verification impact:** The integration test will assign one available category and confirm it is returned with the examination.
+
+---
+
+#### ADS-FR-026-01 — System category seed data
+**Status:** Accepted  
+**Requirement reference:** FR-026  
+**Decision:** It is decided that the eight required categories will be inserted by an idempotent data migration using stable unique slugs. Their API resource will be read-only, and duplicate names or slugs will be prevented by database constraints.  
+**Rationale:** Seeded stable records guarantee availability across environments and prevent duplicates.  
+**Verification impact:** The integration test will retrieve the category collection and compare it with the required set exactly once each.
+
+---
+
+#### ADS-FR-027-01 — Uncategorized presentation fallback
+**Status:** Accepted  
+**Requirement reference:** FR-027  
+**Decision:** It is decided that the API will represent an unassigned category as `null`, while shared frontend presentation logic will display the label `Uncategorized` whenever the category value is null.  
+**Rationale:** Keeping null in the data model avoids creating a misleading database category while providing the required user-facing label.  
+**Verification impact:** The component test will render a record with a null category and assert the fallback text.
+
+---
+
+#### ADS-FR-028-01 — Title search
+**Status:** Accepted  
+**Requirement reference:** FR-028  
+**Decision:** It is decided that `GET /api/v1/examinations/` will support a `search` query parameter that performs a case-insensitive containment search against the authenticated user's examination titles.  
+**Rationale:** A single title-specific search parameter is sufficient for the stated MVP requirement.  
+**Verification impact:** The integration test will create distinct titles and verify exact inclusion and exclusion behavior.
+
+---
+
+#### ADS-FR-029-01 — Status and category filters
+**Status:** Accepted  
+**Requirement reference:** FR-029  
+**Decision:** It is decided that the examination list endpoint will support `status=<status>` and `category=<category-id>` query parameters, validate supplied values, and combine both filters with AND semantics when both are present.  
+**Rationale:** Standard query parameters allow filters to compose without separate endpoints.  
+**Verification impact:** The integration test will verify each filter separately and in combination.
+
+---
+
+#### ADS-FR-030-01 — Scheduled-date ordering with nulls last
+**Status:** Accepted  
+**Requirement reference:** FR-030  
+**Decision:** It is decided that the examination list endpoint will accept `ordering=scheduled_date` and `ordering=-scheduled_date`. Both database orderings will explicitly place null scheduled dates after all dated records, with a stable secondary ordering by identifier.  
+**Rationale:** Explicit null placement avoids database-dependent ordering and keeps pagination stable.  
+**Verification impact:** The integration test will verify ascending, descending, null-last behavior, and deterministic ties.
+
+---
+
+### 4.3 Past, Upcoming, and Overdue Examinations
+
+#### ADS-FR-031-01 — Past examination query
+**Status:** Accepted  
+**Requirement reference:** FR-031  
+**Decision:** It is decided that past examinations will be requested through `GET /api/v1/examinations/?time_state=past`. The backend will include completed records whose `completed_date` is on or before the authenticated user's current local date and cancelled or missed records whose `scheduled_date` is on or before that date; it will exclude planned, draft, and future records.  
+**Rationale:** A derived list filter centralizes ownership, serialization, filtering, and pagination.  
+**Verification impact:** The integration test will freeze time and verify inclusion by the status-specific relevant date.
+
+---
+
+#### ADS-FR-032-01 — Upcoming examination query
+**Status:** Accepted  
+**Requirement reference:** FR-032  
+**Decision:** It is decided that upcoming examinations will be requested through `GET /api/v1/examinations/?time_state=upcoming`. The backend will include only planned records that are not overdue: future-date records, current-date records without a scheduled time, and current-date records whose scheduled time has not passed in the user's timezone.  
+**Rationale:** The query mirrors the requirement's date-only and time-specific boundary behavior.  
+**Verification impact:** The integration test will freeze the user's local date and time and verify every boundary case.
+
+---
+
+#### ADS-FR-033-01 — Overdue is a derived state
+**Status:** Accepted  
+**Requirement reference:** FR-033  
+**Decision:** It is decided that the application will derive an examination's overdue state when data is queried or presented by evaluating its `status`, `scheduled_date`, optional `scheduled_time`, the authenticated user's timezone, and the current time.  
+**Rationale:** Deriving the state keeps the result current as time passes and makes rescheduling immediately reflected in examination lists, calendar views, and dashboard data.  
+**Verification impact:** Tests will freeze time before and after a boundary and confirm that the same unchanged record changes derived state.
+
+---
+
+#### ADS-FR-033-02 — Overdue date and time boundary
+**Status:** Accepted  
+**Requirement reference:** FR-033  
+**Decision:** It is decided that a planned examination is overdue when its scheduled date is before the user's current local date, or when its scheduled date equals the current local date and its scheduled time is present and earlier than the current local time. A current-date record without a scheduled time is not overdue.  
+**Rationale:** Separate date and optional time fields require explicit boundary logic rather than comparison with one timestamp.  
+**Verification impact:** The integration test will cover past date, current date with past time, current date with future time, and current date without time.
+
+---
+
+#### ADS-FR-034-01 — Overdue status restriction
+**Status:** Accepted  
+**Requirement reference:** FR-034  
+**Decision:** It is decided that the overdue query will begin with `status = planned`; completed, cancelled, missed, and draft records will not be evaluated as overdue even when their dates are in the past.  
+**Rationale:** Restricting by lifecycle status keeps overdue as a planning state rather than a general past-date label.  
+**Verification impact:** The integration test will create past records in every status and confirm that only the planned record is returned.
+
+---
+
+### 4.4 In-Application Reminders
+
+#### ADS-FR-035-01 — Reminder persistence and mutation
+**Status:** Accepted  
+**Requirement reference:** FR-035  
+**Decision:** It is decided that each examination may have at most one reminder record containing `examination`, positive integer `offset_days`, `due_date`, `is_active`, and audit timestamps. Authenticated create, update, and disable operations will be exposed through a documented reminder endpoint and will be limited to the examination owner.  
+**Rationale:** A one-to-one reminder model matches the single configurable reminder described for the MVP.  
+**Verification impact:** Integration tests will create, update, and disable a reminder and reject zero, negative, decimal, and non-numeric offsets.
+
+---
+
+#### ADS-FR-036-01 — Reminder due-date calculation
+**Status:** Accepted  
+**Requirement reference:** FR-036  
+**Decision:** It is decided that reminder `due_date` will be calculated as `scheduled_date - offset_days` using calendar-date arithmetic and stored as a date. Recalculation will occur whenever the examination scheduled date or reminder offset changes.  
+**Rationale:** The reminder uses a whole-number day offset and therefore does not require a timestamp for MVP due-date calculation.  
+**Verification impact:** The integration test will use fixed dates and offsets and compare the stored and returned due date with the expected result.
+
+---
+
+#### ADS-FR-037-01 — Due reminder query and display
+**Status:** Accepted  
+**Requirement reference:** FR-037  
+**Decision:** It is decided that the frontend will request active reminders whose `due_date` is on or before the authenticated user's current local date and render only those reminders in the due-reminders area.  
+**Rationale:** Filtering on the backend gives every client the same definition of currently due.  
+**Verification impact:** The frontend integration test will receive due, future, and inactive reminder fixtures and verify that only due active items are displayed.
+
+---
+
+#### ADS-FR-038-01 — Automatic reminder deactivation
+**Status:** Accepted  
+**Requirement reference:** FR-038  
+**Decision:** It is decided that the examination update service will set the associated reminder's `is_active` value to false within the same database transaction when the examination is changed to `completed`, `cancelled`, or `missed`.  
+**Rationale:** Transactional deactivation prevents a terminal examination from retaining an active reminder.  
+**Verification impact:** Integration tests will perform each terminal transition and verify the reminder state after commit.
+
+---
+
+### 4.5 Recurring Examinations
+
+#### ADS-FR-039-01 — Supported recurrence configuration
+**Status:** Accepted  
+**Requirement reference:** FR-039  
+**Decision:** It is decided that a planned examination may have one recurrence rule whose interval field is constrained to `monthly`, `six_months`, or `yearly`. Creation and update will reject every other interval and every non-planned source examination.  
+**Rationale:** A constrained one-to-one rule is sufficient for the three MVP recurrence patterns.  
+**Verification impact:** Validation tests will accept the three values and reject unsupported intervals and invalid source statuses.
+
+---
+
+#### ADS-FR-040-01 — Next-due-date arithmetic
+**Status:** Accepted  
+**Requirement reference:** FR-040  
+**Decision:** It is decided that the backend will calculate recurrence with calendar-month arithmetic: add one month for `monthly`, six months for `six_months`, and one year for `yearly`. When the target month lacks the source day, the result will use the target month's last valid day; leap-day yearly recurrence will therefore resolve to the last valid February day in non-leap years.  
+**Rationale:** Calendar arithmetic preserves expected monthly and yearly behavior better than fixed day counts.  
+**Verification impact:** Integration tests will cover ordinary dates, month-end dates, February 29, and transitions into non-leap years.
+
+---
+
+#### ADS-FR-041-01 — User-requested next occurrence creation
+**Status:** Accepted  
+**Requirement reference:** FR-041  
+**Decision:** It is decided that `POST /api/v1/examinations/{id}/next-occurrence/` will create exactly one new planned examination from the source examination and its recurrence rule. The operation will run in a transaction, use the calculated next due date, and record the source occurrence so a repeated request cannot create a duplicate for the same due date.  
+**Rationale:** An explicit action endpoint reflects that occurrence creation is user-triggered and must be protected against accidental duplicate submissions.  
+**Verification impact:** The integration test will call the action, verify one created record and its date, then repeat the request and verify that no second duplicate is created.
+
+---
+
+### 4.6 Calendar
+
+#### ADS-FR-042-01 — Monthly calendar data placement
+**Status:** Accepted  
+**Requirement reference:** FR-042  
+**Decision:** It is decided that monthly calendar data will be obtained from a date-range API query. Planned, cancelled, and missed records will be assigned to `scheduled_date`; completed records will be assigned to `completed_date`; draft records and records lacking the required display date will be excluded.  
+**Rationale:** A status-specific calendar date produces the required placement without duplicating examination records.  
+**Verification impact:** The frontend integration test will render a selected month and verify each status on its designated date.
+
+---
+
+#### ADS-FR-043-01 — Calendar state indicators
+**Status:** Accepted  
+**Requirement reference:** FR-043  
+**Decision:** It is decided that the calendar presentation will map `planned`, `completed`, `cancelled`, `missed`, and derived `overdue` to distinct combinations of label, icon or shape, and visual styling. Color will not be the sole differentiator.  
+**Rationale:** Multiple cues preserve distinction for keyboard users and users with color-vision limitations.  
+**Verification impact:** The component test will render each state and assert its semantic label and state-specific indicator.
+
+---
+
+### 4.7 Dashboard
+
+#### ADS-FR-044-01 — Dashboard examination sections
+**Status:** Accepted  
+**Requirement reference:** FR-044  
+**Decision:** It is decided that `GET /api/v1/dashboard/` will return separate collections named `upcoming`, `overdue`, and `recently_completed`. The frontend will render one dashboard section for each collection with its own loading-independent empty presentation.  
+**Rationale:** One dashboard response reduces repeated startup requests while preserving separate section semantics.  
+**Verification impact:** The frontend integration test will supply all three collections and confirm that each section renders the corresponding records.
+
+---
+
+#### ADS-FR-045-01 — Dashboard status counts
+**Status:** Accepted  
+**Requirement reference:** FR-045  
+**Decision:** It is decided that the dashboard response will contain a `status_counts` object with explicit keys for `draft`, `planned`, `completed`, `cancelled`, and `missed`. Missing database groups will be returned as zero rather than omitted.  
+**Rationale:** A stable complete shape simplifies frontend charts and summary cards.  
+**Verification impact:** The API integration test will compare each key with counts calculated from owned examination fixtures.
+
+---
+
+#### ADS-FR-046-01 — Dashboard category counts
+**Status:** Accepted  
+**Requirement reference:** FR-046  
+**Decision:** It is decided that the dashboard response will contain one count for every system-defined category and a separate `uncategorized` count for records whose category is null. Categories with no examinations will still be returned with zero.  
+**Rationale:** Returning the full category set provides predictable grouping and explicitly represents null categories.  
+**Verification impact:** The API integration test will verify every category key, zero-filled categories, and the uncategorized total.
+
+---
+
+#### ADS-FR-047-01 — Dashboard overdue count
+**Status:** Accepted
+**Requirement reference:** FR-047  
+**Decision:** It is decided that the dashboard response will contain `overdue_count`, calculated with the same shared overdue query used by the examination list rather than with separate duplicated logic.  
+**Rationale:** A shared query prevents disagreement between the dashboard count and overdue records shown elsewhere.  
+**Verification impact:** The API integration test will compare `overdue_count` with the number of records returned by the overdue query for the same frozen time.
+
+---
+
+## 5. User Experience Design Decisions
+
+#### ADS-UX-001-01 — Mobile-first responsive layout
+**Status:** Accepted  
+**Requirement reference:** UX-001  
+**Decision:** It is decided that page layouts will be implemented mobile-first with base styles for phone widths and explicit tablet and desktop enhancements. Registration, login, examination list, examination form, calendar, and dashboard will avoid horizontal page scrolling at approved viewport widths.  
+**Rationale:** Mobile-first rules provide a consistent minimum layout before additional space is used.  
+**Verification impact:** The documented browser review will exercise the approved viewport widths and record any overflow or unusable controls.
+
+---
+
+#### ADS-UX-002-01 — Email field-level error presentation
+**Status:** Accepted  
+**Requirement reference:** UX-002  
+**Decision:** It is decided that registration email errors returned by client validation or the registration API will be associated with the email control through shared form-error state and displayed immediately adjacent to that control. The field will expose the error through accessible descriptive attributes.  
+**Rationale:** The user must be able to identify the exact invalid field and reason.  
+**Verification impact:** Frontend tests will cover missing, malformed, and duplicate email responses and assert the rendered field association.
+
+---
+
+#### ADS-UX-003-01 — Password field-level error presentation
+**Status:** Accepted  
+**Requirement reference:** UX-003  
+**Decision:** It is decided that the registration form will validate the password as required and at least eight characters before submission, while also displaying backend password errors adjacent to the password control using the same accessible field-error component.  
+**Rationale:** Client validation gives immediate feedback while backend validation remains authoritative.  
+**Verification impact:** Frontend tests will cover missing and short passwords and verify the field-level message.
+
+---
+
+#### ADS-UX-004-01 — Timezone field-level error presentation
+**Status:** Accepted  
+**Requirement reference:** UX-004  
+**Decision:** It is decided that registration will use a required timezone selection control populated from supported values supplied by the application and will display missing or unsupported timezone errors adjacent to that control.  
+**Rationale:** A constrained control reduces invalid input while preserving backend validation.  
+**Verification impact:** Frontend tests will cover no selection and an API rejection for an unsupported value.
+
+---
+
+#### ADS-UX-005-01 — Draft examination form behavior
+**Status:** Accepted  
+**Requirement reference:** UX-005  
+**Decision:** It is decided that the examination form will offer an explicit draft save action. In draft mode only the title field will be marked required; category, scheduled date, scheduled time, specialty, location, and notes will remain optional and their entered values will be submitted unchanged.  
+**Rationale:** The form must not impose planned-record requirements on drafts.  
+**Verification impact:** The frontend integration test will save a title-only draft and a draft containing selected optional information.
+
+---
+
+#### ADS-UX-006-01 — Planned examination form behavior
+**Status:** Accepted  
+**Requirement reference:** UX-006  
+**Decision:** It is decided that planned mode will mark title and scheduled date as required and will leave category and scheduled time optional. The form will prevent submission only for missing required planned fields or backend validation failures.  
+**Rationale:** This matches the exact planned-record minimum defined by the requirement.  
+**Verification impact:** The frontend integration test will submit title and date only and verify successful creation.
+
+---
+
+#### ADS-UX-007-01 — Timezone-aware date and time presentation
+**Status:** Accepted  
+**Requirement reference:** UX-007  
+**Decision:** It is decided that the authenticated account timezone will be held in application state and passed to a shared formatting utility. Timezone-aware timestamps will be converted to that zone; date-only values will be displayed as stored calendar dates and will not be shifted through UTC conversion.  
+**Rationale:** Dates and instants have different semantics and must not be formatted through the same conversion path.  
+**Verification impact:** Frontend tests will use fixed timestamps, date-only values, and selected timezones to verify expected output.
+
+---
+
+#### ADS-UX-008-01 — Input-method accessibility
+**Status:** Accepted  
+**Requirement reference:** UX-008  
+**Decision:** It is decided that navigation and actions will use semantic interactive elements, visible keyboard focus, correctly labelled controls, focus-managed modal dialogs, and touch targets sized for practical use. No primary action will depend exclusively on hover, pointer gestures, or color.  
+**Rationale:** Standard semantics support touch, mouse, and keyboard without parallel custom interaction systems.  
+**Verification impact:** The documented interaction review will complete each primary flow with all three input methods.
+
+---
+
+## 6. Security Design Decisions
+
+#### ADS-SEC-001-01 — Authentication required by default
+**Status:** Accepted  
+**Requirement reference:** SEC-001  
+**Decision:** It is decided that Django REST Framework will use authenticated access as the default permission for domain APIs. Only explicitly listed public endpoints, such as registration, login, token refresh, and health check, may override that default.  
+**Rationale:** A secure default reduces the risk of accidentally exposing a new domain endpoint.  
+**Verification impact:** The API integration suite will enumerate protected endpoints and verify rejection without valid authentication.
+
+---
+
+#### ADS-SEC-002-01 — Owner-scoped domain access
+**Status:** Accepted  
+**Requirement reference:** SEC-002  
+**Decision:** It is decided that examination, reminder, and recurrence querysets will always be filtered by `request.user`; ownership fields will be assigned server-side and will not be writable by clients. Related-object validation will require the same owner.  
+**Rationale:** Queryset scoping and server-assigned ownership enforce isolation for list and object operations.  
+**Verification impact:** Authorization tests will attempt cross-user retrieval, update, deletion, and related-object attachment.
+
+---
+
+#### ADS-SEC-003-01 — Django password hashing
+**Status:** Accepted  
+**Requirement reference:** SEC-003  
+**Decision:** It is decided that all account creation and password changes will call Django's `set_password` or approved user-manager methods and will never assign raw passwords to the model field. Django password validators will run where configured.  
+**Rationale:** Django's framework provides salted adaptive hashing and verification without custom cryptography.  
+**Verification impact:** The backend test will inspect the stored value and verify it with Django's password-checking function.
+
+---
+
+#### ADS-SEC-004-01 — Secrets from environment variables
+**Status:** Accepted  
+**Requirement reference:** SEC-004  
+**Decision:** It is decided that Django secret keys, database credentials, JWT signing material, and deployment credentials will be read from environment variables. Local `.env` files will be excluded from version control and only placeholder example files may be committed.  
+**Rationale:** Separating secrets from source code prevents repository disclosure and supports environment-specific deployment.  
+**Verification impact:** The repository scan will search committed content for configured secrets and verify that required variables are documented without real values.
+
+---
+
+#### ADS-SEC-005-01 — Configured CORS origins
+**Status:** Accepted  
+**Requirement reference:** SEC-005  
+**Decision:** It is decided that the backend will build its CORS allowlist from an environment variable containing explicit frontend origins. Wildcard origins will not be used in production, and credential support will be enabled only when required by the selected authentication transport.  
+**Rationale:** An explicit allowlist limits which browser origins can call the deployed API.  
+**Verification impact:** Deployment integration tests will send requests with an allowed and disallowed `Origin` header.
+
+---
+
+#### ADS-SEC-006-01 — Uniform not-found behavior
+**Status:** Accepted  
+**Requirement reference:** SEC-006  
+**Decision:** It is decided that examination object lookup will occur only inside the authenticated user's filtered queryset and will return the same HTTP 404 status and response structure when the identifier is absent or owned by another user.  
+**Rationale:** The lookup sequence prevents object ownership from being disclosed.  
+**Verification impact:** The integration test will compare both responses byte-for-structure except for any non-deterministic request identifier.
+
+---
+
+## 7. Privacy Design Decisions
+
+#### ADS-PRV-001-01 — Approved examination field whitelist
+**Status:** Accepted  
+**Requirement reference:** PRV-001  
+**Decision:** It is decided that the examination model and writable serializers will contain only fields listed in the approved domain model. Adding any new stored examination field will require an approved requirements and design change before migration creation.  
+**Rationale:** A controlled whitelist prevents silent expansion into sensitive clinical data.  
+**Verification impact:** The data-model review will compare model and serializer fields with the approved domain model.
+
+---
+
+#### ADS-PRV-002-01 — Examination creation data boundary
+**Status:** Accepted  
+**Requirement reference:** PRV-002  
+**Decision:** It is decided that examination creation will accept the appointment and examination metadata defined by the approved domain model and will apply validation to the fields required for the selected examination status.  
+**Rationale:** This keeps the creation contract aligned with the approved domain model and the status-specific requirements.  
+**Verification impact:** API integration tests will create each supported examination status using its required appointment and examination metadata.
+
+---
+
+#### ADS-PRV-003-01 — Non-clinical purpose statement
+**Status:** Accepted  
+**Requirement reference:** PRV-003  
+**Decision:** It is decided that a dedicated informational page, reachable from unauthenticated and authenticated navigation, will display the statement that the application is an organizational tool and does not provide medical advice, diagnosis, treatment, or emergency assistance.  
+**Rationale:** The limitation must be visible without requiring an account and remain reachable after login.  
+**Verification impact:** The component test will render the designated page and assert all required limitations.
+
+---
+
+## 8. Technical and Operational Design Decisions
+
+#### ADS-TECH-001-01 — Versioned documented JSON API
+**Status:** Accepted  
+**Requirement reference:** TECH-001  
+**Decision:** It is decided that backend routes will be namespaced under `/api/v1/`, accept and return JSON for MVP domain operations, and be documented in an OpenAPI contract maintained with the implementation. The React application will consume the API only through that contract.  
+**Rationale:** Versioning and a machine-readable contract support an interface independent of the frontend.  
+**Verification impact:** Contract tests will exercise every documented MVP endpoint without using browser-specific rendering behavior.
+
+---
+
+#### ADS-TECH-002-01 — Date, time, and timestamp field types
+**Status:** Accepted  
+**Requirement reference:** TECH-002  
+**Decision:** It is decided that scheduled calendar dates will use a database date field, optional scheduled times will use a separate nullable time field, and values representing real instants such as audit timestamps will use timezone-aware datetime fields with Django timezone support enabled.  
+**Rationale:** Separate field types preserve date-only meaning and avoid inventing a time when none is known.  
+**Verification impact:** Model tests will round-trip a date-only record, a date plus optional time, and a timezone-aware timestamp.
+
+---
+
+#### ADS-TECH-003-01 — Environment-specific settings
+**Status:** Accepted  
+**Requirement reference:** TECH-003  
+**Decision:** It is decided that runtime configuration will be loaded from environment variables through a typed settings layer or explicit parser, with separate development and production defaults and fail-fast validation for required production values.  
+**Rationale:** Typed environment loading reduces accidental string coercion and prevents silent production misconfiguration.  
+**Verification impact:** Configuration tests will start the settings loader with development and production values and assert the resulting settings.
+
+---
+
+#### ADS-TECH-004-01 — Health-check endpoint
+**Status:** Accepted  
+**Requirement reference:** TECH-004  
+**Decision:** It is decided that `GET /api/v1/health/` will be unauthenticated and return HTTP 200 with a minimal JSON body such as `{"status": "ok"}` when the web process is serving requests. It will not expose configuration or secret values.  
+**Rationale:** A minimal endpoint supports deployment checks without leaking internal information.  
+**Verification impact:** The integration test will call the route anonymously and assert its status and exact public response fields.
+
+---
+
+#### ADS-TECH-005-01 — Production debug disabled
+**Status:** Accepted  
+**Requirement reference:** TECH-005  
+**Decision:** It is decided that production settings will set `DEBUG = False` unconditionally and will fail application startup when mandatory production configuration is absent rather than falling back to development settings.  
+**Rationale:** Fail-fast production configuration prevents debug pages and accidental insecure defaults.  
+**Verification impact:** The deployment configuration test will load production settings and assert that debug mode cannot be enabled by omission.
+
+---
+
+#### ADS-TECH-006-01 — HTTPS-only deployment
+**Status:** Accepted  
+**Requirement reference:** TECH-006  
+**Decision:** It is decided that public frontend and backend deployment URLs will use HTTPS, the backend will trust only the configured reverse-proxy HTTPS header, and production security settings will mark authentication cookies secure and redirect direct HTTP requests where the platform supports it.  
+**Rationale:** Transport encryption protects credentials and application data in transit.  
+**Verification impact:** The deployment smoke test will verify HTTPS URLs and confirm that normal application flows do not require plain HTTP.
+
+---
+
+#### ADS-TECH-007-01 — Repository operating documentation
+**Status:** Accepted  
+**Requirement reference:** TECH-007  
+**Decision:** It is decided that the repository will contain maintained instructions for local setup, environment variables, dependency installation, database migrations, backend and frontend tests, production builds, and deployment. Commands will be copyable and tied to the actual repository structure.  
+**Rationale:** Operational documentation is part of the deliverable and must be executable by another developer.  
+**Verification impact:** The clean-environment review will follow the instructions without undocumented corrective steps.
+
+---
+
+## 9. Change Control
+
+A proposed design decision becomes accepted only after review.
+
+When a design decision changes:
+
+1. update only the decision attached to its single requirement;
+2. confirm that the requirement remains satisfied;
+3. update the domain model, API contract, user flow, test specification, and implementation tasks where applicable;
+4. preserve the requirement identifier;
+5. add another design decision under the same requirement when the new concern is separate rather than expanding one decision to cover another requirement.
+
+## 10. Traceability Summary
+
+- Requirement references represented: **71**
+- Design decisions recorded: **72**
+- Requirements with multiple design decisions: **FR-033**
+- Design decisions linked to more than one requirement: **0**
+- Requirement statements duplicated from `requirements_specification.md`: **0**
