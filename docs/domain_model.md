@@ -121,7 +121,7 @@ Fields:
 | `id` | Identifier | Yes | Internal reminder identifier. |
 | `examination` | ExaminationRecord reference | Yes | One-to-one relationship; ownership is inherited from the examination. |
 | `offset_days` | Positive integer | Yes | Whole-number number of days before the scheduled date. |
-| `due_date` | Date | Yes | Calculated as `scheduled_date - offset_days`. |
+| `due_date` | Date or null | No | Calculated as `scheduled_date - offset_days`; null when the examination has no `scheduled_date`. |
 | `is_active` | Boolean | Yes | Determines whether the reminder may appear as due. |
 | `created_at` | Timezone-aware datetime | Yes | System generated. |
 | `updated_at` | Timezone-aware datetime | Yes | System generated. |
@@ -129,15 +129,18 @@ Fields:
 Rules:
 
 - an examination may have at most one reminder;
-- reminder configuration is allowed only for a `planned` examination;
+- a reminder may remain attached regardless of examination status;
+- a reminder may be active only for a `planned` examination;
+- reminder creation, offset updates, and reactivation are allowed only for a `planned` examination;
 - `offset_days` must be greater than zero and must be a whole number;
-- `due_date` is recalculated when `scheduled_date` or `offset_days` changes;
-- a reminder is deactivated when its examination becomes `completed`, `cancelled`, or `missed`;
+- `due_date` is recalculated when `scheduled_date` or `offset_days` changes and is set to null when `scheduled_date` is absent;
+- changing a planned examination to any non-planned status deactivates its reminder;
+- changing an examination to `planned` does not reactivate its reminder automatically;
 - reminder changes are limited to the examination owner.
 
 ### 3.5 RecurrenceRule
 
-Represents the optional recurrence configuration attached to a planned examination.
+Represents the optional recurrence configuration attached to an examination. The rule may be created or modified only while the examination is planned.
 
 Fields:
 
@@ -152,9 +155,11 @@ Fields:
 Rules:
 
 - an examination may have at most one recurrence rule;
-- recurrence configuration is allowed only for a `planned` examination;
+- a recurrence rule remains attached when the examination status changes;
+- recurrence creation and modification are allowed only for a `planned` examination;
 - unsupported recurrence intervals are rejected;
-- the next due date is calculated from the source examination's `scheduled_date` and the recurrence interval;
+- the next due date is calculated from the source examination's `scheduled_date` and the recurrence interval and is unavailable when `scheduled_date` is absent;
+- next-occurrence creation is allowed for `planned`, `completed`, `cancelled`, and `missed` source examinations and rejected for `draft`;
 - future occurrences are created one at a time only after an explicit user request;
 - a repeated request must not create another occurrence for the same source occurrence and due date.
 
@@ -295,9 +300,15 @@ The application therefore calculates overdue during queries or presentation. Thi
 - only planned examinations can be upcoming or overdue;
 - drafts are excluded from upcoming, overdue, and calendar results;
 - an examination has zero or one reminder;
+- a reminder record may remain attached to an examination in any status;
+- a reminder may be active only when its examination is `planned`;
+- reminder creation, offset updates, and reactivation are allowed only for planned examinations;
+- changing a planned examination to any non-planned status deactivates its reminder;
+- changing an examination to `planned` does not reactivate its reminder automatically;
 - an examination has zero or one recurrence rule;
-- reminders and recurrence rules can be configured only for planned examinations;
-- terminal examination statuses deactivate the associated reminder;
+- a recurrence rule may remain attached to an examination in any status;
+- recurrence rules may be created or modified only for planned examinations;
+- next-occurrence creation is prohibited for draft source examinations;
 - deleting an examination permanently deletes its reminder and recurrence rule;
 - next-occurrence creation produces at most one generated examination for a source occurrence and due date.
 
@@ -308,14 +319,18 @@ The following behavior is defined:
 - a draft may change to `planned` through the normal examination update operation when the resulting record contains `scheduled_date`;
 - changing any record to `planned`, `cancelled`, or `missed` requires `scheduled_date`;
 - changing any record to `completed` requires `completed_date`;
-- changing an examination to `completed`, `cancelled`, or `missed` deactivates its reminder in the same transaction;
+- changing an examination from `planned` to `draft`, `completed`, `cancelled`, or `missed` deactivates its reminder in the same transaction;
+- changing an examination to `planned` does not reactivate an inactive reminder;
+- an existing recurrence rule remains attached and unchanged when the examination status changes;
+- recurrence creation and modification remain prohibited while the examination is non-planned;
+- next-occurrence creation is allowed for `planned`, `completed`, `cancelled`, and `missed` source examinations that contain `scheduled_date` and a recurrence rule, and is prohibited for `draft`;
 - every update validates the complete resulting record rather than only the submitted fields.
 
 A complete matrix of all permitted forward, reverse, and correction transitions is not defined by the current requirements or accepted design decisions. No additional transition restriction should be introduced without a corresponding approved decision.
 
 ## 10. Date, Time, and Timezone Rules
 
-- `scheduled_date`, `completed_date`, and reminder `due_date` are calendar-date values;
+- `scheduled_date`, `completed_date`, and a non-null reminder `due_date` are calendar-date values;
 - `scheduled_time` is an optional time value stored separately from `scheduled_date`;
 - date-only values are displayed as stored and are not shifted through UTC conversion;
 - timestamps representing real instants, including audit timestamps, are timezone-aware and use Django timezone support;

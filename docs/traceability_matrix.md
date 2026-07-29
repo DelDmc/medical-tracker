@@ -86,8 +86,11 @@ It is an administrative mapping document. It does not define product behavior, d
 | Due-reminder query | FR-037 | ADS-FR-037-01 |
 | Automatic reminder deactivation | FR-038 | ADS-FR-038-01 |
 | Recurrence create and update operations | FR-039 | ADS-FR-039-01 |
+| Recurrence persistence across status changes | FR-039 | ADS-FR-039-02 |
 | Recurrence next-due-date calculation | FR-040 | ADS-FR-040-01 |
+| Null next due date without a scheduled date | FR-040 | ADS-FR-040-02 |
 | `POST /api/v1/examinations/{id}/next-occurrence/` | FR-041 | ADS-FR-041-01 |
+| Allowed next-occurrence source statuses | FR-041 | ADS-FR-041-02 |
 | Calendar date-range API | FR-042 | ADS-FR-042-01 |
 | Calendar state value supplied to the frontend | FR-043 | ADS-FR-043-01 |
 | `GET /api/v1/dashboard/` examination sections | FR-044 | ADS-FR-044-01 |

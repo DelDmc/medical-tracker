@@ -185,7 +185,9 @@ The requirements specification is authoritative. This document applies the accep
 5. The frontend sends `PATCH /api/v1/examinations/{id}/`.
 6. The backend validates the complete resulting record.
 7. The backend saves the status change when the resulting record contains a title and scheduled date.
-8. The record is then included in applicable calendar, upcoming, overdue, and dashboard results.
+8. Any retained reminder remains inactive until the user explicitly reactivates it.
+9. Any retained recurrence rule becomes eligible for update and next-occurrence creation.
+10. The record is then included in applicable calendar, upcoming, overdue, and dashboard results.
 
 ### Failure behavior
 
@@ -289,9 +291,20 @@ Invalid filter or ordering values are rejected with a validation error.
 7. The backend saves the changes.
 8. The frontend refreshes the affected examination list, calendar, reminder, recurrence, and dashboard data.
 
-## 14. Change an Examination to a Terminal Status
+## 14. Change a Planned Examination to a Non-Planned Status
 
-**Requirement references:** FR-012, FR-014, FR-031, FR-034, FR-038
+**Requirement references:** FR-012–FR-014, FR-022, FR-031, FR-034, FR-038–FR-041
+
+### Return a planned examination to draft
+
+1. The user opens a planned examination they own.
+2. The user changes its status to `draft`.
+3. The frontend sends `PATCH /api/v1/examinations/{id}/`.
+4. The backend validates the complete resulting draft.
+5. Within the same database transaction, the backend saves the status change and deactivates the associated reminder when one exists.
+6. Any recurrence rule remains attached and unchanged.
+7. While the examination remains draft, the reminder cannot be reactivated, the recurrence rule cannot be modified, and next-occurrence creation is rejected.
+8. The examination is excluded from upcoming, overdue, and calendar results.
 
 ### Complete an examination
 
@@ -301,9 +314,10 @@ Invalid filter or ordering values are rejected with a validation error.
 4. The frontend submits the update through `PATCH /api/v1/examinations/{id}/`.
 5. The backend validates and saves the complete resulting record.
 6. Within the same database transaction, the backend deactivates the associated reminder when one exists.
-7. The examination is removed from upcoming and overdue results.
-8. It appears in the past collection when its completion date is not later than the user's current local date.
-9. The monthly calendar places it on its completion date.
+7. Any recurrence rule remains attached and unchanged, and may be used to create the next occurrence.
+8. The examination is removed from upcoming and overdue results.
+9. It appears in the past collection when its completion date is not later than the user's current local date.
+10. The monthly calendar places it on its completion date.
 
 ### Cancel or mark an examination as missed
 
@@ -313,9 +327,10 @@ Invalid filter or ordering values are rejected with a validation error.
 4. The frontend sends `PATCH /api/v1/examinations/{id}/`.
 5. The backend validates and saves the record.
 6. Within the same database transaction, the backend deactivates the associated reminder when one exists.
-7. The examination is excluded from overdue results.
-8. It appears in the past collection when its scheduled date is not later than the user's current local date.
-9. The monthly calendar retains it on its scheduled date with the corresponding status indicator.
+7. Any recurrence rule remains attached and unchanged, and may be used to create the next occurrence.
+8. The examination is excluded from overdue results.
+9. It appears in the past collection when its scheduled date is not later than the user's current local date.
+10. The monthly calendar retains it on its scheduled date with the corresponding status indicator.
 
 ## 15. Delete an Examination
 
@@ -405,6 +420,7 @@ Invalid filter or ordering values are rejected with a validation error.
 
 - unsupported recurrence intervals are rejected;
 - recurrence configuration for a draft or another non-planned examination is rejected;
+- an existing recurrence rule remains retrievable but cannot be modified while its examination is non-planned;
 - an examination owned by another user cannot be used to create or modify a recurrence rule.
 
 ## 19. Create the Next Recurring Occurrence
@@ -413,7 +429,9 @@ Invalid filter or ordering values are rejected with a validation error.
 
 ### Preconditions
 
+- the source examination status is `planned`, `completed`, `cancelled`, or `missed`;
 - the examination has a recurrence rule;
+- the examination contains `scheduled_date`;
 - the next due date can be calculated.
 
 1. The user requests creation of the next occurrence.
@@ -424,6 +442,12 @@ Invalid filter or ordering values are rejected with a validation error.
 6. The backend records the source occurrence relationship.
 7. The new examination appears in applicable list, calendar, upcoming or overdue, and dashboard results.
 8. Repeating the same request does not create another occurrence for the same source occurrence and due date.
+
+### Failure behavior
+
+- a draft source examination is rejected with a business-rule error;
+- a source examination without `scheduled_date` or without a recurrence rule is rejected;
+- an examination owned by another user follows the common not-found behavior.
 
 ## 20. View the Monthly Calendar
 

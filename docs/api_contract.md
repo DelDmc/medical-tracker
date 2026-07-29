@@ -346,7 +346,7 @@ Field rules:
 - A supplied category identifier must exist.
 - `scheduled_time` is optional for all statuses.
 - Every create or update validates the complete resulting record, not only submitted fields.
-- The API does not introduce additional status-transition restrictions beyond these resulting-state rules.
+- The API does not restrict status transitions beyond these resulting-state rules and the documented reminder and recurrence side effects.
 
 ## 9. Examination Collection
 
@@ -526,7 +526,11 @@ Completion request:
 }
 ```
 
-Changing an examination to `completed`, `cancelled`, or `missed` deactivates its reminder in the same transaction.
+Status-change side effects:
+
+- changing a `planned` examination to `draft`, `completed`, `cancelled`, or `missed` deactivates its reminder in the same transaction;
+- an existing recurrence rule remains attached and unchanged;
+- changing an examination to `planned` does not reactivate an inactive reminder.
 
 Success:
 
@@ -572,12 +576,16 @@ Reminder representation:
 
 Rules:
 
-- reminder configuration is allowed only when the examination status is `planned`;
+- a reminder record may remain attached regardless of examination status;
+- a reminder may be active only when the examination status is `planned`;
+- reminder creation, offset updates, and reactivation are allowed only when the examination status is `planned`;
+- disabling an existing reminder is allowed regardless of examination status;
 - `offset_days` must be a positive whole number;
 - `due_date` is read-only and equals `scheduled_date - offset_days` using calendar-date arithmetic;
-- `due_date` is recalculated when `scheduled_date` or `offset_days` changes;
+- `due_date` is recalculated when `scheduled_date` or `offset_days` changes and is null when `scheduled_date` is absent;
 - ownership is inherited from the examination;
-- a reminder is automatically deactivated when the examination becomes `completed`, `cancelled`, or `missed`.
+- changing a `planned` examination to `draft`, `completed`, `cancelled`, or `missed` deactivates the reminder;
+- changing an examination to `planned` does not reactivate the reminder automatically.
 
 ### 14.1 Retrieve reminder
 
@@ -659,7 +667,7 @@ Success is a JSON array of reminder representations.
 
 ## 15. Recurrence Resource
 
-Each planned examination may have at most one recurrence rule.
+Each examination may have at most one recurrence rule. An existing rule remains attached when the examination status changes. Recurrence creation and update are allowed only while the examination is `planned`.
 
 Recurrence representation:
 
@@ -674,7 +682,7 @@ Recurrence representation:
 }
 ```
 
-`next_due_date` is a read-only derived value. It is calculated from the source examination's `scheduled_date` using calendar-month arithmetic:
+`next_due_date` is a read-only date or null. It is null when the source examination has no `scheduled_date`; otherwise, it is calculated using calendar-month arithmetic:
 
 - `monthly`: add one calendar month;
 - `six_months`: add six calendar months;
@@ -741,7 +749,7 @@ Success:
 
 Authentication: required.
 
-The source examination must be owned by the authenticated user, have status `planned`, contain `scheduled_date`, and have a recurrence rule.
+The source examination must be owned by the authenticated user, have status `planned`, `completed`, `cancelled`, or `missed`, contain `scheduled_date`, and have a recurrence rule. A source examination with status `draft` is rejected with `400 Bad Request`.
 
 The operation creates exactly one planned examination using the recurrence rule's calculated next due date and records the source examination in `source_occurrence`.
 

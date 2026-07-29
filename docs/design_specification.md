@@ -522,9 +522,9 @@ Each design decision contains:
 #### ADS-FR-036-01 — Reminder due-date calculation
 **Status:** Accepted  
 **Requirement reference:** FR-036  
-**Decision:** It is decided that reminder `due_date` will be calculated as `scheduled_date - offset_days` using calendar-date arithmetic and stored as a date. Recalculation will occur whenever the examination scheduled date or reminder offset changes.  
-**Rationale:** The reminder uses a whole-number day offset and therefore does not require a timestamp for MVP due-date calculation.  
-**Verification impact:** The integration test will use fixed dates and offsets and compare the stored and returned due date with the expected result.
+**Decision:** It is decided that reminder `due_date` will be calculated as `scheduled_date - offset_days` using calendar-date arithmetic and stored as a nullable date. Recalculation will occur whenever the examination scheduled date or reminder offset changes, and `due_date` will be set to null when `scheduled_date` is absent.  
+**Rationale:** The reminder uses a whole-number day offset and therefore does not require a timestamp, while a nullable value prevents an inactive retained reminder from exposing a stale due date after its examination loses its scheduled date.  
+**Verification impact:** Integration tests will compare stored due dates with expected calculations, verify recalculation after date and offset changes, and verify a null due date when the examination has no scheduled date.
 
 ---
 
@@ -540,9 +540,9 @@ Each design decision contains:
 #### ADS-FR-038-01 — Automatic reminder deactivation
 **Status:** Accepted  
 **Requirement reference:** FR-038  
-**Decision:** It is decided that the examination update service will set the associated reminder's `is_active` value to false within the same database transaction when the examination is changed to `completed`, `cancelled`, or `missed`.  
-**Rationale:** Transactional deactivation prevents a terminal examination from retaining an active reminder.  
-**Verification impact:** Integration tests will perform each terminal transition and verify the reminder state after commit.
+**Decision:** It is decided that changing an examination from `planned` to `draft`, `completed`, `cancelled`, or `missed` will set its associated reminder's `is_active` value to false within the same database transaction. Changing an examination to `planned` will not reactivate the reminder automatically.  
+**Rationale:** An active reminder is valid only for a planned examination, while retaining the inactive record preserves the configured offset.  
+**Verification impact:** Integration tests will verify deactivation for all four non-planned target statuses and confirm that a later transition to `planned` does not reactivate the reminder.
 
 ---
 
@@ -551,9 +551,18 @@ Each design decision contains:
 #### ADS-FR-039-01 — Supported recurrence configuration
 **Status:** Accepted  
 **Requirement reference:** FR-039  
-**Decision:** It is decided that a planned examination may have one recurrence rule whose interval field is constrained to `monthly`, `six_months`, or `yearly`. Creation and update will reject every other interval and every non-planned source examination.  
+**Decision:** It is decided that each examination may have at most one recurrence rule whose interval field is constrained to `monthly`, `six_months`, or `yearly`. Creation and update will reject every other interval and every non-planned source examination.  
 **Rationale:** A constrained one-to-one rule is sufficient for the three MVP recurrence patterns.  
 **Verification impact:** Validation tests will accept the three values and reject unsupported intervals and invalid source statuses.
+
+---
+
+#### ADS-FR-039-02 — Recurrence persistence across status changes
+**Status:** Accepted  
+**Requirement reference:** FR-039  
+**Decision:** It is decided that an existing recurrence rule will remain attached when its examination changes status. The status change will not delete or modify the recurrence rule.  
+**Rationale:** Retaining the rule preserves the configured interval for later correction, replanning, or next-occurrence creation.  
+**Verification impact:** Integration tests will change a recurring examination to each non-planned status and confirm that the same recurrence rule remains attached and unchanged.
 
 ---
 
@@ -566,12 +575,30 @@ Each design decision contains:
 
 ---
 
+#### ADS-FR-040-02 — Unavailable next due date
+**Status:** Accepted  
+**Requirement reference:** FR-040  
+**Decision:** It is decided that the recurrence representation will return `next_due_date` as null when the source examination has no `scheduled_date`.  
+**Rationale:** A retained recurrence rule can remain attached to a draft or completed examination whose scheduled date has been removed, so no recurrence date can be derived until a scheduled date exists.  
+**Verification impact:** An integration test will retrieve a retained recurrence rule whose source has no scheduled date and confirm that `next_due_date` is null.
+
+---
+
 #### ADS-FR-041-01 — User-requested next occurrence creation
 **Status:** Accepted  
 **Requirement reference:** FR-041  
 **Decision:** It is decided that `POST /api/v1/examinations/{id}/next-occurrence/` will create exactly one new planned examination from the source examination and its recurrence rule. The operation will run in a transaction, use the calculated next due date, and record the source occurrence so a repeated request cannot create a duplicate for the same due date.  
 **Rationale:** An explicit action endpoint reflects that occurrence creation is user-triggered and must be protected against accidental duplicate submissions.  
 **Verification impact:** The integration test will call the action, verify one created record and its date, then repeat the request and verify that no second duplicate is created.
+
+---
+
+#### ADS-FR-041-02 — Next-occurrence source status
+**Status:** Accepted  
+**Requirement reference:** FR-041  
+**Decision:** It is decided that next-occurrence creation will accept source examinations with status `planned`, `completed`, `cancelled`, or `missed` and reject source examinations with status `draft`. The source must contain `scheduled_date` and an attached recurrence rule.  
+**Rationale:** A completed, cancelled, or missed occurrence may still define the next scheduled occurrence, while a draft is not sufficiently planned to serve as a recurrence source.  
+**Verification impact:** Integration tests will verify successful creation from each accepted source status and a business-rule error for a draft source.
 
 ---
 

@@ -132,8 +132,8 @@ Verification statements identify the primary verification method. Detailed fixtu
 **FR-037** — The application shall display active reminders whose due date has been reached.
 **Verification:** A frontend integration test shall provide due and non-due reminders and confirm that only due reminders are displayed.
 
-**FR-038** — The application shall deactivate an examination reminder when the examination is marked as `completed`, `cancelled`, or `missed`.
-**Verification:** An API integration test shall change an examination to each defined terminal status and confirm that its reminder is inactive.
+**FR-038** — The application shall deactivate an examination reminder when the examination status changes from `planned` to `draft`, `completed`, `cancelled`, or `missed`.
+**Verification:** An API integration test shall change a planned examination to each defined non-planned status and confirm that its reminder is inactive.
 
 ### 2.5 Recurring Examinations
 

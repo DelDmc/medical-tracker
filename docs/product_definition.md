@@ -98,8 +98,9 @@ Users can:
 - create a planned examination when its scheduled date is known, while leaving its exact time and category unspecified;
 - view planned examinations as upcoming or overdue according to their scheduled date, optional scheduled time, current local date and time, and account timezone;
 - configure one recurrence interval of monthly, every six months, or yearly for a planned examination;
+- retain the recurrence rule when the examination status changes;
 - view the calculated next due date;
-- create exactly one next occurrence when requested.
+- create exactly one next occurrence from a planned, completed, cancelled, or missed examination when requested.
 
 Future occurrences are created one at a time and are not generated automatically without a user request.
 
@@ -108,7 +109,7 @@ Future occurrences are created one at a time and are not generated automatically
 Users can:
 
 - enable or update one reminder for a planned examination using a positive whole-number `offset_days` value;
-- disable or re-enable the reminder;
+- disable the reminder, or re-enable it after the examination is planned;
 - view active reminders whose due date has been reached.
 
 The reminder due date is calculated as the examination's `scheduled_date` minus `offset_days`. A scheduled time is not required for reminder configuration.
@@ -209,8 +210,9 @@ The following features are outside the MVP:
 2. The user changes its status to `completed` and provides `completed_date`.
 3. The application validates and saves the complete resulting record.
 4. The associated reminder is deactivated in the same transaction when one exists.
-5. The record is excluded from upcoming and overdue results and appears in the past collection when its completion date is not later than the user's current local date.
-6. The calendar places the record on `completed_date`.
+5. Any recurrence rule remains attached and may be used to create the next occurrence.
+6. The record is excluded from upcoming and overdue results and appears in the past collection when its completion date is not later than the user's current local date.
+7. The calendar places the record on `completed_date`.
 
 ### 9.6 Review Past, Upcoming, and Overdue Examinations
 
@@ -226,8 +228,10 @@ The following features are outside the MVP:
 1. The user opens one of their examination records.
 2. The application validates ownership through the authenticated-user queryset.
 3. An edit validates the complete resulting record before saving it.
-4. A deletion requires explicit confirmation and permanently removes the examination and its associated reminder and recurrence rule.
-5. The updated state appears in all relevant views.
+4. Changing a planned examination to any non-planned status deactivates its reminder and retains its recurrence rule.
+5. Changing an examination to planned does not reactivate an inactive reminder.
+6. A deletion requires explicit confirmation and permanently removes the examination and its associated reminder and recurrence rule.
+7. The updated state appears in all relevant views.
 
 ## 10. Initial Business Rules
 
@@ -285,19 +289,24 @@ The following features are outside the MVP:
 ### 10.7 Reminders
 
 - An examination may have zero or one reminder.
-- Reminder configuration is allowed only for a planned examination.
+- A reminder record may remain attached regardless of examination status.
+- A reminder may be active only for a planned examination.
+- Reminder creation, offset updates, and reactivation are allowed only for a planned examination.
 - `offset_days` must be a positive whole number.
-- `due_date` is calculated as `scheduled_date - offset_days` and recalculated when either value changes.
-- A reminder becomes inactive when the examination is completed, cancelled, or missed.
+- `due_date` is calculated as `scheduled_date - offset_days`, recalculated when either value changes, and set to null when `scheduled_date` is absent.
+- Changing a planned examination to draft, completed, cancelled, or missed deactivates its reminder.
+- Changing an examination to planned does not reactivate its reminder automatically.
 
 ### 10.8 Recurrence
 
 - An examination may have zero or one recurrence rule.
-- Recurrence configuration is allowed only for a planned examination.
+- A recurrence rule remains attached when the examination status changes.
+- Recurrence creation and update are allowed only for a planned examination.
 - Supported intervals are `monthly`, `six_months`, and `yearly`.
-- The next due date is derived from the source examination's `scheduled_date` using calendar-month arithmetic.
+- The next due date is derived from the source examination's `scheduled_date` using calendar-month arithmetic and is unavailable when `scheduled_date` is absent.
 - When the target month lacks the source day, the target month's last valid day is used.
 - Future occurrences are created exactly one at a time after an explicit user request.
+- Next-occurrence creation is allowed from planned, completed, cancelled, and missed examinations and rejected for drafts.
 - A repeated request does not create another occurrence for the same source occurrence and due date.
 
 ### 10.9 Deletion
