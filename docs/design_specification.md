@@ -72,39 +72,192 @@ Each design decision contains:
 
 ---
 
-#### ADS-FR-005-01 — Login endpoint
+#### ADS-FR-005-01 — Login endpoint and credentials
 **Status:** Accepted  
 **Requirement reference:** FR-005  
-**Decision:** It is decided that login will be provided through `POST /api/v1/auth/login/` using `email` and `password`. Valid credentials will produce an access token and establish the refresh-token mechanism selected for the application; invalid credentials will return one generic authentication error.  
-**Rationale:** A single generic error avoids exposing whether an email address exists while satisfying the required credential flow.  
-**Verification impact:** Integration tests will verify successful token issuance and rejection of invalid credentials.
+**Decision:** It is decided that login will be provided through `POST /api/v1/auth/login/` using `email` and `password`.  
+**Rationale:** A dedicated authentication endpoint provides one explicit contract for credential submission.  
+**Verification impact:** An API integration test will submit valid and invalid `email` and `password` combinations to the login endpoint.
 
 ---
 
-#### ADS-FR-006-01 — Logout operation
+#### ADS-FR-005-02 — Login access-token response
+**Status:** Accepted  
+**Requirement reference:** FR-005  
+**Decision:** It is decided that successful login will return the access token in the JSON field `access_token`.  
+**Rationale:** Returning the short-lived access token in JSON allows the frontend to use bearer authentication without a JavaScript-readable authentication cookie.  
+**Verification impact:** An API integration test will confirm that successful login returns `access_token` in the response body.
+
+---
+
+#### ADS-FR-005-03 — Login refresh-token cookie
+**Status:** Accepted  
+**Requirement reference:** FR-005  
+**Decision:** It is decided that successful login will set the refresh token in the backend-issued `refresh_token` cookie using the accepted refresh-cookie security configuration. The refresh token will not be returned in JSON.  
+**Rationale:** A backend-issued cookie keeps the longer-lived refresh token outside JavaScript-readable response data.  
+**Verification impact:** An API integration test will verify refresh-cookie creation and confirm that the refresh token is absent from the response body.
+
+---
+
+#### ADS-FR-005-04 — Frontend access-token storage and transport
+**Status:** Accepted  
+**Requirement reference:** FR-005  
+**Decision:** It is decided that the frontend will hold the access token only in application memory and will send it to protected endpoints through the `Authorization: Bearer <access_token>` header.  
+**Rationale:** In-memory storage avoids persistent JavaScript-readable token storage while bearer transport keeps protected API authentication explicit.  
+**Verification impact:** Frontend integration tests will verify bearer-header use and confirm that the access token is not written to persistent browser storage.
+
+---
+
+#### ADS-FR-005-05 — Generic invalid-credentials response
+**Status:** Accepted  
+**Requirement reference:** FR-005  
+**Decision:** It is decided that invalid login credentials will return one generic authentication error regardless of whether the submitted email exists.  
+**Rationale:** A generic error avoids disclosing account existence.  
+**Verification impact:** API integration tests will confirm that unknown-email and incorrect-password attempts return the same status and response structure.
+
+---
+
+#### ADS-FR-006-01 — Logout endpoint
 **Status:** Accepted  
 **Requirement reference:** FR-006  
-**Decision:** It is decided that logout will be initiated through `POST /api/v1/auth/logout/`. The backend will invalidate or revoke the active refresh token when supported, and the frontend will clear all locally held authentication state before redirecting to the login page.  
-**Rationale:** Both server-side refresh invalidation and client-side state clearing are needed to end the active session consistently.  
-**Verification impact:** The frontend integration test will confirm that authentication state is cleared and navigation ends on the login page.
+**Decision:** It is decided that logout will be initiated through `POST /api/v1/auth/logout/` using the accepted credentialed-request and CSRF configuration.  
+**Rationale:** A dedicated endpoint provides one explicit server-side logout operation.  
+**Verification impact:** An API integration test will verify the endpoint method, route, credential handling, and CSRF enforcement.
+
+---
+
+#### ADS-FR-006-02 — Logout refresh-token invalidation
+**Status:** Accepted  
+**Requirement reference:** FR-006  
+**Decision:** It is decided that the backend will invalidate a valid refresh token received during logout.  
+**Rationale:** Invalidating the refresh token prevents reuse of the server-recognized session after logout.  
+**Verification impact:** An API integration test will confirm that a refresh token used for logout cannot subsequently issue a new access token.
+
+---
+
+#### ADS-FR-006-03 — Logout refresh-cookie clearing
+**Status:** Accepted  
+**Requirement reference:** FR-006  
+**Decision:** It is decided that the backend will clear the `refresh_token` cookie during logout using the same cookie identity and applicable security attributes used when the cookie was created.  
+**Rationale:** Matching cookie attributes are required for reliable browser-side cookie removal.  
+**Verification impact:** An API integration test will verify that the logout response expires the refresh cookie with the accepted cookie configuration.
+
+---
+
+#### ADS-FR-006-04 — Idempotent logout response
+**Status:** Accepted  
+**Requirement reference:** FR-006  
+**Decision:** It is decided that logout will return an empty successful response when the refresh cookie is missing or contains an already invalid refresh token.  
+**Rationale:** Idempotent behavior lets the client complete logout without exposing unnecessary token-state distinctions.  
+**Verification impact:** API integration tests will verify the same successful response for valid, missing, and already invalid refresh tokens.
+
+---
+
+#### ADS-FR-006-05 — Immediate frontend logout outcome
+**Status:** Accepted  
+**Requirement reference:** FR-006  
+**Decision:** It is decided that the frontend will clear the in-memory access token and all other local authentication state before sending the logout request, then navigate to the login page after the request succeeds, fails, or cannot reach the backend.  
+**Rationale:** Local logout must complete immediately and must not depend on backend availability.  
+**Verification impact:** Frontend integration tests will verify immediate state clearing and login-page navigation for successful, failed, and unreachable logout requests.
+
+---
+
+#### ADS-FR-006-06 — Persistent logout-intent marker
+**Status:** Accepted  
+**Requirement reference:** FR-006  
+**Decision:** It is decided that the frontend will write the non-sensitive value `true` under `medical_tracker.logout_intent` in `localStorage` before sending the logout request. While the marker exists, protected-application initialization will not attempt session restoration from the refresh-token cookie.  
+**Rationale:** The marker preserves an explicit logout choice when the backend is unreachable and an `HttpOnly` refresh cookie cannot be cleared by frontend code.  
+**Verification impact:** Frontend integration tests will verify marker creation and suppression of initialization refresh while the marker exists.
+
+---
+
+#### ADS-FR-006-07 — Logout-intent marker removal
+**Status:** Accepted  
+**Requirement reference:** FR-006  
+**Decision:** It is decided that a later successful login will remove `medical_tracker.logout_intent` from `localStorage`.  
+**Rationale:** Successful authentication establishes a new explicit session and ends the previous logout intent.  
+**Verification impact:** A frontend integration test will confirm that successful login removes the marker.
 
 ---
 
 #### ADS-FR-007-01 — Access-token refresh endpoint
 **Status:** Accepted  
 **Requirement reference:** FR-007  
-**Decision:** It is decided that access-token renewal will be provided through `POST /api/v1/auth/refresh/`. A valid refresh token will return a new access token; expired, revoked, malformed, or otherwise invalid refresh tokens will be rejected without issuing credentials.  
-**Rationale:** A dedicated refresh endpoint keeps access-token renewal separate from login.  
-**Verification impact:** Integration tests will cover valid, expired, revoked, and malformed refresh tokens.
+**Decision:** It is decided that access-token renewal will be provided through `POST /api/v1/auth/refresh/` using the accepted credentialed-request and CSRF configuration, with the refresh token read from the `refresh_token` cookie.  
+**Rationale:** A dedicated endpoint and one defined token source provide an unambiguous renewal contract.  
+**Verification impact:** An API integration test will verify the endpoint route, method, CSRF enforcement, and refresh-token cookie input.
 
 ---
 
-#### ADS-FR-008-01 — Expired-session handling
+#### ADS-FR-007-02 — Refresh-token rotation
+**Status:** Accepted  
+**Requirement reference:** FR-007  
+**Decision:** It is decided that every successful access-token refresh will rotate the submitted refresh token and invalidate the previous refresh token.  
+**Rationale:** Rotation limits the period in which a copied refresh token can be reused.  
+**Verification impact:** An API integration test will confirm that a successful refresh invalidates the previously submitted refresh token.
+
+---
+
+#### ADS-FR-007-03 — Replacement refresh-token cookie
+**Status:** Accepted  
+**Requirement reference:** FR-007  
+**Decision:** It is decided that successful refresh-token rotation will set the replacement token in the `refresh_token` cookie using the accepted refresh-cookie security configuration.  
+**Rationale:** Replacing the cookie preserves the session without exposing the refresh token to frontend JavaScript.  
+**Verification impact:** An API integration test will verify replacement-cookie creation and its accepted attributes.
+
+---
+
+#### ADS-FR-007-04 — Refreshed access-token response
+**Status:** Accepted  
+**Requirement reference:** FR-007  
+**Decision:** It is decided that successful refresh will return the new access token in the JSON field `access_token`.  
+**Rationale:** A stable response field gives the frontend one explicit source for replacing its in-memory access token.  
+**Verification impact:** An API integration test will confirm the `access_token` response field after valid refresh.
+
+---
+
+#### ADS-FR-007-05 — Invalid refresh-token response
+**Status:** Accepted  
+**Requirement reference:** FR-007  
+**Decision:** It is decided that expired, revoked, malformed, missing, or otherwise invalid refresh tokens will be rejected without issuing new credentials, and the stale `refresh_token` cookie will be cleared.  
+**Rationale:** Rejection prevents unauthorized renewal, while cookie clearing prevents repeated submission of a known unusable token.  
+**Verification impact:** API integration tests will verify rejection without credential issuance and cookie clearing for each invalid-token condition.
+
+---
+
+#### ADS-FR-007-06 — Session restoration after page reload
+**Status:** Accepted  
+**Requirement reference:** FR-007  
+**Decision:** It is decided that protected-application initialization may call the refresh endpoint once when no in-memory access token exists and `medical_tracker.logout_intent` is absent.  
+**Rationale:** Initialization refresh restores a valid session after page reload because the access token is intentionally not persisted.  
+**Verification impact:** A frontend integration test will verify one initialization refresh when the access token is absent and the logout-intent marker does not exist.
+
+---
+
+#### ADS-FR-008-01 — Active-session access-token recovery
 **Status:** Accepted  
 **Requirement reference:** FR-008  
-**Decision:** It is decided that the frontend API client will attempt at most one refresh after an access-token authentication failure. When refresh fails, it will clear authentication state, redirect to the login page, and display a session-expired message carried through navigation state.  
-**Rationale:** Limiting the retry prevents refresh loops and gives the user an explicit explanation for the redirect.  
-**Verification impact:** The frontend integration test will simulate failed refresh and verify the cleared session, redirect, and message.
+**Decision:** It is decided that the frontend API client will attempt at most one refresh after an access-token authentication failure. When refresh succeeds, the client will replace the in-memory access token and repeat the original protected request once.  
+**Rationale:** One bounded refresh and replay can recover an active session without creating retry loops.  
+**Verification impact:** Frontend integration tests will verify one refresh attempt, access-token replacement, and one replay of the original request.
+
+---
+
+#### ADS-FR-008-02 — Failed active-session refresh outcome
+**Status:** Accepted  
+**Requirement reference:** FR-008  
+**Decision:** It is decided that a failed refresh during an active session will clear authentication state, redirect to the login page, and display a session-expired message carried through navigation state.  
+**Rationale:** The user must be informed when an active session can no longer be renewed.  
+**Verification impact:** A frontend integration test will verify state clearing, login-page redirection, and the session-expired message after failed active-session refresh.
+
+---
+
+#### ADS-FR-008-03 — Failed initialization refresh outcome
+**Status:** Accepted  
+**Requirement reference:** FR-008  
+**Decision:** It is decided that a failed initialization refresh after page reload will open the login page without a retry loop and without a session-expired message.  
+**Rationale:** An unsuccessful restoration attempt on application startup is an unauthenticated load, not necessarily an expired active session.  
+**Verification impact:** A frontend integration test will verify login-page navigation without repeated refresh requests or a session-expired message.
 
 ---
 
@@ -559,9 +712,9 @@ Each design decision contains:
 #### ADS-SEC-001-01 — Authentication required by default
 **Status:** Accepted  
 **Requirement reference:** SEC-001  
-**Decision:** It is decided that Django REST Framework will use authenticated access as the default permission for domain APIs. Only explicitly listed public endpoints, such as registration, login, token refresh, and health check, may override that default.  
-**Rationale:** A secure default reduces the risk of accidentally exposing a new domain endpoint.  
-**Verification impact:** The API integration suite will enumerate protected endpoints and verify rejection without valid authentication.
+**Decision:** It is decided that Django REST Framework will use authenticated access as the default permission for domain APIs. Registration, login, CSRF-token retrieval, token refresh, and health check will be explicitly configured without bearer authentication. Logout will use refresh-token-cookie validation and CSRF protection instead of the default bearer permission. No other endpoint may override authenticated access without an accepted design change.  
+**Rationale:** A secure default reduces the risk of accidentally exposing a new domain endpoint while allowing the authentication endpoints to use the credential appropriate to their operation.  
+**Verification impact:** The API integration suite will enumerate protected endpoints, verify rejection without a valid bearer access token, and verify the separately defined refresh-cookie and CSRF controls on refresh and logout.
 
 ---
 
@@ -592,12 +745,48 @@ Each design decision contains:
 
 ---
 
-#### ADS-SEC-005-01 — Configured CORS origins
+#### ADS-SEC-005-01 — Explicit CORS origin configuration
 **Status:** Accepted  
 **Requirement reference:** SEC-005  
-**Decision:** It is decided that the backend will build its CORS allowlist from an environment variable containing explicit frontend origins. Wildcard origins will not be used in production, and credential support will be enabled only when required by the selected authentication transport.  
-**Rationale:** An explicit allowlist limits which browser origins can call the deployed API.  
-**Verification impact:** Deployment integration tests will send requests with an allowed and disallowed `Origin` header.
+**Decision:** It is decided that the backend will build its CORS allowlist from explicit frontend origins supplied through environment variables. Each origin will include its scheme, host, and port when applicable. Wildcard origins will not be used in production.  
+**Rationale:** An explicit deployment-specific allowlist prevents arbitrary browser origins from being accepted by the backend.  
+**Verification impact:** Deployment integration tests will verify that configured frontend origins are accepted, unconfigured origins are rejected, and production configuration contains no wildcard origin.
+
+---
+
+#### ADS-SEC-005-02 — Credentialed CORS requests and allowed headers
+**Status:** Accepted  
+**Requirement reference:** SEC-005  
+**Decision:** It is decided that the backend will allow credentialed cross-origin requests only for origins in the configured CORS allowlist. CORS preflight responses will permit the `Authorization`, `Content-Type`, and `X-CSRFToken` request headers required by the API contract. The frontend will enable browser credentials for requests that receive, send, rotate, or clear authentication and CSRF cookies.  
+**Rationale:** The selected authentication flow requires bearer authorization headers, JSON request bodies, CSRF headers, and browser-managed cookies across the deployed frontend and backend origins.  
+**Verification impact:** Deployment integration tests will verify the exact allowed origin, credential support, permitted request headers, successful preflight handling, and rejection of credentialed requests from unconfigured origins.
+
+---
+
+#### ADS-SEC-005-03 — Django CSRF trusted-origin configuration
+**Status:** Accepted  
+**Requirement reference:** SEC-005  
+**Decision:** It is decided that Django's CSRF trusted-origin list will be built from explicit frontend origins supplied through environment variables. Each trusted origin will include its scheme, host, and port when applicable. Wildcard trusted origins will not be used in production.  
+**Rationale:** Django must explicitly trust the deployed frontend origins before accepting cross-origin state-changing requests protected by its CSRF validation.  
+**Verification impact:** Deployment integration tests will verify that a valid CSRF token from a configured frontend origin is accepted and that the same request from an unconfigured origin is rejected.
+
+---
+
+#### ADS-SEC-005-04 — Refresh-token cookie attributes
+**Status:** Accepted  
+**Requirement reference:** SEC-005  
+**Decision:** It is decided that the backend-issued `refresh_token` cookie will be `HttpOnly`, host-only, restricted to the `/api/v1/auth/` path, and configured to expire with the refresh token. In production it will use `Secure` and `SameSite=None`; local HTTP development may use `SameSite=Lax` without `Secure`. Cookie clearing will use the same name, path, and applicable security attributes as cookie creation.  
+**Rationale:** These attributes prevent JavaScript access, limit cookie transmission to authentication routes, support the separately deployed frontend and backend, and ensure reliable cookie removal.  
+**Verification impact:** Authentication integration tests will verify cookie creation, replacement, expiration, clearing, path restriction, `HttpOnly`, and the environment-specific `Secure` and `SameSite` values.
+
+---
+
+#### ADS-SEC-005-05 — CSRF-token bootstrap endpoint
+**Status:** Accepted  
+**Requirement reference:** SEC-005  
+**Decision:** It is decided that the backend will expose `GET /api/v1/auth/csrf/` without bearer authentication. A credentialed request to this endpoint will set or renew the Django CSRF cookie and return the corresponding token in the JSON field `csrf_token`. The frontend will hold the returned token in memory and send it in `X-CSRFToken` with credentialed login, refresh, and logout requests. In production the CSRF cookie will use `Secure`, `SameSite=None`, and path `/api/v1/`; local HTTP development may use `SameSite=Lax` without `Secure`.  
+**Rationale:** The frontend requires an explicit bootstrap operation to obtain a CSRF token that matches the browser-managed CSRF cookie before submitting cookie-affecting authentication requests.  
+**Verification impact:** Authentication integration tests will verify token issuance, CSRF-cookie creation and attributes, successful protected authentication requests with a matching token, and rejection when the header is missing or does not match the cookie.
 
 ---
 

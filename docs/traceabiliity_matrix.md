@@ -22,6 +22,11 @@ It is an administrative mapping document. It does not define product behavior, d
 | General versioned JSON API under `/api/v1/` | TECH-001 | ADS-TECH-001-01 |
 | Authentication required by default | SEC-001 | ADS-SEC-001-01 |
 | Owner-scoped examinations, reminders, and recurrence | SEC-002 | ADS-SEC-002-01 |
+| Explicit CORS origin allowlist | SEC-005 | ADS-SEC-005-01 |
+| Credentialed CORS requests and allowed headers | SEC-005 | ADS-SEC-005-02 |
+| Django CSRF trusted origins | SEC-005 | ADS-SEC-005-03 |
+| Refresh-token cookie attributes | SEC-005 | ADS-SEC-005-04 |
+| CSRF-token bootstrap behavior | SEC-005 | ADS-SEC-005-05 |
 | Uniform not-found response | SEC-006 | ADS-SEC-006-01 |
 | Date, time, and timestamp representations | TECH-002 | ADS-TECH-002-01 |
 | `GET /api/v1/health/` | TECH-004 | ADS-TECH-004-01 |
@@ -29,10 +34,28 @@ It is an administrative mapping document. It does not define product behavior, d
 | Registration email validation | FR-002 | ADS-FR-002-01 |
 | Registration password validation | FR-003, SEC-003 | ADS-FR-003-01, ADS-SEC-003-01 |
 | Registration timezone validation | FR-004 | ADS-FR-004-01 |
-| `POST /api/v1/auth/login/` | FR-005 | ADS-FR-005-01 |
-| `POST /api/v1/auth/logout/` | FR-006 | ADS-FR-006-01 |
-| `POST /api/v1/auth/refresh/` | FR-007 | ADS-FR-007-01 |
-| Failed refresh and expired-session outcome | FR-008 | ADS-FR-008-01 |
+| `GET /api/v1/auth/csrf/` | SEC-005 | ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-05 |
+| `POST /api/v1/auth/login/` request contract | FR-005, SEC-005 | ADS-FR-005-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-05 |
+| Login access-token response | FR-005 | ADS-FR-005-02 |
+| Login refresh-token cookie | FR-005, SEC-005 | ADS-FR-005-03, ADS-SEC-005-04 |
+| Frontend access-token storage and bearer transport | FR-005 | ADS-FR-005-04 |
+| Generic invalid-credentials response | FR-005 | ADS-FR-005-05 |
+| `POST /api/v1/auth/logout/` request contract | FR-006, SEC-005 | ADS-FR-006-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-05 |
+| Logout refresh-token invalidation | FR-006 | ADS-FR-006-02 |
+| Logout refresh-cookie clearing | FR-006, SEC-005 | ADS-FR-006-03, ADS-SEC-005-04 |
+| Idempotent logout response | FR-006 | ADS-FR-006-04 |
+| Immediate frontend logout outcome | FR-006 | ADS-FR-006-05 |
+| Persistent logout-intent marker and restoration suppression | FR-006 | ADS-FR-006-06 |
+| Logout-intent marker removal after successful login | FR-006 | ADS-FR-006-07 |
+| `POST /api/v1/auth/refresh/` request contract | FR-007, SEC-005 | ADS-FR-007-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-05 |
+| Refresh-token rotation and previous-token invalidation | FR-007 | ADS-FR-007-02 |
+| Replacement refresh-token cookie | FR-007, SEC-005 | ADS-FR-007-03, ADS-SEC-005-04 |
+| Refreshed access-token response | FR-007 | ADS-FR-007-04 |
+| Invalid refresh-token response and stale-cookie clearing | FR-007, SEC-005 | ADS-FR-007-05, ADS-SEC-005-04 |
+| Session restoration after page reload | FR-007 | ADS-FR-007-06 |
+| Active-session access-token recovery | FR-008 | ADS-FR-008-01 |
+| Failed active-session refresh outcome | FR-008 | ADS-FR-008-02 |
+| Failed initialization refresh outcome | FR-008 | ADS-FR-008-03 |
 | `GET` and `PATCH /api/v1/account/` | FR-009 | ADS-FR-009-01 |
 | Draft examination creation | FR-010 | ADS-FR-010-01 |
 | Planned examination creation | FR-011 | ADS-FR-011-01 |
