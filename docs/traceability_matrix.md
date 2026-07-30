@@ -62,6 +62,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | Examination status values | FR-012 | ADS-FR-012-01 |
 | Optional examination metadata | FR-013 | ADS-FR-013-01 |
 | Status-dependent examination validation | FR-014 | ADS-FR-014-01 |
+| Future completed-date rejection | FR-014 | ADS-FR-014-02 |
 | Category and status reference validation | FR-015 | ADS-FR-015-01 |
 | Draft-to-planned update | FR-016 | ADS-FR-016-01 |
 | Reminder rejection for drafts | FR-017 | ADS-FR-017-01 |
@@ -94,6 +95,9 @@ It is an administrative mapping document. It does not define product behavior, d
 | Calendar date-range API | FR-042 | ADS-FR-042-01 |
 | Calendar state value supplied to the frontend | FR-043 | ADS-FR-043-01 |
 | `GET /api/v1/dashboard/` examination sections | FR-044 | ADS-FR-044-01 |
+| Dashboard `recently_completed` eligibility window | FR-044 | ADS-FR-044-02 |
+| Dashboard `recently_completed` ordering | FR-044 | ADS-FR-044-03 |
+| Dashboard `recently_completed` limit and pagination behavior | FR-044 | ADS-FR-044-04 |
 | Dashboard status counts | FR-045 | ADS-FR-045-01 |
 | Dashboard `category_counts` and `uncategorized_count` | FR-046 | ADS-FR-046-01 |
 | Dashboard overdue count | FR-047 | ADS-FR-047-01 |

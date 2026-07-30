@@ -317,6 +317,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-FR-014-02 — Future completion-date rejection
+**Status:** Accepted  
+**Requirement reference:** FR-014  
+**Decision:** It is decided that a record whose status is `completed` must have a `completed_date` not later than the authenticated user's current local date. The backend will reject create and update requests that would produce a completed record with a future completion date.  
+**Rationale:** A completed examination represents an event that has already occurred, and enforcing the boundary globally prevents invalid records from entering past, calendar, and dashboard results.  
+**Verification impact:** Validation tests will freeze the user's local date and verify acceptance on that date and rejection on the following date for both create and update operations.
+
+---
+
 #### ADS-FR-015-01 — Category and status reference validation
 **Status:** Accepted  
 **Requirement reference:** FR-015  
@@ -630,6 +639,33 @@ Each design decision contains:
 **Decision:** It is decided that `GET /api/v1/dashboard/` will return separate collections named `upcoming`, `overdue`, and `recently_completed`. The frontend will render one dashboard section for each collection with its own loading-independent empty presentation.  
 **Rationale:** One dashboard response reduces repeated startup requests while preserving separate section semantics.  
 **Verification impact:** The frontend integration test will supply all three collections and confirm that each section renders the corresponding records.
+
+---
+
+#### ADS-FR-044-02 — Recently completed eligibility
+**Status:** Accepted  
+**Requirement reference:** FR-044  
+**Decision:** It is decided that the dashboard `recently_completed` collection will include only examinations owned by the authenticated user whose status is `completed` and whose `completed_date` is between the authenticated user's current local date minus 29 days and the current local date, inclusive.  
+**Rationale:** An explicit inclusive 30-date window gives recently completed a stable and testable meaning.  
+**Verification impact:** An API integration test will freeze the user's local date and verify inclusion at both boundaries and exclusion immediately outside them.
+
+---
+
+#### ADS-FR-044-03 — Recently completed ordering
+**Status:** Accepted  
+**Requirement reference:** FR-044  
+**Decision:** It is decided that `recently_completed` records will be ordered by `completed_date` descending and then by `id` descending.  
+**Rationale:** The primary ordering shows the latest completions first, while the identifier tie-breaker makes results deterministic when multiple examinations have the same completion date.  
+**Verification impact:** An API integration test will verify date ordering and deterministic identifier ordering for records sharing the same completion date.
+
+---
+
+#### ADS-FR-044-04 — Recently completed limit
+**Status:** Accepted  
+**Requirement reference:** FR-044  
+**Decision:** It is decided that the dashboard `recently_completed` collection will contain at most five records after eligibility filtering and ordering have been applied. The collection will not be paginated.  
+**Rationale:** The dashboard is a summary view rather than a replacement for the complete examination history.  
+**Verification impact:** An API integration test will create more than five eligible records and confirm that only the first five ordered records are returned.
 
 ---
 

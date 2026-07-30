@@ -90,7 +90,7 @@ Fields:
 | `medical_specialty` | Text | No | Optional organizational metadata. |
 | `scheduled_date` | Date | Conditional | Required for `planned`, `cancelled`, and `missed`; optional for `draft` and `completed`. |
 | `scheduled_time` | Time | No | Optional and stored separately from `scheduled_date`. |
-| `completed_date` | Date | Conditional | Required for `completed`; optional for other statuses. |
+| `completed_date` | Date | Conditional | Required for `completed`, where it must not be later than the user's current local date; optional for other statuses. |
 | `status` | Enumeration | Yes | `draft`, `planned`, `completed`, `cancelled`, or `missed`. |
 | `location` | Text | No | Optional appointment location. |
 | `notes` | Long text | No | Optional general organizational notes. |
@@ -104,7 +104,7 @@ Rules:
 - a draft may preserve any valid optional examination information supplied by the user;
 - a planned examination requires `title` and `scheduled_date`;
 - a cancelled or missed examination requires `title` and `scheduled_date`;
-- a completed examination requires `title` and `completed_date`;
+- a completed examination requires `title` and a `completed_date` not later than the user's current local date;
 - `category` and `scheduled_time` remain optional for a planned examination;
 - every create or update operation validates the complete resulting record against its status-dependent rules;
 - a supplied category must reference an existing system-defined category;
@@ -241,7 +241,21 @@ A planned examination is upcoming when it is not overdue. This includes:
 - the current local date without a scheduled time;
 - the current local date with a scheduled time that has not passed.
 
-### 6.4 Calendar Placement
+### 6.4 Recently Completed
+
+An examination belongs to the dashboard recently completed collection when:
+
+```text
+status = completed
+AND completed_date >= user's current local date - 29 days
+AND completed_date <= user's current local date
+```
+
+The collection is ordered by `completed_date` descending and then by `id` descending. Eligibility filtering and ordering are applied before the collection is limited to five records. The collection is not paginated.
+
+The upper date boundary is retained as defensive query behavior even though completed examinations with future completion dates are rejected during validation.
+
+### 6.5 Calendar Placement
 
 Monthly calendar placement uses:
 
@@ -250,7 +264,7 @@ Monthly calendar placement uses:
 
 Draft records are excluded from calendar results. A record lacking the date required for its calendar status is also excluded.
 
-### 6.5 Due Reminder
+### 6.6 Due Reminder
 
 A reminder is due when:
 
@@ -259,7 +273,7 @@ is_active = true
 AND due_date <= user's current local date
 ```
 
-### 6.6 Recurrence Next Due Date
+### 6.7 Recurrence Next Due Date
 
 The recurrence next due date is calculated from the source examination's `scheduled_date`:
 
@@ -293,7 +307,7 @@ The application therefore calculates overdue during queries or presentation. Thi
 - object lookup for a missing examination and another user's examination returns the same not-found response;
 - every examination has a title;
 - every planned, cancelled, and missed examination has a scheduled date;
-- every completed examination has a completion date;
+- every completed examination has a completion date not later than the user's current local date;
 - a draft may contain only a title or may include valid optional examination information;
 - an examination has zero or one system-defined category;
 - category absence is represented by null and presented as **Uncategorized**;
@@ -318,7 +332,7 @@ The following behavior is defined:
 
 - a draft may change to `planned` through the normal examination update operation when the resulting record contains `scheduled_date`;
 - changing any record to `planned`, `cancelled`, or `missed` requires `scheduled_date`;
-- changing any record to `completed` requires `completed_date`;
+- changing any record to `completed` requires a `completed_date` not later than the user's current local date;
 - changing an examination from `planned` to `draft`, `completed`, `cancelled`, or `missed` deactivates its reminder in the same transaction;
 - changing an examination to `planned` does not reactivate an inactive reminder;
 - an existing recurrence rule remains attached and unchanged when the examination status changes;

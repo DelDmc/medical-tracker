@@ -287,7 +287,7 @@ Invalid filter or ordering values are rejected with a validation error.
 3. The frontend sends `PATCH /api/v1/examinations/{id}/`.
 4. The backend restricts the writable queryset to the authenticated user.
 5. The backend validates the complete resulting record, not only the submitted fields.
-6. The backend applies the status-dependent title, scheduled-date, and completion-date rules.
+6. The backend applies the status-dependent title and date rules, including rejection of a future `completed_date` for a completed record.
 7. The backend saves the changes.
 8. The frontend refreshes the affected examination list, calendar, reminder, recurrence, and dashboard data.
 
@@ -310,14 +310,15 @@ Invalid filter or ordering values are rejected with a validation error.
 
 1. The user opens an examination they own.
 2. The user sets the status to `completed`.
-3. The user provides a `completed_date`.
+3. The user provides a `completed_date` not later than their current local date.
 4. The frontend submits the update through `PATCH /api/v1/examinations/{id}/`.
-5. The backend validates and saves the complete resulting record.
-6. Within the same database transaction, the backend deactivates the associated reminder when one exists.
-7. Any recurrence rule remains attached and unchanged, and may be used to create the next occurrence.
-8. The examination is removed from upcoming and overdue results.
-9. It appears in the past collection when its completion date is not later than the user's current local date.
+5. The backend validates the complete resulting record and rejects a future `completed_date` with a field-level validation error.
+6. The backend saves the valid record.
+7. Within the same database transaction, the backend deactivates the associated reminder when one exists.
+8. Any recurrence rule remains attached and unchanged, and may be used to create the next occurrence.
+9. The examination is removed from upcoming and overdue results and appears in the past collection.
 10. The monthly calendar places it on its completion date.
+11. It appears in `recently_completed` when its completion date is within the inclusive 30-date dashboard window and it is among the first five records after dashboard ordering.
 
 ### Cancel or mark an examination as missed
 
@@ -472,12 +473,15 @@ Invalid filter or ordering values are rejected with a validation error.
 2. The frontend requests `GET /api/v1/dashboard/`.
 3. The backend returns only data derived from the authenticated user's records.
 4. The response contains separate `upcoming`, `overdue`, and `recently_completed` collections.
-5. The frontend renders a separate section for each collection, including an empty presentation when that collection has no records.
-6. The response contains `status_counts` with explicit keys for `draft`, `planned`, `completed`, `cancelled`, and `missed`.
-7. A status with no matching records is returned with a zero count rather than being omitted.
-8. The response contains `category_counts` with one count for every system-defined category and a separate `uncategorized_count` for records whose category is `null`.
-9. A category with no matching records is returned with a zero count.
-10. The response contains `overdue_count`, calculated with the same shared overdue logic used by the examination list.
+5. For `recently_completed`, the backend selects completed examinations whose `completed_date` is between the user's current local date minus 29 days and the current local date, inclusive.
+6. The backend orders eligible records by `completed_date` descending and then by `id` descending.
+7. The backend returns the first five ordered records without pagination.
+8. The frontend renders a separate section for each collection, including an empty presentation when that collection has no records.
+9. The response contains `status_counts` with explicit keys for `draft`, `planned`, `completed`, `cancelled`, and `missed`.
+10. A status with no matching records is returned with a zero count rather than being omitted.
+11. The response contains `category_counts` with one count for every system-defined category and a separate `uncategorized_count` for records whose category is `null`.
+12. A category with no matching records is returned with a zero count.
+13. The response contains `overdue_count`, calculated with the same shared overdue logic used by the examination list.
 
 ## 22. Protected-Resource and Ownership Failure
 

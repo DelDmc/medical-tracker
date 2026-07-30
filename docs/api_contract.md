@@ -325,7 +325,7 @@ Field rules:
 | `medical_specialty` | string or `null` | Yes | Optional organizational metadata. |
 | `scheduled_date` | date or `null` | Yes | Required for `planned`, `cancelled`, and `missed`. |
 | `scheduled_time` | time or `null` | Yes | Optional and stored separately from `scheduled_date`. |
-| `completed_date` | date or `null` | Yes | Required for `completed`. |
+| `completed_date` | date or `null` | Yes | Required for `completed`; must not be later than the authenticated user's current local date. |
 | `status` | string | Yes | `draft`, `planned`, `completed`, `cancelled`, or `missed`. |
 | `location` | string or `null` | Yes | Optional. |
 | `notes` | string or `null` | Yes | Optional general organizational notes. |
@@ -342,6 +342,7 @@ Field rules:
 - `draft` requires no date field and may preserve any valid optional information.
 - `planned`, `cancelled`, and `missed` require `scheduled_date`.
 - `completed` requires `completed_date`.
+- For a `completed` record, `completed_date` must not be later than the authenticated user's current local date; a future value returns a field-level validation error.
 - `category_id` may be omitted or set to `null`.
 - A supplied category identifier must exist.
 - `scheduled_time` is optional for all statuses.
@@ -522,7 +523,7 @@ Completion request:
 ```json
 {
   "status": "completed",
-  "completed_date": "2026-08-15"
+  "completed_date": "2026-07-15"
 }
 ```
 
@@ -852,12 +853,16 @@ Rules:
 
 - `upcoming` uses the same shared calculation as `time_state=upcoming`;
 - `overdue` uses the same shared calculation as `time_state=overdue`;
+- `recently_completed` contains only owned records satisfying `status = completed`, `completed_date >= current local date - 29 days`, and `completed_date <= current local date`;
+- `recently_completed` is ordered by `completed_date` descending and then by `id` descending;
+- eligibility filtering and ordering are applied before the collection is limited to five records;
+- `recently_completed` is a fixed dashboard preview collection and is not paginated;
+- the current local date is calculated in the authenticated user's configured timezone;
+- the upper-bound condition on `recently_completed` is retained defensively even though future completion dates are rejected during examination validation;
 - `overdue_count` equals the number of records produced by the shared overdue query for the same current time;
 - `status_counts` always contains all five status keys, including zero values;
 - `category_counts` contains every system-defined category, including zero values;
 - `uncategorized_count` counts records whose category is `null`.
-
-The exact lookback period, maximum item count, and ordering for `recently_completed` are not defined by the current source documents and must be decided before implementation.
 
 ## 19. Open Contract Points
 
@@ -865,7 +870,6 @@ The following points are intentionally not finalized because the source document
 
 1. access-token and refresh-token transport, storage, request placement, and response placement;
 2. repeated next-occurrence response status and body;
-3. optional field-copying rules for a generated next occurrence;
-4. recently-completed lookback period, limit, and ordering.
+3. optional field-copying rules for a generated next occurrence.
 
 These points require accepted design decisions before the corresponding contract sections can be finalized.

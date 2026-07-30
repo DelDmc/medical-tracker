@@ -56,8 +56,8 @@ Verification statements identify the primary verification method. Detailed fixtu
 **FR-013** — The application shall allow an authenticated user to store an optional medical specialty, location, and general notes for an examination record.
 **Verification:** An API integration test shall save and retrieve an examination containing each optional field and confirm that the values are preserved.
 
-**FR-014** — The application shall require a title for every examination record, a scheduled date for `planned`, `cancelled`, and `missed` records, and a completion date for `completed` records.
-**Verification:** An API validation test shall submit each status without its required title or date field and confirm that the record is rejected with the corresponding field error.
+**FR-014** — The application shall require a title for every examination record, a scheduled date for `planned`, `cancelled`, and `missed` records, and a completion date not later than the authenticated user's current local date for `completed` records.
+**Verification:** API validation tests shall submit each status without its required title or date field and shall submit a completed record with a future completion date; each invalid record shall be rejected with the corresponding field error.
 
 **FR-015** — The application shall reject an examination record when a supplied category does not exist or when its status is unsupported.
 **Verification:** An API validation test shall submit a nonexistent category and an unsupported status and confirm that each value is rejected.
@@ -157,7 +157,7 @@ Verification statements identify the primary verification method. Detailed fixtu
 ### 2.7 Dashboard
 
 **FR-044** — The application shall display upcoming examinations, overdue examinations, and recently completed examinations on the dashboard.
-**Verification:** A frontend integration test shall confirm that the dashboard displays each required examination section using the data returned by the API.
+**Verification:** An API integration test shall freeze the authenticated user's local date and verify the recently completed eligibility boundaries, deterministic ordering, and five-record limit. A frontend integration test shall confirm that the dashboard displays each required examination section using the data returned by the API.
 
 **FR-045** — The application shall display examination counts for each supported status on the dashboard.
 **Verification:** An API integration test shall confirm that the dashboard response contains the correct count for draft, planned, completed, cancelled, and missed examinations.
