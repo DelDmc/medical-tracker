@@ -18,7 +18,10 @@ Traceability to requirement and design-decision identifiers is maintained separa
 - Datetimes representing instants use ISO 8601 with timezone information.
 - Date-only values are not converted through UTC.
 - The authenticated user's configured IANA timezone determines current local date and time calculations.
-- Authentication is required by default. Registration, login, token refresh, and health check are public.
+- Bearer authentication is required by default. Registration, CSRF bootstrap, login, token refresh, logout, and health check do not require a bearer access token.
+- Protected endpoints receive the access token through `Authorization: Bearer <access_token>`.
+- Requests that set, send, rotate, or clear authentication or CSRF cookies include browser credentials.
+- Login, token refresh, and logout require a matching `X-CSRFToken` header and CSRF cookie.
 - User ownership is assigned by the backend and is never writable by clients.
 - User-owned querysets are restricted to the authenticated user.
 - A missing object and an object owned by another user return the same `404 Not Found` response structure.
@@ -41,7 +44,21 @@ Traceability to requirement and design-decision identifiers is maintained separa
 
 An expired or invalid access token uses the same status class. The frontend may attempt one token refresh before ending the session.
 
-### 3.2 Not found
+### 3.2 CSRF failure
+
+```http
+403 Forbidden
+```
+
+```json
+{
+  "detail": "CSRF verification failed."
+}
+```
+
+This response is used when a CSRF-protected authentication request omits `X-CSRFToken` or the submitted token does not match the CSRF cookie. No authentication credentials are issued.
+
+### 3.3 Not found
 
 ```http
 404 Not Found
@@ -55,7 +72,7 @@ An expired or invalid access token uses the same status class. The frontend may 
 
 The same response is used when the requested object does not exist or belongs to another user.
 
-### 3.3 Validation failure
+### 3.4 Validation failure
 
 ```http
 400 Bad Request
@@ -102,22 +119,24 @@ No configuration, environment, database credential, or secret value is returned.
 
 ## 5. Authentication
 
-Authentication routes:
+### 5.1 Authentication matrix
 
-```http
-POST /api/v1/auth/register/
-POST /api/v1/auth/login/
-POST /api/v1/auth/refresh/
-POST /api/v1/auth/logout/
-```
+| Operation | Bearer access token | Browser credentials | `X-CSRFToken` |
+|---|---:|---:|---:|
+| `POST /api/v1/auth/register/` | No | No | No |
+| `GET /api/v1/auth/csrf/` | No | Yes | No |
+| `POST /api/v1/auth/login/` | No | Yes | Yes |
+| `POST /api/v1/auth/refresh/` | No | Yes | Yes |
+| `POST /api/v1/auth/logout/` | No | Yes | Yes |
+| Protected API operations | Yes | No | No |
 
-The final token transport and storage mechanism remains unresolved. Consequently, the exact login, refresh, and logout token placement cannot be finalized in this contract until that design is accepted.
+For browser requests, browser credentials means that the frontend includes credentials so the browser can receive or send the applicable cookies. The frontend holds `access_token` and `csrf_token` only in application memory. It does not read the refresh-token or CSRF cookies directly.
 
-### 5.1 Register
+### 5.2 Register
 
 #### `POST /api/v1/auth/register/`
 
-Authentication: not required.
+Authentication: bearer access token not required. Browser credentials and CSRF protection are not required.
 
 Request:
 
@@ -150,11 +169,49 @@ Success:
 }
 ```
 
-### 5.2 Log in
+### 5.3 Bootstrap CSRF protection
+
+#### `GET /api/v1/auth/csrf/`
+
+Authentication: bearer access token not required.
+
+Request requirements:
+
+- the request includes browser credentials;
+- no `X-CSRFToken` header is required.
+
+Success:
+
+```http
+200 OK
+```
+
+```json
+{
+  "csrf_token": "<csrf-token>"
+}
+```
+
+The response sets or renews the Django CSRF cookie. The returned `csrf_token` corresponds to that cookie and is held only in frontend application memory.
+
+CSRF cookie attributes:
+
+| Environment | `HttpOnly` | `Secure` | `SameSite` | Path |
+|---|---:|---:|---|---|
+| Production | `true` | `true` | `None` | `/api/v1/` |
+| Local HTTP development | `true` | `false` | `Lax` | `/api/v1/` |
+
+### 5.4 Log in
 
 #### `POST /api/v1/auth/login/`
 
-Authentication: not required.
+Authentication: bearer access token not required.
+
+Request requirements:
+
+- the request includes browser credentials;
+- the request includes `X-CSRFToken: <csrf_token>` using the token returned by the CSRF bootstrap endpoint;
+- the request body is JSON.
 
 Request:
 
@@ -165,29 +222,112 @@ Request:
 }
 ```
 
-Valid credentials establish the access-token and refresh-token mechanism selected for the application. Invalid credentials return one generic authentication error and do not disclose whether the email address exists.
+Success:
 
-The exact success body or cookie behavior is pending the token-transport decision.
+```http
+200 OK
+```
 
-### 5.3 Refresh access token
+```json
+{
+  "access_token": "<access-token>"
+}
+```
+
+The response sets the refresh token only in the backend-issued `refresh_token` cookie. The refresh token is not returned in JSON. The frontend stores `access_token` only in application memory.
+
+Invalid credentials:
+
+```http
+401 Unauthorized
+```
+
+```json
+{
+  "detail": "Invalid credentials."
+}
+```
+
+Unknown-email and incorrect-password attempts return the same status and response structure.
+
+A missing or mismatched CSRF token returns the common `403 Forbidden` CSRF failure response and does not establish an authenticated session.
+
+### 5.5 Refresh access token
 
 #### `POST /api/v1/auth/refresh/`
 
-Authentication: not required.
+Authentication: bearer access token not required.
 
-A valid refresh token returns a new access token. Expired, revoked, malformed, or otherwise invalid refresh tokens are rejected without issuing credentials.
+Request requirements:
 
-The refresh-token input location and access-token output location are pending the token-transport decision.
+- the request includes browser credentials;
+- the request includes `X-CSRFToken: <csrf_token>`;
+- the refresh token is read only from the `refresh_token` cookie;
+- the request has no JSON body.
 
-### 5.4 Log out
+Success:
+
+```http
+200 OK
+```
+
+```json
+{
+  "access_token": "<new-access-token>"
+}
+```
+
+On success, the backend invalidates the submitted refresh token, issues a replacement refresh token, and replaces the `refresh_token` cookie. The frontend replaces its in-memory access token with the returned `access_token`.
+
+Expired, revoked, malformed, missing, or otherwise invalid refresh token:
+
+```http
+401 Unauthorized
+```
+
+```json
+{
+  "detail": "Refresh token is invalid or expired."
+}
+```
+
+The backend issues no new credentials and clears the stale `refresh_token` cookie.
+
+A missing or mismatched CSRF token returns the common `403 Forbidden` CSRF failure response and issues no new credentials.
+
+### 5.6 Log out
 
 #### `POST /api/v1/auth/logout/`
 
-Authentication: required according to the selected token mechanism.
+Authentication: bearer access token not required.
 
-The operation invalidates or revokes the active refresh token when supported. The frontend clears all locally held authentication state regardless of the backend response.
+Request requirements:
 
-The exact request body or cookie behavior is pending the token-transport decision.
+- the request includes browser credentials;
+- the request includes `X-CSRFToken: <csrf_token>`;
+- the refresh token is read from the `refresh_token` cookie when present;
+- the request has no JSON body.
+
+Success for a valid, expired, revoked, already invalid, or missing refresh token:
+
+```http
+204 No Content
+```
+
+The response body is empty. The backend invalidates a valid refresh token when present and always clears the `refresh_token` cookie. The response does not disclose the refresh-token state.
+
+A missing or mismatched CSRF token returns the common `403 Forbidden` CSRF failure response.
+
+### 5.7 Refresh-token cookie contract
+
+The backend creates, replaces, and clears the `refresh_token` cookie using the following attributes:
+
+| Environment | `HttpOnly` | Host-only | `Secure` | `SameSite` | Path | Expiration |
+|---|---:|---:|---:|---|---|---|
+| Production | `true` | `true` | `true` | `None` | `/api/v1/auth/` | Aligned with refresh-token expiry |
+| Local HTTP development | `true` | `true` | `false` | `Lax` | `/api/v1/auth/` | Aligned with refresh-token expiry |
+
+Cookie clearing uses the same cookie name, path, host-only scope, and applicable `Secure` and `SameSite` values as cookie creation. The refresh token is never returned in a JSON response and is not readable by frontend JavaScript.
 
 ## 6. Account
 
@@ -868,8 +1008,7 @@ Rules:
 
 The following points are intentionally not finalized because the source documents do not define them:
 
-1. access-token and refresh-token transport, storage, request placement, and response placement;
-2. repeated next-occurrence response status and body;
-3. optional field-copying rules for a generated next occurrence.
+1. repeated next-occurrence response status and body;
+2. optional field-copying rules for a generated next occurrence.
 
 These points require accepted design decisions before the corresponding contract sections can be finalized.

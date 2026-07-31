@@ -147,9 +147,9 @@ Each design decision contains:
 #### ADS-FR-006-04 — Idempotent logout response
 **Status:** Accepted  
 **Requirement reference:** FR-006  
-**Decision:** It is decided that logout will return an empty successful response when the refresh cookie is missing or contains an already invalid refresh token.  
-**Rationale:** Idempotent behavior lets the client complete logout without exposing unnecessary token-state distinctions.  
-**Verification impact:** API integration tests will verify the same successful response for valid, missing, and already invalid refresh tokens.
+**Decision:** It is decided that `POST /api/v1/auth/logout/` will return `204 No Content` with an empty response body when the refresh cookie contains a valid, expired, revoked, or already invalid refresh token, or when the refresh cookie is missing.  
+**Rationale:** One deterministic response lets the client complete logout without exposing refresh-token state and preserves idempotent behavior.  
+**Verification impact:** API integration tests will verify `204 No Content` with an empty body for valid, missing, expired, revoked, and already invalid refresh tokens.
 
 ---
 
@@ -847,9 +847,36 @@ Each design decision contains:
 #### ADS-SEC-005-05 — CSRF-token bootstrap endpoint
 **Status:** Accepted  
 **Requirement reference:** SEC-005  
-**Decision:** It is decided that the backend will expose `GET /api/v1/auth/csrf/` without bearer authentication. A credentialed request to this endpoint will set or renew the Django CSRF cookie and return the corresponding token in the JSON field `csrf_token`. The frontend will hold the returned token in memory and send it in `X-CSRFToken` with credentialed login, refresh, and logout requests. In production the CSRF cookie will use `Secure`, `SameSite=None`, and path `/api/v1/`; local HTTP development may use `SameSite=Lax` without `Secure`.  
-**Rationale:** The frontend requires an explicit bootstrap operation to obtain a CSRF token that matches the browser-managed CSRF cookie before submitting cookie-affecting authentication requests.  
-**Verification impact:** Authentication integration tests will verify token issuance, CSRF-cookie creation and attributes, successful protected authentication requests with a matching token, and rejection when the header is missing or does not match the cookie.
+**Decision:** It is decided that the backend will expose `GET /api/v1/auth/csrf/` without bearer authentication. A credentialed request to this endpoint will set or renew the Django CSRF cookie and return the corresponding token in the JSON field `csrf_token`.  
+**Rationale:** An explicit bootstrap endpoint gives the frontend the token required for subsequent CSRF-protected authentication requests.  
+**Verification impact:** An authentication integration test will verify that a credentialed request succeeds without bearer authentication, sets or renews the CSRF cookie, and returns the corresponding `csrf_token` value.
+
+---
+
+#### ADS-SEC-005-06 — Frontend CSRF-token handling
+**Status:** Accepted  
+**Requirement reference:** SEC-005  
+**Decision:** It is decided that the frontend will hold the `csrf_token` returned by `GET /api/v1/auth/csrf/` only in application memory and will send it in the `X-CSRFToken` header with credentialed login, refresh, and logout requests. The frontend will not read the CSRF cookie directly.  
+**Rationale:** Memory-only handling supplies the required header value without making frontend behavior depend on direct cookie access.  
+**Verification impact:** Frontend integration tests will verify in-memory token handling, `X-CSRFToken` transmission for login, refresh, and logout, and absence of direct CSRF-cookie reads.
+
+---
+
+#### ADS-SEC-005-07 — CSRF-cookie HttpOnly attribute
+**Status:** Accepted  
+**Requirement reference:** SEC-005  
+**Decision:** It is decided that the Django CSRF cookie will use `HttpOnly=true` in local development and production.  
+**Rationale:** The frontend obtains the CSRF token from the bootstrap response and therefore does not require JavaScript access to the cookie.  
+**Verification impact:** Authentication integration tests will verify that the CSRF cookie is issued with `HttpOnly` in local development and production configurations.
+
+---
+
+#### ADS-SEC-005-08 — CSRF-cookie environment attributes
+**Status:** Accepted  
+**Requirement reference:** SEC-005  
+**Decision:** It is decided that the Django CSRF cookie will use path `/api/v1/`. In production it will use `Secure` and `SameSite=None`; local HTTP development may use `SameSite=Lax` without `Secure`.  
+**Rationale:** The environment-specific attributes support the separately deployed HTTPS frontend and backend while permitting local HTTP development.  
+**Verification impact:** Configuration and authentication integration tests will verify the CSRF cookie path and the accepted production and local-development `Secure` and `SameSite` values.
 
 ---
 

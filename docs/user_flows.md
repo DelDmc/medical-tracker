@@ -8,7 +8,7 @@ The requirements specification is authoritative. This document applies the accep
 
 ## 2. Register and Log In
 
-**Requirement references:** FR-001–FR-005, UX-002–UX-004
+**Requirement references:** FR-001–FR-005, SEC-005, UX-002–UX-004
 
 ### Preconditions
 
@@ -26,45 +26,70 @@ The requirements specification is authoritative. This document applies the accep
 
 ### Login flow
 
-1. The user enters their email address and password.
-2. The frontend sends `POST /api/v1/auth/login/`.
-3. The backend validates the credentials.
-4. Valid credentials return authentication tokens and establish the application's refresh-token mechanism.
-5. The authenticated dashboard opens.
+1. The user opens the login page and enters their email address and password.
+2. When no CSRF token is held in application memory, the frontend sends a credentialed `GET /api/v1/auth/csrf/` request.
+3. The backend sets or renews the `HttpOnly` CSRF cookie and returns the corresponding token in `csrf_token`.
+4. The frontend holds `csrf_token` only in application memory and does not read the CSRF cookie directly.
+5. The frontend sends a credentialed `POST /api/v1/auth/login/` request with the email and password and sends the in-memory token through `X-CSRFToken`.
+6. The backend validates the CSRF token and credentials.
+7. Valid credentials return `access_token` in JSON and set the refresh token only in the `HttpOnly` `refresh_token` cookie.
+8. The frontend holds `access_token` only in application memory and sends it to protected endpoints through `Authorization: Bearer <access_token>`.
+9. The frontend removes `medical_tracker.logout_intent` from `localStorage`.
+10. The authenticated dashboard opens.
 
 ### Failure behavior
 
 - a missing, incorrectly formatted, or already registered email displays an error adjacent to the email field;
 - a missing password or a password shorter than eight characters displays an error adjacent to the password field;
 - a missing or unsupported timezone displays an error adjacent to the timezone field;
+- missing or mismatched CSRF data rejects login without creating an authenticated session;
 - invalid login credentials return one generic authentication error and do not disclose whether the account exists;
 - network or server failure displays an error without creating an authenticated client session.
 
-## 3. Refresh an Authenticated Session
+## 3. Restore or Refresh an Authenticated Session
 
-**Requirement references:** FR-007, FR-008
+**Requirement references:** FR-007, FR-008, SEC-005
 
-1. An authenticated API request fails because the access token is no longer valid.
-2. The frontend API client makes at most one request to `POST /api/v1/auth/refresh/`.
-3. When the refresh token is valid, the backend returns a new access token.
-4. The frontend repeats the original request once with the renewed access token.
-5. When the refresh token is expired, revoked, malformed, or otherwise invalid, the backend rejects the refresh request.
-6. The frontend clears the authentication state, redirects the user to the login page, and displays a session-expired message.
-7. The frontend does not enter a repeated refresh loop.
+### Session restoration after page reload
+
+1. Protected-application initialization finds no access token because access tokens are not persisted outside application memory.
+2. The frontend checks `medical_tracker.logout_intent` in `localStorage`.
+3. When the marker exists, the frontend does not attempt session restoration and opens the login page.
+4. When the marker is absent, the frontend obtains a CSRF token through a credentialed `GET /api/v1/auth/csrf/` request and holds the returned token in application memory.
+5. The frontend makes one credentialed request to `POST /api/v1/auth/refresh/` with the in-memory token in `X-CSRFToken`; the request has no JSON body.
+6. The backend reads the refresh token from the `refresh_token` cookie.
+7. When the refresh token is valid, the backend invalidates it, issues a replacement refresh token in the cookie, and returns a new `access_token` in JSON.
+8. The frontend stores the returned access token only in application memory and continues loading the protected application.
+9. When initialization refresh fails, the frontend opens the login page without another refresh attempt and without a session-expired message.
+
+### Active-session refresh
+
+1. A protected API request using `Authorization: Bearer <access_token>` fails because the access token is no longer valid.
+2. The frontend API client makes at most one credentialed request to `POST /api/v1/auth/refresh/` with the in-memory CSRF token in `X-CSRFToken`.
+3. When the refresh token is valid, the backend rotates it, invalidates the previous token, sets the replacement `refresh_token` cookie, and returns a new `access_token`.
+4. The frontend replaces the in-memory access token and repeats the original protected request once with the new bearer token.
+5. The frontend does not enter a repeated refresh or request-replay loop.
+6. When the refresh token is expired, revoked, malformed, missing, or otherwise invalid, the backend issues no credentials and clears the stale refresh cookie.
+7. The frontend clears authentication state, redirects to the login page, and displays a session-expired message.
 
 ## 4. Log Out
 
-**Requirement reference:** FR-006
+**Requirement references:** FR-006, SEC-005
 
 ### Preconditions
 
 - the user is authenticated.
 
 1. The user selects **Log out**.
-2. The frontend sends `POST /api/v1/auth/logout/`.
-3. The backend invalidates or revokes the active refresh token when supported by the selected authentication mechanism.
-4. Regardless of whether the logout request succeeds, fails, or cannot reach the backend, the frontend clears all locally held authentication state.
-5. The application redirects the user to the login page.
+2. The frontend writes `true` to `medical_tracker.logout_intent` in `localStorage`.
+3. The frontend immediately clears the in-memory access token and all local authenticated-session state.
+4. The frontend sends a credentialed `POST /api/v1/auth/logout/` request with the in-memory CSRF token in `X-CSRFToken`; the request has no JSON body and does not require a bearer access token.
+5. When the refresh cookie contains a valid token, the backend invalidates it.
+6. The backend clears the `refresh_token` cookie for valid, expired, revoked, already invalid, and missing refresh-token states.
+7. The backend returns `204 No Content` with an empty response body for each of those states.
+8. The frontend navigates to the login page after the request succeeds, fails, or cannot reach the backend.
+9. While `medical_tracker.logout_intent` exists, later protected-application initialization does not attempt session restoration.
+10. A later successful login removes the logout-intent marker.
 
 ## 5. Update Account Timezone
 
