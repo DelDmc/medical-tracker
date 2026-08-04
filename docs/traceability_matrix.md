@@ -14,6 +14,7 @@ It is an administrative mapping document. It does not define product behavior, d
 - When a requirement or decision is added, removed, superseded, or materially changed, affected rows must be updated.
 - One API operation may map to several requirements and decisions.
 - Requirements that are purely frontend, deployment, documentation, or internal persistence concerns may have no direct API-operation row.
+- A mapped design decision may be accepted or proposed; `design_specification.md` remains authoritative for design-decision status.
 
 ## 3. API Traceability
 
@@ -40,6 +41,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | `GET /api/v1/auth/csrf/` | SEC-005 | ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-05, ADS-SEC-005-07, ADS-SEC-005-08 |
 | `POST /api/v1/auth/login/` request contract | FR-005, SEC-005 | ADS-FR-005-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-06 |
 | Login access-token response | FR-005 | ADS-FR-005-02 |
+| Access-token lifetime | FR-005 | ADS-FR-005-06 |
 | Login refresh-token cookie | FR-005, SEC-005 | ADS-FR-005-03, ADS-SEC-005-04 |
 | Frontend access-token storage and bearer transport | FR-005 | ADS-FR-005-04 |
 | Generic invalid-credentials response | FR-005 | ADS-FR-005-05 |
@@ -47,11 +49,13 @@ It is an administrative mapping document. It does not define product behavior, d
 | Logout refresh-token invalidation | FR-006 | ADS-FR-006-02 |
 | Logout refresh-cookie clearing | FR-006, SEC-005 | ADS-FR-006-03, ADS-SEC-005-04 |
 | Idempotent logout response | FR-006 | ADS-FR-006-04 |
-| Immediate frontend logout outcome | FR-006 | ADS-FR-006-05 |
+| Immediate local session-state clearing | FR-006 | ADS-FR-006-05 |
 | Persistent logout-intent marker and restoration suppression | FR-006 | ADS-FR-006-06 |
 | Logout-intent marker removal after successful login | FR-006 | ADS-FR-006-07 |
+| Logout navigation outcome | FR-006 | ADS-FR-006-08 |
 | `POST /api/v1/auth/refresh/` request contract | FR-007, SEC-005 | ADS-FR-007-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-06 |
 | Refresh-token rotation and previous-token invalidation | FR-007 | ADS-FR-007-02 |
+| Refresh-session maximum lifetime | FR-007 | ADS-FR-007-07 |
 | Replacement refresh-token cookie | FR-007, SEC-005 | ADS-FR-007-03, ADS-SEC-005-04 |
 | Refreshed access-token response | FR-007 | ADS-FR-007-04 |
 | Invalid refresh-token response and stale-cookie clearing | FR-007, SEC-005 | ADS-FR-007-05, ADS-SEC-005-04 |
@@ -59,6 +63,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | Active-session access-token recovery | FR-008 | ADS-FR-008-01 |
 | Failed active-session refresh outcome | FR-008 | ADS-FR-008-02 |
 | Failed initialization refresh outcome | FR-008 | ADS-FR-008-03 |
+| Single-flight refresh coordination | FR-008 | ADS-FR-008-04 |
 | `GET` and `PATCH /api/v1/account/` | FR-009 | ADS-FR-009-01 |
 | Draft examination creation | FR-010 | ADS-FR-010-01 |
 | Planned examination creation | FR-011 | ADS-FR-011-01 |

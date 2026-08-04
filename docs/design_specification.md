@@ -10,7 +10,9 @@ This document records proposed and accepted implementation design decisions for 
 
 **Status:** Accepted
 
-No design decision in this document is accepted merely because it is recorded here. Each decision must be reviewed before the affected implementation begins.
+Every design decision recorded in this document is accepted. Each decision also carries its own status, and that per-decision status is authoritative.
+
+No design decision in this document is accepted merely because it is recorded here. A decision marked **Proposed** must be reviewed and accepted before the affected implementation begins. Section 10 records the current accepted and proposed decision counts.
 
 ## 3. Traceability Rules
 
@@ -117,6 +119,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-FR-005-06 — Access-token lifetime
+**Status:** Accepted
+**Requirement reference:** FR-005
+**Decision:** It is decided that every access token will expire ten minutes after issuance.
+**Rationale:** A ten-minute lifetime limits the period in which a leaked bearer token can be used while allowing the accepted refresh mechanism to maintain an active user session without repeated login.
+**Verification impact:** Authentication tests will verify that the access token contains an expiration time ten minutes after issuance and is rejected after that expiration boundary.
+
+---
+
 #### ADS-FR-006-01 — Logout endpoint
 **Status:** Accepted  
 **Requirement reference:** FR-006  
@@ -153,12 +164,12 @@ Each design decision contains:
 
 ---
 
-#### ADS-FR-006-05 — Immediate frontend logout outcome
+#### ADS-FR-006-05 — Immediate local session-state clearing
 **Status:** Accepted  
 **Requirement reference:** FR-006  
-**Decision:** It is decided that the frontend will clear the in-memory access token and all other local authentication state before sending the logout request, then navigate to the login page after the request succeeds, fails, or cannot reach the backend.  
-**Rationale:** Local logout must complete immediately and must not depend on backend availability.  
-**Verification impact:** Frontend integration tests will verify immediate state clearing and login-page navigation for successful, failed, and unreachable logout requests.
+**Decision:** It is decided that the frontend will clear the in-memory access token and authenticated-user state immediately after the user selects logout and before sending the logout request.  
+**Rationale:** Immediate local session-state clearing prevents continued authenticated interface and API activity without depending on backend availability.  
+**Verification impact:** Frontend integration tests will verify that the access token and authenticated-user state are cleared before the logout request is sent.
 
 ---
 
@@ -177,6 +188,15 @@ Each design decision contains:
 **Decision:** It is decided that a later successful login will remove `medical_tracker.logout_intent` from `localStorage`.  
 **Rationale:** Successful authentication establishes a new explicit session and ends the previous logout intent.  
 **Verification impact:** A frontend integration test will confirm that successful login removes the marker.
+
+---
+
+#### ADS-FR-006-08 — Logout navigation outcome
+**Status:** Accepted  
+**Requirement reference:** FR-006  
+**Decision:** It is decided that the frontend will navigate to the login page after the logout request succeeds, fails, or cannot reach the backend.  
+**Rationale:** Completion of the user-visible logout flow must not depend on the availability or response of the backend.  
+**Verification impact:** Frontend integration tests will verify login-page navigation after successful, failed, and unreachable logout requests.
 
 ---
 
@@ -234,6 +254,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-FR-007-07 — Refresh-session maximum lifetime
+**Status:** Accepted  
+**Requirement reference:** FR-007  
+**Decision:** It is decided that the refresh-token session will have an absolute maximum lifetime of seven days from successful login. Refresh-token rotation will preserve the original session expiration and will not extend it.  
+**Rationale:** A seven-day maximum supports intermittent use without permitting refresh-token rotation to maintain a session indefinitely.  
+**Verification impact:** Authentication integration tests will verify that every rotated refresh token retains the original session-expiration boundary and that refresh is rejected after seven days from login.
+
+---
+
 #### ADS-FR-008-01 — Active-session access-token recovery
 **Status:** Accepted  
 **Requirement reference:** FR-008  
@@ -258,6 +287,15 @@ Each design decision contains:
 **Decision:** It is decided that a failed initialization refresh after page reload will open the login page without a retry loop and without a session-expired message.  
 **Rationale:** An unsuccessful restoration attempt on application startup is an unauthenticated load, not necessarily an expired active session.  
 **Verification impact:** A frontend integration test will verify login-page navigation without repeated refresh requests or a session-expired message.
+
+---
+
+#### ADS-FR-008-04 — Single-flight refresh coordination
+**Status:** Accepted  
+**Requirement reference:** FR-008  
+**Decision:** It is decided that the frontend API client will permit at most one access-token refresh request to be in progress within one frontend application instance. Protected requests that encounter an access-token authentication failure while that refresh is in progress will await the same refresh result and will not initiate another refresh request.  
+**Rationale:** Sharing one in-progress refresh prevents concurrent requests from submitting the same rotating refresh token and producing inconsistent session outcomes.  
+**Verification impact:** Frontend integration tests will issue multiple concurrent protected requests that receive access-token authentication failures and verify that exactly one refresh request is sent and that every affected request awaits the same refresh result.
 
 ---
 
@@ -998,7 +1036,9 @@ When a design decision changes:
 ## 10. Traceability Summary
 
 - Requirement references represented: **71**
-- Design decisions recorded: **72**
-- Requirements with multiple design decisions: **FR-033**
+- Design decisions recorded: **107**
+- Accepted design decisions: **107**
+- Proposed design decisions: **0**
+- Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-033, FR-039, FR-040, FR-041, FR-044, SEC-005**
 - Design decisions linked to more than one requirement: **0**
 - Requirement statements duplicated from `requirements_specification.md`: **0**

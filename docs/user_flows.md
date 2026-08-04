@@ -71,6 +71,8 @@ The requirements specification is authoritative. This document applies the accep
 5. The frontend does not enter a repeated refresh or request-replay loop.
 6. When the refresh token is expired, revoked, malformed, missing, or otherwise invalid, the backend issues no credentials and clears the stale refresh cookie.
 7. The frontend clears authentication state, redirects to the login page, and displays a session-expired message.
+8. When no refresh request is in progress, the frontend creates one shared refresh operation. 
+9. When a refresh request is already in progress, every other protected request with an access-token authentication failure waits for that same operation and does not send another refresh request.
 
 ## 4. Log Out
 
@@ -82,7 +84,7 @@ The requirements specification is authoritative. This document applies the accep
 
 1. The user selects **Log out**.
 2. The frontend writes `true` to `medical_tracker.logout_intent` in `localStorage`.
-3. The frontend immediately clears the in-memory access token and all local authenticated-session state.
+3. The frontend immediately clears the in-memory access token and authenticated-user state. The in-memory CSRF token remains available for the logout request.
 4. The frontend sends a credentialed `POST /api/v1/auth/logout/` request with the in-memory CSRF token in `X-CSRFToken`; the request has no JSON body and does not require a bearer access token.
 5. When the refresh cookie contains a valid token, the backend invalidates it.
 6. The backend clears the `refresh_token` cookie for valid, expired, revoked, already invalid, and missing refresh-token states.
