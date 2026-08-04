@@ -80,6 +80,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | `GET /api/v1/examinations/{id}/` | FR-021 | ADS-FR-021-01 |
 | `PATCH /api/v1/examinations/{id}/` | FR-022 | ADS-FR-022-01 |
 | `DELETE /api/v1/examinations/{id}/` and cascade | FR-023 | ADS-FR-023-01 |
+| Source-occurrence reference on deletion | FR-023 | ADS-FR-023-02 |
 | Category assignment | FR-025 | ADS-FR-025-01 |
 | `GET /api/v1/categories/` and fixed category set | FR-026 | ADS-FR-026-01 |
 | Null category representation | FR-027 | ADS-FR-027-01 |
@@ -91,6 +92,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | Derived overdue state and boundary | FR-033 | ADS-FR-033-01, ADS-FR-033-02 |
 | Overdue status restriction | FR-034 | ADS-FR-034-01 |
 | Reminder create, update, and disable operations | FR-035 | ADS-FR-035-01 |
+| Reminder status restriction beyond drafts | FR-035 | ADS-FR-035-02 |
 | Reminder due-date calculation | FR-036 | ADS-FR-036-01 |
 | Due-reminder query | FR-037 | ADS-FR-037-01 |
 | Automatic reminder deactivation | FR-038 | ADS-FR-038-01 |
@@ -100,6 +102,8 @@ It is an administrative mapping document. It does not define product behavior, d
 | Null next due date without a scheduled date | FR-040 | ADS-FR-040-02 |
 | `POST /api/v1/examinations/{id}/next-occurrence/` | FR-041 | ADS-FR-041-01 |
 | Allowed next-occurrence source statuses | FR-041 | ADS-FR-041-02 |
+| Repeated next-occurrence request response | FR-041 | ADS-FR-041-03 |
+| Generated next-occurrence field values | FR-041 | ADS-FR-041-04 |
 | Calendar date-range API | FR-042 | ADS-FR-042-01 |
 | Calendar state value supplied to the frontend | FR-043 | ADS-FR-043-01 |
 | `GET /api/v1/dashboard/` examination sections | FR-044 | ADS-FR-044-01 |

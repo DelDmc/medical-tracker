@@ -94,7 +94,7 @@ Fields:
 | `status` | Enumeration | Yes | `draft`, `planned`, `completed`, `cancelled`, or `missed`. |
 | `location` | Text | No | Optional appointment location. |
 | `notes` | Long text | No | Optional general organizational notes. |
-| `source_occurrence` | ExaminationRecord reference | No | Identifies the recurring source occurrence when this record was generated as the next occurrence. |
+| `source_occurrence` | ExaminationRecord reference | No | Identifies the recurring source occurrence when this record was generated as the next occurrence. Set to null when the referenced source examination is deleted. |
 | `created_at` | Timezone-aware datetime | Yes | System generated. |
 | `updated_at` | Timezone-aware datetime | Yes | System generated. |
 
@@ -181,7 +181,7 @@ ExaminationRecord 1 ─────── 0..* generated ExaminationRecord
 
 Ownership of `Reminder` and `RecurrenceRule` is derived through their associated `ExaminationRecord`.
 
-Deleting an examination cascades to its associated reminder and recurrence rule.
+Deleting an examination cascades to its associated reminder and recurrence rule. Deleting an examination referenced by another examination's `source_occurrence` sets that reference to null instead; the generated examination is not deleted and the deletion is not blocked.
 
 ## 5. Examination Status
 
@@ -324,6 +324,7 @@ The application therefore calculates overdue during queries or presentation. Thi
 - recurrence rules may be created or modified only for planned examinations;
 - next-occurrence creation is prohibited for draft source examinations;
 - deleting an examination permanently deletes its reminder and recurrence rule;
+- deleting an examination that is referenced as `source_occurrence` by other examinations sets `source_occurrence` to null on those examinations rather than deleting or blocking changes to them;
 - next-occurrence creation produces at most one generated examination for a source occurrence and due date.
 
 ## 9. Status Changes
@@ -358,4 +359,5 @@ A complete matrix of all permitted forward, reverse, and correction transitions 
 - deletion is permanent in the MVP;
 - the user interface requires explicit confirmation before sending the delete request;
 - deleting an examination cascades to its associated reminder and recurrence rule;
+- deleting an examination sets `source_occurrence` to null on any examination generated from it, rather than deleting or blocking changes to that generated examination;
 - the deleted examination and its dependent records cannot be retrieved afterward.

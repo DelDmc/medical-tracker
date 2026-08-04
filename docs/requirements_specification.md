@@ -124,7 +124,7 @@ Verification statements identify the primary verification method. Detailed fixtu
 ### 2.4 In-Application Reminders
 
 **FR-035** — The application shall allow an authenticated user to enable, update, and disable an in-application reminder using a positive whole-number offset in days before a planned examination.
-**Verification:** An API integration test shall create, update, and disable a reminder and shall confirm that zero, negative, and non-whole-number offsets are rejected.
+**Verification:** An API integration test shall create, update, and disable a reminder and shall confirm that zero, negative, and non-whole-number offsets are rejected, and that reminder creation, offset updates, and reactivation are rejected when the associated examination's status is not `planned`.
 
 **FR-036** — The application shall calculate a reminder due date from the examination scheduled date and the configured reminder offset.
 **Verification:** An API integration test shall use fixed scheduled dates and reminder offsets and confirm the calculated reminder due dates.

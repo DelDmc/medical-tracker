@@ -467,9 +467,11 @@ Invalid filter or ordering values are rejected with a validation error.
 3. The backend verifies ownership and loads the source examination and recurrence rule.
 4. The backend calculates the next due date using calendar arithmetic.
 5. Within a database transaction, the backend creates exactly one new examination with status `planned` and the calculated scheduled date.
-6. The backend records the source occurrence relationship.
-7. The new examination appears in applicable list, calendar, upcoming or overdue, and dashboard results.
-8. Repeating the same request does not create another occurrence for the same source occurrence and due date.
+6. The backend copies `title`, `category`, `medical_specialty`, `scheduled_time`, and `location` from the source examination and leaves `notes` and `completed_date` empty.
+7. The backend records the source occurrence relationship.
+8. The generated occurrence has no reminder and no recurrence rule. The user may configure either one explicitly because the generated occurrence is planned.
+9. The new examination appears in applicable list, calendar, upcoming or overdue, and dashboard results.
+10. Repeating the same request does not create another occurrence for the same source occurrence and due date; the application receives the existing occurrence instead.
 
 ### Failure behavior
 

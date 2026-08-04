@@ -469,7 +469,7 @@ Field rules:
 | `status` | string | Yes | `draft`, `planned`, `completed`, `cancelled`, or `missed`. |
 | `location` | string or `null` | Yes | Optional. |
 | `notes` | string or `null` | Yes | Optional general organizational notes. |
-| `source_occurrence` | identifier or `null` | No | Source record when generated through recurrence. |
+| `source_occurrence` | identifier or `null` | No | Source record when generated through recurrence. Becomes `null` if the source record is later deleted. |
 | `time_state` | string or `null` | No | `upcoming`, `overdue`, or `null`. |
 | `created_at` | datetime | No | Timezone-aware system timestamp. |
 | `updated_at` | datetime | No | Timezone-aware system timestamp. |
@@ -687,7 +687,7 @@ The response contains the updated examination representation.
 
 Authentication: required.
 
-Deletion is permanent. The associated reminder and recurrence rule are deleted through cascading deletion.
+Deletion is permanent. The associated reminder and recurrence rule are deleted through cascading deletion. Any examination generated from the deleted examination through recurrence is not deleted and remains retrievable; its `source_occurrence` is set to `null`.
 
 Success:
 
@@ -902,9 +902,30 @@ Success:
 
 The response contains the generated examination representation.
 
-A repeated request must not create another occurrence for the same source examination and due date. The exact response status for that repeated request remains unresolved and must be selected before implementation.
+Field values in the generated examination:
 
-The exact set of optional source fields copied into the generated examination also remains unresolved and must be selected before implementation.
+| Field | Value in the generated examination |
+|---|---|
+| `title` | Copied from the source examination. |
+| `category` | Copied from the source examination. |
+| `medical_specialty` | Copied from the source examination. |
+| `scheduled_time` | Copied from the source examination. |
+| `location` | Copied from the source examination. |
+| `scheduled_date` | The recurrence rule's calculated next due date. |
+| `status` | `planned`. |
+| `source_occurrence` | The source examination identifier. |
+| `notes` | `null`. |
+| `completed_date` | `null`. |
+
+No reminder and no recurrence rule is created for the generated examination. Configuring either one for the generated occurrence remains an explicit user action, which the API permits because the generated occurrence is `planned`.
+
+Repeated request:
+
+```http
+200 OK
+```
+
+A repeated request that resolves to an existing generated occurrence for the same source examination and calculated due date does not create another record, and the response contains the existing generated examination representation. `201 Created` therefore indicates that the request created the occurrence and `200 OK` indicates that it already existed.
 
 ## 17. Calendar
 
@@ -1006,9 +1027,6 @@ Rules:
 
 ## 19. Open Contract Points
 
-The following points are intentionally not finalized because the source documents do not define them:
+None.
 
-1. repeated next-occurrence response status and body;
-2. optional field-copying rules for a generated next occurrence.
-
-These points require accepted design decisions before the corresponding contract sections can be finalized.
+The repeated next-occurrence response and the field values of a generated next occurrence were previously unresolved. Both are now defined by accepted design decisions and specified in Section 16.

@@ -18,7 +18,7 @@ When documents differ, they have the following precedence:
 2. `product_definition.md` — product-level summary;
 3. `design_specification.md` — accepted implementation design decisions;
 4. `domain_model.md`, `api_contract.md`, and `user_flows.md` — detailed design artifacts;
-5. the application test specification — verification design linked to requirements.
+5. `test_specification.md` — verification design linked to requirements.
 
 The product definition must be updated when an accepted requirement changes the product-level description.
 

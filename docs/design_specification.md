@@ -445,6 +445,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-FR-023-02 — Source-occurrence reference on deletion
+**Status:** Accepted  
+**Requirement reference:** FR-023  
+**Decision:** It is decided that deleting an owned examination will set `source_occurrence` to null on every generated examination that referenced it, rather than deleting those generated examinations or blocking the deletion. The generated examinations, their own reminders, and their own recurrence rules remain otherwise unchanged.  
+**Rationale:** A generated occurrence is an independent examination record that may already carry its own history, reminder, or recurrence configuration; deleting an unrelated source record should not silently destroy or block changes to it. This mirrors the existing pattern of nulling a derived reference when its basis is removed, such as `next_due_date` becoming null when `scheduled_date` is absent.  
+**Verification impact:** An integration test will delete a source examination that has a generated next occurrence and confirm that the generated examination still exists, is otherwise unchanged, and has `source_occurrence` set to null.
+
+---
+
 #### ADS-FR-024-01 — Delete confirmation dialog
 **Status:** Accepted  
 **Requirement reference:** FR-024  
@@ -566,6 +575,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-FR-035-02 — Reminder status restriction beyond drafts
+**Status:** Accepted  
+**Requirement reference:** FR-035  
+**Decision:** It is decided that reminder creation, offset updates, and reactivation (setting `is_active` to `true`) will be validated against the related examination's current status and rejected whenever that status is not `planned`, covering `completed`, `cancelled`, and `missed` source examinations in addition to the `draft` case already rejected under ADS-FR-017-01. Disabling an existing reminder remains allowed regardless of examination status.  
+**Rationale:** `domain_model.md` and `api_contract.md` restrict active reminder configuration to planned examinations generally, not only to excluding drafts; the reminder endpoint must enforce the full restriction rather than the draft-specific subset, matching the equivalent recurrence restriction in ADS-FR-039-01.  
+**Verification impact:** Integration tests will attempt reminder creation, offset update, and reactivation for `completed`, `cancelled`, and `missed` source examinations and assert a business-rule error for each, and will confirm that disabling a reminder still succeeds regardless of examination status.
+
+---
+
 #### ADS-FR-036-01 — Reminder due-date calculation
 **Status:** Accepted  
 **Requirement reference:** FR-036  
@@ -646,6 +664,24 @@ Each design decision contains:
 **Decision:** It is decided that next-occurrence creation will accept source examinations with status `planned`, `completed`, `cancelled`, or `missed` and reject source examinations with status `draft`. The source must contain `scheduled_date` and an attached recurrence rule.  
 **Rationale:** A completed, cancelled, or missed occurrence may still define the next scheduled occurrence, while a draft is not sufficiently planned to serve as a recurrence source.  
 **Verification impact:** Integration tests will verify successful creation from each accepted source status and a business-rule error for a draft source.
+
+---
+
+#### ADS-FR-041-03 — Repeated next-occurrence request response
+**Status:** Accepted  
+**Requirement reference:** FR-041  
+**Decision:** It is decided that a repeated next-occurrence request resolving to an existing generated occurrence for the same source examination and calculated due date will not create another record and will return `200 OK` with the existing generated examination representation. An initial successful creation will continue to return `201 Created`.  
+**Rationale:** A repeated request is normally an accidental resubmission rather than an error, so returning the existing occurrence keeps the client's view correct without adding a second record or a new error status, while the differing success status still distinguishes a creation from a repeat.  
+**Verification impact:** An API integration test will call the action twice for the same source and due date, assert `201 Created` followed by `200 OK`, and confirm that both responses describe the same single generated examination.
+
+---
+
+#### ADS-FR-041-04 — Generated next-occurrence field values
+**Status:** Accepted  
+**Requirement reference:** FR-041  
+**Decision:** It is decided that a generated next occurrence will copy `title`, `category`, `medical_specialty`, `scheduled_time`, and `location` from its source examination; will set `status` to `planned`, `scheduled_date` to the calculated next due date, and `source_occurrence` to the source examination; and will leave `notes` and `completed_date` empty. No reminder and no recurrence rule will be created for the generated occurrence.  
+**Rationale:** Copying the fields that identify a repeating appointment avoids re-entering unchanged information, while `notes` commonly describe one specific past visit and a planned occurrence has no completion date. Creating a reminder or recurrence rule automatically would attach dependent records the user did not request, and the contract provides no delete operation for either, so both remain explicit user actions on the new occurrence.  
+**Verification impact:** An API integration test will create a next occurrence from a fully populated source and will assert each copied value, the planned status, the calculated scheduled date, the recorded source occurrence, empty `notes` and `completed_date`, and the absence of a reminder and recurrence rule.
 
 ---
 
@@ -1036,9 +1072,9 @@ When a design decision changes:
 ## 10. Traceability Summary
 
 - Requirement references represented: **71**
-- Design decisions recorded: **107**
-- Accepted design decisions: **107**
+- Design decisions recorded: **111**
+- Accepted design decisions: **111**
 - Proposed design decisions: **0**
-- Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-033, FR-039, FR-040, FR-041, FR-044, SEC-005**
+- Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-044, SEC-005**
 - Design decisions linked to more than one requirement: **0**
 - Requirement statements duplicated from `requirements_specification.md`: **0**
