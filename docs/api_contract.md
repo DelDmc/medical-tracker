@@ -942,7 +942,7 @@ Calendar entry representation:
 ```json
 {
   "calendar_date": "2026-08-15",
-  "state": "overdue",
+  "state": "planned",
   "examination": {
     "id": 184,
     "title": "Annual dental checkup",
@@ -955,7 +955,7 @@ Calendar entry representation:
     "scheduled_time": "10:30:00",
     "completed_date": null,
     "status": "planned",
-    "time_state": "overdue"
+    "time_state": "upcoming"
   }
 }
 ```

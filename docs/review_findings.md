@@ -43,11 +43,6 @@ Maintenance rules:
 **Disposition:** Needs decision
 **Finding:** FR-002 requires registration to reject an already-registered email address, and UX-002 requires that rejection to appear as a field-level error. `POST /api/v1/auth/register/` therefore confirms whether an address has an account, which is the disclosure that `ADS-FR-005-05` prevents at the login endpoint. The two requirements are individually reasonable and jointly inconsistent. Either the disclosure is accepted and recorded as an exclusion, or registration must report duplicates without confirming them, which would change UX-002.
 
-#### RF-03 — The same examination is shown with two different `time_state` values
-**Documents:** `api_contract.md (432-453)`, `api_contract.md (942-960)`
-**Disposition:** Fix now
-**Finding:** Examination `184` appears in §8.1 with `scheduled_date: "2026-08-15"`, `scheduled_time: "10:30:00"`, and `time_state: "upcoming"`, and in §17 with the identical identifier, date, and time but `time_state: "overdue"` and `state: "overdue"`. One of the two examples is wrong, or the two examples imply different current dates without saying so.
-
 #### RF-04 — The `time_state` field domain has no value for a past record
 **Documents:** `api_contract.md:473`, `api_contract.md:511`
 **Disposition:** Needs decision
@@ -151,8 +146,8 @@ Maintenance rules:
 
 ## 7. Summary
 
-- Findings open: **22**
-- Fix now: **6** — RF-03, RF-05, RF-06, RF-07, RF-09, RF-10
+- Findings open: **21**
+- Fix now: **5** — RF-05, RF-06, RF-07, RF-09, RF-10
 - Needs decision: **10** — RF-02, RF-04, RF-08, RF-12, RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
 - In progress: **2** — RF-01, RF-11
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
