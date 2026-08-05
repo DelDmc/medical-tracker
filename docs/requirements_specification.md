@@ -21,8 +21,8 @@ Verification statements identify the primary verification method. Detailed fixtu
 **FR-002** — The application shall reject registration when the email address is missing, incorrectly formatted, or already registered.
 **Verification:** An API validation test shall confirm that registration is rejected when the email address is missing, incorrectly formatted, or already associated with an existing account.
 
-**FR-003** — The application shall reject registration when the password is missing or contains fewer than eight characters.
-**Verification:** An API validation test shall confirm that registration is rejected when the password is missing or contains fewer than eight characters.
+**FR-003** — The application shall reject registration when the password is missing, contains fewer than eight characters, or contains more than 128 characters.
+**Verification:** An API validation test shall confirm that registration is rejected when the password is missing, shorter than eight characters, or longer than 128 characters.
 
 **FR-004** — The application shall reject registration when the selected timezone is unsupported.
 **Verification:** An API validation test shall confirm that registration is rejected when the submitted timezone is not included in the supported timezone set.

@@ -59,9 +59,9 @@ Each design decision contains:
 #### ADS-FR-003-01 — Password validation during registration
 **Status:** Accepted  
 **Requirement reference:** FR-003  
-**Decision:** It is decided that the registration serializer will define `password` as a required, write-only field with a minimum length of eight characters and will create the account by calling Django's password-setting API.  
-**Rationale:** This enforces the stated minimum without exposing or directly storing the submitted password.  
-**Verification impact:** Validation tests will cover a missing password and passwords shorter than eight characters.
+**Decision:** It is decided that the registration serializer will define `password` as a required, write-only field with a minimum length of eight characters and a maximum length of 128 characters, and will create the account by calling Django's password-setting API.  
+**Rationale:** This enforces the stated minimum without exposing or directly storing the submitted password, and the maximum bounds the length of input passed to the password hasher.  
+**Verification impact:** Validation tests will cover a missing password, a password shorter than eight characters, and a password longer than 128 characters.
 
 ---
 
@@ -894,9 +894,9 @@ Each design decision contains:
 #### ADS-SEC-003-01 — Django password hashing
 **Status:** Accepted  
 **Requirement reference:** SEC-003  
-**Decision:** It is decided that all account creation and password changes will call Django's `set_password` or approved user-manager methods and will never assign raw passwords to the model field. Django password validators will run where configured.  
-**Rationale:** Django's framework provides salted adaptive hashing and verification without custom cryptography.  
-**Verification impact:** The backend test will inspect the stored value and verify it with Django's password-checking function.
+**Decision:** It is decided that all account creation and password changes will call Django's `set_password` or approved user-manager methods and will never assign raw passwords to the model field. Registration validation will run Django's default password validators: `MinimumLengthValidator` (eight characters, matching `ADS-FR-003-01`), `CommonPasswordValidator`, `NumericPasswordValidator`, and `UserAttributeSimilarityValidator` compared against the account's email address.  
+**Rationale:** Django's framework provides salted adaptive hashing and verification without custom cryptography, and its default validator set rejects common, fully numeric, and email-similar passwords without requiring bespoke validation logic.  
+**Verification impact:** The backend test will inspect the stored value and verify it with Django's password-checking function, and validation tests will confirm registration is rejected for a commonly used password, an entirely numeric password, and a password matching the account's email address.
 
 ---
 

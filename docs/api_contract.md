@@ -166,7 +166,7 @@ Request:
 Validation:
 
 - `email` is required, must be valid, is normalized before comparison, and must be unique using case-insensitive comparison;
-- `password` is required and must contain at least eight characters;
+- `password` is required, must contain between eight and 128 characters, must not be a commonly used password, must not be entirely numeric, and must not closely resemble the submitted email address;
 - `timezone` is required and must be a supported IANA timezone identifier;
 - the password is write-only and is never returned.
 

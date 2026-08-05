@@ -105,6 +105,15 @@ When a test case is implemented in code, the test's name or docstring must inclu
 
 ---
 
+#### TC-FR-003-03 — Registration rejects a password longer than 128 characters
+**Requirement reference:** FR-003  
+**Layer:** API validation test  
+**Given** a registration request with `password` set to a 129-character value  
+**When** the client submits `POST /api/v1/auth/register/`  
+**Then** the response is `400 Bad Request` with a `password` field error and no account is created.
+
+---
+
 #### TC-FR-004-01 — Registration rejects an unsupported timezone
 **Requirement reference:** FR-004  
 **Layer:** API validation test  
@@ -2093,6 +2102,33 @@ When a test case is implemented in code, the test's name or docstring must inclu
 
 ---
 
+#### TC-SEC-003-02 — Registration rejects a commonly used password
+**Requirement reference:** SEC-003  
+**Layer:** API validation test  
+**Given** a registration request with `password` set to a value on Django's common-password list (for example, `password123`)  
+**When** the client submits `POST /api/v1/auth/register/`  
+**Then** the response is `400 Bad Request` with a `password` field error and no account is created.
+
+---
+
+#### TC-SEC-003-03 — Registration rejects an entirely numeric password
+**Requirement reference:** SEC-003  
+**Layer:** API validation test  
+**Given** a registration request with `password` set to a value containing only digits  
+**When** the client submits `POST /api/v1/auth/register/`  
+**Then** the response is `400 Bad Request` with a `password` field error and no account is created.
+
+---
+
+#### TC-SEC-003-04 — Registration rejects a password matching the account's email address
+**Requirement reference:** SEC-003  
+**Layer:** API validation test  
+**Given** a registration request whose `password` closely resembles the submitted `email` address  
+**When** the client submits `POST /api/v1/auth/register/`  
+**Then** the response is `400 Bad Request` with a `password` field error and no account is created.
+
+---
+
 #### TC-SEC-004-01 — No committed file contains a configured secret
 **Requirement reference:** SEC-004  
 **Layer:** Repository secret scan  
@@ -2435,7 +2471,7 @@ When a test case changes:
 ## 11. Traceability Summary
 
 - Requirement references represented: **72**
-- Test cases recorded: **261**
-- Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-005, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
+- Test cases recorded: **265**
+- Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-003, SEC-005, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
 - Requirements verified by exactly one test case: all remaining requirement identifiers.
 - Test cases linked to more than one requirement: **0**

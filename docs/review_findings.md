@@ -40,11 +40,6 @@ Maintenance rules:
 
 ## 4. Security and Design Gaps
 
-#### RF-13 — Password policy is underspecified in both directions
-**Documents:** `design_specification.md:870`, `requirements_specification.md (24-25)`
-**Disposition:** Needs decision
-**Finding:** `ADS-SEC-003-01` states that Django password validators "will run where configured" without deciding which validators are configured, so the effective policy is whatever the settings happen to contain. No maximum password length is defined either, which allows an arbitrarily long input to reach the password hasher.
-
 #### RF-14 — Password change is referenced but exists nowhere else
 **Documents:** `design_specification.md:870`
 **Disposition:** Needs decision
@@ -94,9 +89,9 @@ Maintenance rules:
 
 ## 6. Summary
 
-- Findings open: **11**
+- Findings open: **10**
 - Fix now: **0**
-- Needs decision: **6** — RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
+- Needs decision: **5** — RF-14, RF-17, RF-18, RF-22, RF-23
 - In progress: **1** — RF-01
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
 - Accepted: **0**
