@@ -38,11 +38,6 @@ Maintenance rules:
 **Disposition:** In progress
 **Finding:** The same security principle — that a failure response must not disclose whether something exists — is a requirement for examination lookups (SEC-006) but only a design decision for login (`ADS-FR-005-05`). Two levels of the hierarchy express one principle, so a future non-disclosure decision has no consistent parent. The agreed fix is to broaden SEC-006 to cover both scopes and re-home `ADS-FR-005-05` as `ADS-SEC-006-02`, which also requires updating the matrix row and splitting the indistinguishability assertion out of `TC-FR-005-04` into a new `TC-SEC-006-02`.
 
-#### RF-02 — Registration discloses account existence, weakening the generic login error
-**Documents:** `requirements_specification.md:21`, `requirements_specification.md:176`, `api_contract.md:153`, `design_specification.md (113-118)`
-**Disposition:** Needs decision
-**Finding:** FR-002 requires registration to reject an already-registered email address, and UX-002 requires that rejection to appear as a field-level error. `POST /api/v1/auth/register/` therefore confirms whether an address has an account, which is the disclosure that `ADS-FR-005-05` prevents at the login endpoint. The two requirements are individually reasonable and jointly inconsistent. Either the disclosure is accepted and recorded as an exclusion, or registration must report duplicates without confirming them, which would change UX-002.
-
 #### RF-04 — The `time_state` field domain has no value for a past record
 **Documents:** `api_contract.md:473`, `api_contract.md:511`
 **Disposition:** Needs decision
@@ -146,9 +141,9 @@ Maintenance rules:
 
 ## 7. Summary
 
-- Findings open: **21**
+- Findings open: **20**
 - Fix now: **5** — RF-05, RF-06, RF-07, RF-09, RF-10
-- Needs decision: **10** — RF-02, RF-04, RF-08, RF-12, RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
+- Needs decision: **9** — RF-04, RF-08, RF-12, RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
 - In progress: **2** — RF-01, RF-11
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
 - Accepted: **0**

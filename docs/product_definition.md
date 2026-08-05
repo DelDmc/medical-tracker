@@ -167,7 +167,8 @@ The following features are outside the MVP:
 - multi-language support;
 - audit history;
 - account deletion and configurable data-retention controls;
-- claims of HIPAA, GDPR, or other regulatory compliance without separate implementation and verification.
+- claims of HIPAA, GDPR, or other regulatory compliance without separate implementation and verification;
+- account-existence non-disclosure at registration: `POST /api/v1/auth/register/` confirms an already-registered email through a field-level error (FR-002, UX-002), which discloses account existence at that endpoint. The generic-error protection in `ADS-FR-005-05` applies only to login, not registration; hiding existence at registration too would require an out-of-band verification step (e.g. email), and email notifications are themselves excluded from this MVP above.
 
 ## 9. Primary User Flows
 
