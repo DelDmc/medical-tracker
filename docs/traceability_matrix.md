@@ -106,11 +106,12 @@ It is an administrative mapping document. It does not define product behavior, d
 | Repeated next-occurrence request response | FR-041 | ADS-FR-041-03 |
 | Generated next-occurrence field values | FR-041 | ADS-FR-041-04 |
 | Calendar date-range API | FR-042 | ADS-FR-042-01 |
+| Calendar date-range parameter validation | FR-042 | ADS-FR-042-02 |
 | Calendar state value supplied to the frontend | FR-043 | ADS-FR-043-01 |
 | `GET /api/v1/dashboard/` examination sections | FR-044 | ADS-FR-044-01 |
 | Dashboard `recently_completed` eligibility window | FR-044 | ADS-FR-044-02 |
 | Dashboard `recently_completed` ordering | FR-044 | ADS-FR-044-03 |
-| Dashboard `recently_completed` limit and pagination behavior | FR-044 | ADS-FR-044-04 |
+| Dashboard `recently_completed` limit behavior | FR-044 | ADS-FR-044-04 |
 | Dashboard status counts | FR-045 | ADS-FR-045-01 |
 | Dashboard `category_counts` and `uncategorized_count` | FR-046 | ADS-FR-046-01 |
 | Dashboard overdue count | FR-047 | ADS-FR-047-01 |

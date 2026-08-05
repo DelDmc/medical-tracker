@@ -344,6 +344,8 @@ The backend creates, replaces, and clears the `refresh_token` cookie using the f
 
 Cookie clearing uses the same cookie name, path, host-only scope, and applicable `Secure` and `SameSite` values as cookie creation. The refresh token is never returned in a JSON response and is not readable by frontend JavaScript.
 
+The refresh-token session has an absolute maximum lifetime of seven days from successful login; rotation replaces the token but does not extend this lifetime (`ADS-FR-007-07`). The `access_token` returned in the login, refresh, and register response bodies expires ten minutes after issuance (`ADS-FR-005-06`).
+
 ## 6. Account
 
 ### 6.1 Retrieve account

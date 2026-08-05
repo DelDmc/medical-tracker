@@ -12,7 +12,7 @@ This document occupies position 5 in the source-of-truth hierarchy defined in `p
 
 **Status:** Accepted
 
-Every test case recorded in this document is accepted for implementation. Section 10 records the current test-case count and traceability summary.
+Every test case recorded in this document is accepted for implementation. Section 11 records the current test-case count and traceability summary.
 
 ## 3. Conventions
 
@@ -1255,6 +1255,15 @@ When a test case is implemented in code, the test's name or docstring must inclu
 
 ---
 
+#### TC-FR-037-02 — The reminders endpoint's due-state filter returns only due, active reminders
+**Requirement reference:** FR-037  
+**Layer:** API integration test  
+**Given** an owned active reminder whose `due_date` is on or before the user's current local date, an owned active reminder whose `due_date` is in the future, and an owned inactive reminder whose `due_date` is on or before the user's current local date  
+**When** the client requests `GET /api/v1/reminders/?state=due`  
+**Then** the response includes only the due, active reminder.
+
+---
+
 #### TC-FR-038-01 — Changing a planned examination to draft deactivates its reminder
 **Requirement reference:** FR-038  
 **Layer:** API integration test  
@@ -1562,6 +1571,33 @@ When a test case is implemented in code, the test's name or docstring must inclu
 **Given** a `completed` record with no `completed_date`, within the requested range  
 **When** the client requests `GET /api/v1/calendar/?start_date={date}&end_date={date}`  
 **Then** the record does not appear in the response.
+
+---
+
+#### TC-FR-042-07 — A missing date-range parameter is rejected
+**Requirement reference:** FR-042  
+**Layer:** API integration test  
+**Given** an authenticated user  
+**When** the client requests `GET /api/v1/calendar/` with only one of `start_date` or `end_date` supplied  
+**Then** the response is a validation error and no calendar data is returned.
+
+---
+
+#### TC-FR-042-08 — A malformed date-range parameter is rejected
+**Requirement reference:** FR-042  
+**Layer:** API integration test  
+**Given** an authenticated user  
+**When** the client requests `GET /api/v1/calendar/?start_date={not-a-date}&end_date={date}`  
+**Then** the response is a validation error and no calendar data is returned.
+
+---
+
+#### TC-FR-042-09 — A start date after the end date is rejected
+**Requirement reference:** FR-042  
+**Layer:** API integration test  
+**Given** an authenticated user  
+**When** the client requests `GET /api/v1/calendar/?start_date={later-date}&end_date={earlier-date}`  
+**Then** the response is a validation error and no calendar data is returned.
 
 ---
 
@@ -2399,7 +2435,7 @@ When a test case changes:
 ## 11. Traceability Summary
 
 - Requirement references represented: **72**
-- Test cases recorded: **257**
-- Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-005, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
+- Test cases recorded: **261**
+- Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-005, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
 - Requirements verified by exactly one test case: all remaining requirement identifiers.
 - Test cases linked to more than one requirement: **0**

@@ -74,6 +74,10 @@ The requirements specification is authoritative. This document applies the accep
 8. When no refresh request is in progress, the frontend creates one shared refresh operation. 
 9. When a refresh request is already in progress, every other protected request with an access-token authentication failure waits for that same operation and does not send another refresh request.
 
+### Absolute session lifetime
+
+The refresh-token session carries an absolute maximum lifetime of seven days from the original login; each rotation issues a new refresh token but does not extend this lifetime. When the absolute lifetime has elapsed, the next refresh attempt is treated as a failed refresh: an initialization refresh opens the login page silently, and an active-session refresh redirects to the login page with a session-expired message, exactly as for any other invalid refresh token.
+
 ## 4. Log Out
 
 **Requirement references:** FR-006, SEC-005

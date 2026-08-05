@@ -31,7 +31,7 @@ Verification statements identify the primary verification method. Detailed fixtu
 **Verification:** An API integration test shall confirm that valid credentials return authentication tokens and invalid credentials are rejected.
 
 **FR-006** — The application shall allow an authenticated user to log out.
-**Verification:** A frontend integration test shall confirm that logout clears the active client session and redirects the user to the login page.
+**Verification:** An API integration test shall confirm that logout invalidates the refresh token and clears the refresh-token cookie, and a frontend integration test shall confirm that logout clears the active client session and redirects the user to the login page.
 
 **FR-007** — The application shall issue a new access token when a valid refresh token is submitted.
 **Verification:** An API integration test shall confirm that a valid refresh token returns a new access token and that an expired or invalid refresh token is rejected.
@@ -130,7 +130,7 @@ Verification statements identify the primary verification method. Detailed fixtu
 **Verification:** An API integration test shall use fixed scheduled dates and reminder offsets and confirm the calculated reminder due dates.
 
 **FR-037** — The application shall display active reminders whose due date has been reached.
-**Verification:** A frontend integration test shall provide due and non-due reminders and confirm that only due reminders are displayed.
+**Verification:** An API integration test shall confirm that the reminders endpoint's due-state filter returns only active reminders whose due date has been reached, and a frontend integration test shall provide due and non-due reminders and confirm that only due reminders are displayed.
 
 **FR-038** — The application shall deactivate an examination reminder when the examination status changes from `planned` to `draft`, `completed`, `cancelled`, or `missed`.
 **Verification:** An API integration test shall change a planned examination to each defined non-planned status and confirm that its reminder is inactive.

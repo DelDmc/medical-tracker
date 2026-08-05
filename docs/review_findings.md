@@ -43,34 +43,7 @@ Maintenance rules:
 **Disposition:** Needs decision
 **Finding:** The `time_state` response field is documented as `upcoming`, `overdue`, or `null`, while the list endpoint accepts `time_state=past` as a filter value. A past record is therefore selected by a value that the field itself can never hold. Either the field domain gains `past`, or the contract must state explicitly that filter values and field values are separate vocabularies.
 
-#### RF-05 — Pagination is excluded from the contract but used as design rationale
-**Documents:** `api_contract.md:29`, `design_specification.md:515`, `design_specification.md:526`, `traceability_matrix.md:112`
-**Disposition:** Fix now
-**Finding:** The contract states that pagination is not part of it, yet `ADS-FR-030-01` justifies null-last ordering because it "keeps pagination stable" and `ADS-FR-031-01` says the derived list filter "centralizes ownership, serialization, filtering, and pagination". The matrix also names "pagination behavior" in a row title. Either the rationales are reworded to describe deterministic ordering, or pagination is documented as a deliberate post-MVP extension point.
-
-#### RF-06 — Accepted token lifetimes appear in no detailed artifact
-**Documents:** `design_specification.md (122-127)`, `design_specification.md (257-262)`, `api_contract.md (321-330)`, `user_flows.md (49-75)`
-**Disposition:** Fix now
-**Finding:** `ADS-FR-005-06` fixes the access-token lifetime at ten minutes and `ADS-FR-007-07` fixes an absolute seven-day refresh-session lifetime. Neither value appears in `api_contract.md` or `user_flows.md`. The refresh-cookie table states only that expiration is "Aligned with refresh-token expiry", so a reader of the contract cannot determine either lifetime, and the seven-day cap is invisible in the session-refresh flow that it terminates.
-
-#### RF-07 — Two requirements state a verification method narrower than their own decisions
-**Documents:** `requirements_specification.md (33-34)`, `requirements_specification.md (132-133)`, `design_specification.md (140-163)`, `design_specification.md (596-601)`, `api_contract.md (796-807)`, `test_specification.md (171-199)`
-**Disposition:** Fix now
-**Finding:** FR-006 states a frontend integration test as its verification method, but `ADS-FR-006-02`, `ADS-FR-006-03`, and `ADS-FR-006-04` define backend behavior and `TC-FR-006-01` through `TC-FR-006-04` are API integration tests. FR-037 likewise states a frontend integration test, while the due-reminder filter is defined as a backend query in `api_contract.md` §14.4 and `ADS-FR-037-01` relies on that backend filtering. In both cases the requirement's stated verification method does not cover the behavior actually accepted beneath it.
-
-#### RF-09 — The test specification points at the wrong section for its own counts
-**Documents:** `test_specification.md:15`, `test_specification.md:2370`, `test_specification.md:2381`
-**Disposition:** Fix now
-**Finding:** §2 states that "Section 10 records the current test-case count and traceability summary". Section 10 is Change Control; the counts and traceability summary are in Section 11.
-
-## 4. Statements Without a Source or Verification
-
-#### RF-10 — Calendar request-parameter rules are unsourced and unverified at the API level
-**Documents:** `api_contract.md:936`, `design_specification.md (690-695)`, `requirements_specification.md (151-152)`
-**Disposition:** Fix now
-**Finding:** The contract requires both `start_date` and `end_date`, fixes their format, and requires `start_date` not to be later than `end_date`. `ADS-FR-042-01` decides only that calendar data comes from a date-range query and how records are placed; it does not state the parameter rules. FR-042's verification method is a frontend integration test, and its decision's verification impact is likewise frontend-only, so no accepted verification exercises the parameter validation the contract promises.
-
-## 5. Security and Design Gaps
+## 4. Security and Design Gaps
 
 #### RF-12 — The refresh-token invalidation mechanism is never specified
 **Documents:** `design_specification.md (140-145)`, `design_specification.md (212-215)`, `design_specification.md (239-244)`, `design_specification.md (257-262)`
@@ -95,7 +68,7 @@ Maintenance rules:
 #### RF-16 — Response and query sizes are unbounded
 **Documents:** `api_contract.md:29`, `api_contract.md:936`
 **Disposition:** Deferred
-**Finding:** MVP list endpoints return complete JSON arrays with pagination excluded from the contract, and the calendar endpoint places no maximum span on its date range. Both response sizes grow with stored data and with a caller-chosen range. Trigger: revisit together with RF-05, or as soon as any account is expected to hold a large number of records.
+**Finding:** MVP list endpoints return complete JSON arrays with pagination excluded from the contract, and the calendar endpoint places no maximum span on its date range. Both response sizes grow with stored data and with a caller-chosen range. Trigger: revisit when pagination is implemented, or as soon as any account is expected to hold a large number of records.
 
 #### RF-17 — Logout does not end access-token validity
 **Documents:** `design_specification.md (140-145)`, `design_specification.md (122-127)`, `user_flows.md (85-94)`
@@ -112,7 +85,7 @@ Maintenance rules:
 **Disposition:** Deferred
 **Finding:** A reminder offset must be a positive whole number, with no maximum. A very large offset produces a `due_date` far in the past, which is immediately due and stays due. Trigger: revisit when the due-reminder view is implemented.
 
-## 6. Repository Artifacts Outside `docs/`
+## 5. Repository Artifacts Outside `docs/`
 
 #### RF-20 — Required repository documentation does not exist
 **Documents:** `README.md`, `requirements_specification.md (248-249)`, `design_specification.md (1051-1056)`
@@ -129,10 +102,10 @@ Maintenance rules:
 **Disposition:** Needs decision
 **Finding:** Two open business rules in the 18.07.2026 and 19.07.2026 entries are written in terms of `scheduled_at` and `completed_at`. The accepted model uses `scheduled_date`, a separate optional `scheduled_time`, and `completed_date`, and both questions have since been answered by accepted requirements and decisions. Resolution depends on the same decision as RF-22.
 
-## 7. Summary
+## 6. Summary
 
-- Findings open: **18**
-- Fix now: **5** — RF-05, RF-06, RF-07, RF-09, RF-10
+- Findings open: **13**
+- Fix now: **0**
 - Needs decision: **8** — RF-04, RF-12, RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
 - In progress: **1** — RF-01
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20

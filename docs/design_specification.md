@@ -512,7 +512,7 @@ Each design decision contains:
 **Status:** Accepted  
 **Requirement reference:** FR-030  
 **Decision:** It is decided that the examination list endpoint will accept `ordering=scheduled_date` and `ordering=-scheduled_date`. Both database orderings will explicitly place null scheduled dates after all dated records, with a stable secondary ordering by identifier.  
-**Rationale:** Explicit null placement avoids database-dependent ordering and keeps pagination stable.  
+**Rationale:** Explicit null placement avoids database-dependent ordering and keeps result ordering deterministic.  
 **Verification impact:** The integration test will verify ascending, descending, null-last behavior, and deterministic ties.
 
 ---
@@ -523,7 +523,7 @@ Each design decision contains:
 **Status:** Accepted  
 **Requirement reference:** FR-031  
 **Decision:** It is decided that past examinations will be requested through `GET /api/v1/examinations/?time_state=past`. The backend will include completed records whose `completed_date` is on or before the authenticated user's current local date and cancelled or missed records whose `scheduled_date` is on or before that date; it will exclude planned, draft, and future records.  
-**Rationale:** A derived list filter centralizes ownership, serialization, filtering, and pagination.  
+**Rationale:** A derived list filter centralizes ownership, serialization, and filtering.  
 **Verification impact:** The integration test will freeze time and verify inclusion by the status-specific relevant date.
 
 ---
@@ -693,6 +693,15 @@ Each design decision contains:
 **Decision:** It is decided that monthly calendar data will be obtained from a date-range API query. Planned, cancelled, and missed records will be assigned to `scheduled_date`; completed records will be assigned to `completed_date`; draft records and records lacking the required display date will be excluded.  
 **Rationale:** A status-specific calendar date produces the required placement without duplicating examination records.  
 **Verification impact:** The frontend integration test will render a selected month and verify each status on its designated date.
+
+---
+
+#### ADS-FR-042-02 — Calendar date-range parameter validation
+**Status:** Accepted  
+**Requirement reference:** FR-042  
+**Decision:** It is decided that the calendar endpoint will require both `start_date` and `end_date` query parameters in `YYYY-MM-DD` format, will reject a request where either parameter is missing or malformed, and will reject a request where `start_date` is later than `end_date`.  
+**Rationale:** The contract already promises this validation; stating it as an accepted decision gives it a requirement-level parent and makes it verifiable at the API layer rather than left implicit in `api_contract.md`.  
+**Verification impact:** An API integration test will confirm rejection of a request missing either parameter, a request with a malformed date, and a request where `start_date` is later than `end_date`.
 
 ---
 
@@ -1081,9 +1090,9 @@ When a design decision changes:
 ## 10. Traceability Summary
 
 - Requirement references represented: **72**
-- Design decisions recorded: **112**
-- Accepted design decisions: **112**
+- Design decisions recorded: **113**
+- Accepted design decisions: **113**
 - Proposed design decisions: **0**
-- Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-044, SEC-005**
+- Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-042, FR-044, SEC-005**
 - Design decisions linked to more than one requirement: **0**
 - Requirement statements duplicated from `requirements_specification.md`: **0**
