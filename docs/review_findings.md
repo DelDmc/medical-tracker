@@ -40,11 +40,6 @@ Maintenance rules:
 
 ## 4. Security and Design Gaps
 
-#### RF-12 — The refresh-token invalidation mechanism is never specified
-**Documents:** `design_specification.md (140-145)`, `design_specification.md (212-215)`, `design_specification.md (239-244)`, `design_specification.md (257-262)`
-**Disposition:** Needs decision
-**Finding:** Four accepted decisions require server-side refresh-token state: logout invalidates a token, refresh rotates and invalidates the previous token, invalid tokens are rejected, and a session carries an absolute seven-day lifetime measured from login. No decision defines where that state is held, how a token is marked invalid, how the original session start is recorded across rotations, or what happens when an already-rotated token is replayed. Reuse detection and token-family revocation are therefore undefined.
-
 #### RF-13 — Password policy is underspecified in both directions
 **Documents:** `design_specification.md:870`, `requirements_specification.md (24-25)`
 **Disposition:** Needs decision
@@ -99,9 +94,9 @@ Maintenance rules:
 
 ## 6. Summary
 
-- Findings open: **12**
+- Findings open: **11**
 - Fix now: **0**
-- Needs decision: **7** — RF-12, RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
+- Needs decision: **6** — RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
 - In progress: **1** — RF-01
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
 - Accepted: **0**

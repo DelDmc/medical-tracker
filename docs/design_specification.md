@@ -263,6 +263,24 @@ Each design decision contains:
 
 ---
 
+#### ADS-FR-007-08 — Refresh-token session-start and expiry encoding
+**Status:** Accepted  
+**Requirement reference:** FR-007  
+**Decision:** It is decided that every refresh token will carry a `session_start` claim set once at login and copied unchanged into every rotated token issued within that session, and an `exp` claim fixed at `session_start` plus seven days and computed identically at login and at every subsequent rotation rather than relative to the rotation time.  
+**Rationale:** Encoding the absolute expiration in the token itself lets the seven-day-from-login boundary decided in `ADS-FR-007-07` be enforced from the token alone, without a database lookup, and keeps each login's session window independent of any other concurrent session belonging to the same user.  
+**Verification impact:** Already verified by `TC-FR-007-10`, which mocks a login time and confirms refresh is rejected once seven days have elapsed regardless of intervening rotations.
+
+---
+
+#### ADS-FR-007-09 — Refresh-token revocation state
+**Status:** Accepted  
+**Requirement reference:** FR-007  
+**Decision:** It is decided that the backend will persist revoked refresh tokens in a `RevokedRefreshToken` table keyed by the token's `jti` claim, with an `expires_at` value copied from the token's own `exp`. A refresh request is rejected as revoked when its `jti` is present in this table. Logout (`ADS-FR-006-02`) and successful rotation (`ADS-FR-007-02`) each insert the token they invalidate into this table. A row past its `expires_at` carries no further meaning and may be purged.  
+**Rationale:** A `jti` denylist is the minimum server-side state that satisfies the already-accepted logout-invalidation, rotation-invalidation, and revoked-token-rejection decisions; it needs no session or device model beyond the token itself, and expired rows are self-identifying for cleanup.  
+**Verification impact:** Already verified by `TC-FR-006-01` (a token used for logout is subsequently rejected) and `TC-FR-007-02` / `TC-FR-007-06` (a token superseded by rotation, or already revoked, is rejected on resubmission).
+
+---
+
 #### ADS-FR-008-01 — Active-session access-token recovery
 **Status:** Accepted  
 **Requirement reference:** FR-008  
@@ -1090,8 +1108,8 @@ When a design decision changes:
 ## 10. Traceability Summary
 
 - Requirement references represented: **72**
-- Design decisions recorded: **113**
-- Accepted design decisions: **113**
+- Design decisions recorded: **115**
+- Accepted design decisions: **115**
 - Proposed design decisions: **0**
 - Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-042, FR-044, SEC-005**
 - Design decisions linked to more than one requirement: **0**

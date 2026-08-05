@@ -57,6 +57,8 @@ It is an administrative mapping document. It does not define product behavior, d
 | `POST /api/v1/auth/refresh/` request contract | FR-007, SEC-005 | ADS-FR-007-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-06 |
 | Refresh-token rotation and previous-token invalidation | FR-007 | ADS-FR-007-02 |
 | Refresh-session maximum lifetime | FR-007 | ADS-FR-007-07 |
+| Refresh-token session-start and expiry encoding | FR-007 | ADS-FR-007-08 |
+| Refresh-token revocation state | FR-007 | ADS-FR-007-09 |
 | Replacement refresh-token cookie | FR-007, SEC-005 | ADS-FR-007-03, ADS-SEC-005-04 |
 | Refreshed access-token response | FR-007 | ADS-FR-007-04 |
 | Invalid refresh-token response and stale-cookie clearing | FR-007, SEC-005 | ADS-FR-007-05, ADS-SEC-005-04 |
