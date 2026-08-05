@@ -43,6 +43,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | `POST /api/v1/auth/login/` request contract | FR-005, SEC-005 | ADS-FR-005-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-06 |
 | Login access-token response | FR-005 | ADS-FR-005-02 |
 | Access-token lifetime | FR-005 | ADS-FR-005-06 |
+| Access-token signing algorithm and claims | FR-005 | ADS-FR-005-07 |
 | Login refresh-token cookie | FR-005, SEC-005 | ADS-FR-005-03, ADS-SEC-005-04 |
 | Frontend access-token storage and bearer transport | FR-005 | ADS-FR-005-04 |
 | Generic invalid-credentials response | FR-005 | ADS-FR-005-05 |
@@ -60,6 +61,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | Refresh-session maximum lifetime | FR-007 | ADS-FR-007-07 |
 | Refresh-token session-start and expiry encoding | FR-007 | ADS-FR-007-08 |
 | Refresh-token revocation state | FR-007 | ADS-FR-007-09 |
+| Refresh-token signing algorithm and claims | FR-007 | ADS-FR-007-10 |
 | Replacement refresh-token cookie | FR-007, SEC-005 | ADS-FR-007-03, ADS-SEC-005-04 |
 | Refreshed access-token response | FR-007 | ADS-FR-007-04 |
 | Invalid refresh-token response and stale-cookie clearing | FR-007, SEC-005 | ADS-FR-007-05, ADS-SEC-005-04 |

@@ -50,11 +50,6 @@ Maintenance rules:
 **Disposition:** Deferred
 **Finding:** MVP list endpoints return complete JSON arrays with pagination excluded from the contract, and the calendar endpoint places no maximum span on its date range. Both response sizes grow with stored data and with a caller-chosen range. Trigger: revisit when pagination is implemented, or as soon as any account is expected to hold a large number of records.
 
-#### RF-18 — JWT algorithm and claim set are unspecified
-**Documents:** `design_specification.md (86-127)`, `design_specification.md:879`
-**Disposition:** Needs decision
-**Finding:** The design accepts an access token in `access_token` with a ten-minute expiry and reads JWT signing material from environment variables, but no decision states the signing algorithm or the claim set. Algorithm confusion and unexpected claim contents are both avoidable by deciding this before implementation.
-
 #### RF-19 — `offset_days` has no upper bound
 **Documents:** `api_contract.md:724`, `design_specification.md (569-574)`, `requirements_specification.md (126-127)`
 **Disposition:** Deferred
@@ -79,9 +74,9 @@ Maintenance rules:
 
 ## 6. Summary
 
-- Findings open: **8**
+- Findings open: **7**
 - Fix now: **0**
-- Needs decision: **3** — RF-18, RF-22, RF-23
+- Needs decision: **2** — RF-22, RF-23
 - In progress: **1** — RF-01
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
 - Accepted: **0**

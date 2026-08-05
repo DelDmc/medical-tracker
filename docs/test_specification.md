@@ -177,6 +177,15 @@ When a test case is implemented in code, the test's name or docstring must inclu
 
 ---
 
+#### TC-FR-005-07 — Access token is signed with the accepted algorithm and claim set
+**Requirement reference:** FR-005  
+**Layer:** API integration test  
+**Given** a successful login producing an `access_token`  
+**When** the token header and payload are decoded, a copy with its header `alg` changed to `none` or `HS512` is presented to a protected endpoint, and a valid refresh token (`token_type: "refresh"`) is presented as a bearer credential to a protected endpoint  
+**Then** the decoded token is signed with `HS256` and carries `sub`, `token_type: "access"`, `iat`, and `exp`; the algorithm-substituted copy is rejected; and the refresh token is rejected as a bearer credential.
+
+---
+
 #### TC-FR-006-01 — Logout invalidates the refresh token
 **Requirement reference:** FR-006  
 **Layer:** API integration test  
@@ -391,6 +400,15 @@ When a test case is implemented in code, the test's name or docstring must inclu
 **Given** a session established by login at a mocked time T, refreshed successfully several times with the clock mocked to points before T + 7 days  
 **When** the client submits `POST /api/v1/auth/refresh/` with the clock mocked to T + 7 days and 1 second  
 **Then** the request is rejected, confirming that rotation preserved the original session-expiration boundary rather than extending it.
+
+---
+
+#### TC-FR-007-11 — Refresh token is signed with the accepted algorithm and claim set
+**Requirement reference:** FR-007  
+**Layer:** API integration test  
+**Given** a successful login producing a `refresh_token` cookie  
+**When** the token header and payload are decoded, a copy with its header `alg` changed to `none` or `HS512` is submitted to `POST /api/v1/auth/refresh/`, and a valid access token (`token_type: "access"`) is submitted as the refresh token to `POST /api/v1/auth/refresh/`  
+**Then** the decoded token is signed with `HS256` and carries `sub`, `token_type: "refresh"`, `jti`, `session_start`, `iat`, and `exp`; the algorithm-substituted copy is rejected; and the access token is rejected when submitted as a refresh token.
 
 ---
 
@@ -2507,7 +2525,7 @@ When a test case changes:
 ## 11. Traceability Summary
 
 - Requirement references represented: **73**
-- Test cases recorded: **269**
+- Test cases recorded: **271**
 - Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, FR-048, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-003, SEC-005, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
 - Requirements verified by exactly one test case: all remaining requirement identifiers.
 - Test cases linked to more than one requirement: **0**

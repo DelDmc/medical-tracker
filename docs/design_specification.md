@@ -128,6 +128,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-FR-005-07 — Access-token signing algorithm and claims
+**Status:** Accepted  
+**Requirement reference:** FR-005  
+**Decision:** It is decided that the access token will be a JWT signed with HS256 using the signing secret decided in `ADS-SEC-004-01`, carrying `sub` (the authenticated user's id), `token_type: "access"`, `iat`, and `exp` (issuance time plus the ten-minute lifetime decided in `ADS-FR-005-06`). The backend will reject any submitted token whose header `alg` is not exactly `HS256`, and will reject a token as a bearer credential when its `token_type` is not `access`.  
+**Rationale:** Pinning a single algorithm and rejecting any other prevents algorithm-confusion attacks, such as a client substituting `alg: none` or an asymmetric algorithm to forge a signature; the `token_type` claim prevents a refresh token from being submitted as a bearer access token. Naming the claim set makes the token's structure verifiable rather than an implicit library default.  
+**Verification impact:** An API integration test will decode an issued access token and confirm its claims and algorithm, and will confirm that a token with a substituted algorithm or a `refresh` token_type is rejected as a bearer credential.
+
+---
+
 #### ADS-FR-006-01 — Logout endpoint
 **Status:** Accepted  
 **Requirement reference:** FR-006  
@@ -287,6 +296,15 @@ Each design decision contains:
 **Decision:** It is decided that the backend will persist revoked refresh tokens in a `RevokedRefreshToken` table keyed by the token's `jti` claim, with an `expires_at` value copied from the token's own `exp`. A refresh request is rejected as revoked when its `jti` is present in this table. Logout (`ADS-FR-006-02`) and successful rotation (`ADS-FR-007-02`) each insert the token they invalidate into this table. A row past its `expires_at` carries no further meaning and may be purged.  
 **Rationale:** A `jti` denylist is the minimum server-side state that satisfies the already-accepted logout-invalidation, rotation-invalidation, and revoked-token-rejection decisions; it needs no session or device model beyond the token itself, and expired rows are self-identifying for cleanup.  
 **Verification impact:** Already verified by `TC-FR-006-01` (a token used for logout is subsequently rejected) and `TC-FR-007-02` / `TC-FR-007-06` (a token superseded by rotation, or already revoked, is rejected on resubmission).
+
+---
+
+#### ADS-FR-007-10 — Refresh-token signing algorithm and claims
+**Status:** Accepted  
+**Requirement reference:** FR-007  
+**Decision:** It is decided that the refresh token will be a JWT signed with HS256 using the signing secret decided in `ADS-SEC-004-01`, carrying `sub` (the authenticated user's id), `token_type: "refresh"`, `jti` (used by `ADS-FR-007-09`'s revocation table), `session_start` and `exp` (as decided in `ADS-FR-007-08`), and `iat`. The backend will reject any submitted token whose header `alg` is not exactly `HS256`, and will reject a token submitted to the refresh or logout endpoints when its `token_type` is not `refresh`.  
+**Rationale:** Matches `ADS-FR-005-07`'s algorithm-pinning rationale for the refresh token; the `token_type` claim prevents an access token from being submitted to the refresh or logout endpoints in place of a refresh token. Naming the full claim set makes explicit what `ADS-FR-007-08` and `ADS-FR-007-09` already assumed.  
+**Verification impact:** An API integration test will decode an issued refresh token and confirm its claims and algorithm, and will confirm that a token with a substituted algorithm or an `access` token_type is rejected by the refresh and logout endpoints.
 
 ---
 
@@ -1126,8 +1144,8 @@ When a design decision changes:
 ## 10. Traceability Summary
 
 - Requirement references represented: **73**
-- Design decisions recorded: **117**
-- Accepted design decisions: **117**
+- Design decisions recorded: **119**
+- Accepted design decisions: **119**
 - Proposed design decisions: **0**
 - Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-042, FR-044, SEC-005**
 - Design decisions linked to more than one requirement: **0**
