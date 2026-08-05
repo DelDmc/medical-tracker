@@ -529,6 +529,8 @@ Supported query parameters:
 | `time_state` | `time_state=upcoming` | Upcoming collection. |
 | `time_state` | `time_state=overdue` | Overdue collection. |
 
+The `time_state` filter's three values (`past`, `upcoming`, `overdue`) select computed collections and are a separate vocabulary from the `time_state` response field defined in §8.1, whose domain is `upcoming`, `overdue`, or `null`. The `past` collection (§9.2) is built from completed, cancelled, and missed records, none of which the response field ever labels `upcoming` or `overdue`, so every record returned by `time_state=past` carries `time_state: null` in its serialized representation.
+
 Supplied `status` and `category` filters use AND semantics. Other supplied filters are applied to the same owned queryset. Invalid filter or ordering values return `400 Bad Request`.
 
 Both scheduled-date ordering directions place records with `scheduled_date = null` after all dated records. Equal scheduled dates use identifier as a stable secondary ordering.

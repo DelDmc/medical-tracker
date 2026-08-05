@@ -38,11 +38,6 @@ Maintenance rules:
 **Disposition:** In progress
 **Finding:** The same security principle — that a failure response must not disclose whether something exists — is a requirement for examination lookups (SEC-006) but only a design decision for login (`ADS-FR-005-05`). Two levels of the hierarchy express one principle, so a future non-disclosure decision has no consistent parent. The agreed fix is to broaden SEC-006 to cover both scopes and re-home `ADS-FR-005-05` as `ADS-SEC-006-02`, which also requires updating the matrix row and splitting the indistinguishability assertion out of `TC-FR-005-04` into a new `TC-SEC-006-02`.
 
-#### RF-04 — The `time_state` field domain has no value for a past record
-**Documents:** `api_contract.md:473`, `api_contract.md:511`
-**Disposition:** Needs decision
-**Finding:** The `time_state` response field is documented as `upcoming`, `overdue`, or `null`, while the list endpoint accepts `time_state=past` as a filter value. A past record is therefore selected by a value that the field itself can never hold. Either the field domain gains `past`, or the contract must state explicitly that filter values and field values are separate vocabularies.
-
 ## 4. Security and Design Gaps
 
 #### RF-12 — The refresh-token invalidation mechanism is never specified
@@ -104,9 +99,9 @@ Maintenance rules:
 
 ## 6. Summary
 
-- Findings open: **13**
+- Findings open: **12**
 - Fix now: **0**
-- Needs decision: **8** — RF-04, RF-12, RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
+- Needs decision: **7** — RF-12, RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
 - In progress: **1** — RF-01
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
 - Accepted: **0**
