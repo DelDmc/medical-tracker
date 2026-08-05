@@ -1,0 +1,78 @@
+@startuml examination_status_state_diagram
+title Examination Status Lifecycle (domain_model.md §5, §7, §9)
+
+state draft
+state planned
+state completed
+state cancelled
+state missed
+
+[*] --> draft
+[*] --> planned
+[*] --> completed
+[*] --> cancelled
+[*] --> missed
+
+draft <--> planned
+draft <--> completed
+draft <--> cancelled
+draft <--> missed
+planned <--> completed
+planned <--> cancelled
+planned <--> missed
+completed <--> cancelled
+completed <--> missed
+cancelled <--> missed
+
+draft --> [*] : delete
+planned --> [*] : delete
+completed --> [*] : delete
+cancelled --> [*] : delete
+missed --> [*] : delete
+
+note top of draft
+  Every create/update validates the COMPLETE
+  resulting record, not the submitted diff. Any
+  status may transition to any other status via
+  update, provided the resulting record satisfies
+  its status-dependent required fields below. No
+  further transition matrix is defined
+  (domain_model.md §9) — do not add restrictions
+  without an approved decision.
+
+  draft: title only
+  planned / cancelled / missed: + scheduled_date
+  completed: + completed_date (<= today)
+end note
+
+state planned {
+  [*] --> upcoming
+  upcoming --> overdue : scheduled_date/time passes
+  note right of overdue
+    Derived at query/presentation time from
+    status + scheduled_date + scheduled_time +
+    the user's local time. Never persisted
+    (domain_model.md §7). Only "planned"
+    examinations can be upcoming or overdue.
+  end note
+}
+
+note right of planned
+  Reminder: may be created, updated, or
+  reactivated only while planned. Leaving
+  planned deactivates it (not deleted);
+  returning to planned does NOT auto-reactivate
+  it.
+
+  RecurrenceRule: create/modify only while
+  planned; the rule itself persists unchanged
+  across every status change.
+end note
+
+note bottom of draft
+  Drafts are excluded from upcoming, overdue,
+  and calendar results regardless of which
+  optional fields happen to be filled in.
+end note
+
+@enduml

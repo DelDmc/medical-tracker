@@ -1,0 +1,32 @@
+@startuml sequence_logout
+title Logout Flow (FR-006, SEC-005)
+
+actor User
+participant Frontend
+participant Backend
+
+User -> Frontend : select "Log out"
+Frontend -> Frontend : write logout_intent = true\nto localStorage
+Frontend -> Frontend : clear in-memory access_token and\nauthenticated-user state\n(CSRF token retained for this request)
+Frontend -> Backend : POST /api/v1/auth/logout/\nX-CSRFToken: <csrf_token>\n(no bearer token required)
+
+alt refresh_token cookie valid
+  Backend -> Backend : invalidate refresh token\n(ADS-FR-006-02, ADS-FR-007-09)
+else expired / revoked / already invalid / missing
+  Backend -> Backend : no-op (idempotent)
+end
+
+Backend --> Frontend : 204 No Content\nclear refresh_token cookie
+Frontend -> User : navigate to login page\n(on success, failure, or unreachable backend)
+
+note over Backend
+  A bearer access token already issued before
+  logout remains valid until its own 10-minute
+  expiry (ADS-FR-006-09) — an accepted, bounded
+  exposure window, not a defect.
+end note
+
+User -> Frontend : next successful login
+Frontend -> Frontend : remove logout_intent marker
+
+@enduml

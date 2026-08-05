@@ -1,0 +1,39 @@
+@startuml sequence_login
+title Login Flow (FR-005, SEC-005, UX-002–004)
+
+actor User
+participant Frontend
+participant Backend
+
+User -> Frontend : open login page,\nenter email + password
+
+alt no CSRF token held in memory
+  Frontend -> Backend : GET /api/v1/auth/csrf/ (credentialed)
+  Backend --> Frontend : Set-Cookie: csrf cookie (HttpOnly)\nbody: { csrf_token }
+  note right of Frontend
+    csrf_token held only in application
+    memory — never read from the cookie
+  end note
+end
+
+Frontend -> Backend : POST /api/v1/auth/login/\nX-CSRFToken: <csrf_token>\nbody: { email, password }
+Backend -> Backend : validate CSRF token\nvalidate credentials
+
+alt valid credentials
+  Backend --> Frontend : 200 OK\nbody: { access_token }\nSet-Cookie: refresh_token\n(HttpOnly, /api/v1/auth/)
+  Frontend -> Frontend : hold access_token in memory only\nremove medical_tracker.logout_intent
+  Frontend -> User : open authenticated dashboard
+else unknown email OR incorrect password
+  Backend --> Frontend : 401 Unauthorized\nbody: { "detail": "Invalid credentials." }
+  note over Backend
+    Identical response for both cases
+    (ADS-SEC-006-02) — does not disclose
+    whether the account exists.
+  end note
+  Frontend -> User : show generic authentication error
+else missing / mismatched CSRF
+  Backend --> Frontend : 403 Forbidden (CSRF failure)
+  Frontend -> User : show error,\nno session created
+end
+
+@enduml

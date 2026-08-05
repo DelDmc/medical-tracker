@@ -8,6 +8,10 @@ This repository is currently **documentation-only**. `backend/` and `frontend/` 
 
 Before writing any implementation code, read the relevant documents in `docs/` — they are a complete, decision-level specification (functional requirements, accepted design decisions, domain model, API contract, and user flows) for a Django REST Framework + React application that has not been built yet. Treat them as the plan to implement against, not background reading to skim.
 
+## Branching
+
+`main` is the documentation source of truth. Implementation work happens on other branches; `main` receives code only after the MVP is complete. Exact branch naming/workflow is not yet decided — don't assume a convention that isn't documented here.
+
 ## Document Source-of-Truth Hierarchy
 
 When documents disagree, this precedence applies (highest first):
@@ -52,3 +56,4 @@ Core rules that recur throughout the spec and are easy to violate accidentally:
 - Follow the existing per-decision structure exactly: unique `ADS-<REQ>-NN` id, status, single requirement reference, "It is decided ..." decision text, rationale, verification impact.
 - `docs/test_specification.md` holds one Given/When/Then test case per scenario, each with a unique `TC-<REQ-ID>-NN` id and exactly one requirement reference — mirrors the `ADS-<REQ-ID>-NN` pattern. When you write the actual test in code later, put its `TC-*` id in the test name or docstring so the link back to this spec is traceable; don't invent a new id scheme per test file. Update Section 11's traceability summary counts whenever you add or remove a test case.
 - `DEVELOPMENT_LOG.md` has its own usage rules at the top (one entry per dev day, newest first, only record actually-completed work, never record secrets/tokens/private medical data). Follow them when asked to update the log — don't mark something complete unless its acceptance criteria in the requirements are actually satisfied.
+- `docs/diagrams/` holds PlantUML source (`.puml` only, no rendered images) for the domain class diagram, the examination status state diagram, and the auth/password-change sequence diagrams. They are illustrative, not authoritative — if a diagram and a document disagree, fix the diagram. Keep them in sync when a change touches the domain model, examination status rules, or the auth/password-change flows.

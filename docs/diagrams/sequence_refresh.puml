@@ -1,0 +1,58 @@
+@startuml sequence_refresh_initialization
+title Session Restoration After Page Reload (FR-007, FR-008)
+
+actor User
+participant Frontend
+participant Backend
+
+Frontend -> Frontend : app initializes: no access token\nheld in memory (never persisted)
+Frontend -> Frontend : check medical_tracker.logout_intent\nin localStorage
+
+alt marker present
+  Frontend -> User : open login page\n(no refresh attempted)
+else marker absent
+  Frontend -> Backend : GET /api/v1/auth/csrf/ (credentialed)
+  Backend --> Frontend : { csrf_token }
+  Frontend -> Backend : POST /api/v1/auth/refresh/\nX-CSRFToken: <csrf_token>\n(reads refresh_token cookie, no JSON body)
+  alt refresh token valid
+    Backend -> Backend : invalidate submitted token\n(ADS-FR-007-09), issue rotated replacement
+    Backend --> Frontend : 200 OK { access_token }\nSet-Cookie: refresh_token (rotated)
+    Frontend -> Frontend : store access_token in memory
+    Frontend -> User : continue loading protected app
+  else refresh token invalid, expired,\nrevoked, or missing
+    Backend --> Frontend : 401 Unauthorized\nclear refresh_token cookie
+    Frontend -> User : open login page\n(silent — no session-expired message)
+  end
+end
+
+@enduml
+
+@startuml sequence_refresh_active_session
+title Active-Session Refresh on 401 (FR-007, FR-008)
+
+actor User
+participant Frontend
+participant Backend
+
+Frontend -> Backend : protected request\nAuthorization: Bearer <access_token>
+Backend --> Frontend : 401 Unauthorized (access token invalid)
+
+alt no refresh already in progress
+  Frontend -> Frontend : create one shared\nrefresh operation
+  Frontend -> Backend : POST /api/v1/auth/refresh/\nX-CSRFToken: <csrf_token>
+  alt refresh token valid and within\n7-day absolute session lifetime
+    Backend -> Backend : rotate token, invalidate previous\n(ADS-FR-007-02, ADS-FR-007-09)\ncheck session_start + 7 days (ADS-FR-007-08)
+    Backend --> Frontend : 200 OK { access_token }\nSet-Cookie: refresh_token (rotated)
+    Frontend -> Frontend : replace in-memory access_token
+    Frontend -> Backend : repeat original request once\nAuthorization: Bearer <new access_token>
+    Backend --> Frontend : original response
+  else invalid, expired, revoked,\nor 7-day lifetime elapsed
+    Backend --> Frontend : 401 Unauthorized\nclear refresh_token cookie
+    Frontend -> Frontend : clear auth state
+    Frontend -> User : redirect to login,\nshow session-expired message
+  end
+else refresh already in progress
+  Frontend -> Frontend : await the same in-flight refresh\n(no second refresh request sent)
+end
+
+@enduml

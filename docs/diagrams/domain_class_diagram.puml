@@ -1,0 +1,93 @@
+@startuml domain_class_diagram
+title Medical Tracker — Domain Class Diagram (docs/domain_model.md)
+
+hide circle
+skinparam classAttributeIconSize 0
+
+class User {
+  +id : Identifier
+  +email : string <<unique, case-insensitive>>
+  +password : hashed credential
+  +timezone : IANA timezone id
+}
+
+class ExaminationCategory {
+  +id : Identifier
+  +name : string <<unique>>
+  +slug : string <<unique>>
+}
+note right of ExaminationCategory
+  Fixed, seeded via idempotent migration,
+  read-only for MVP users. A null category
+  on ExaminationRecord is presented as
+  "Uncategorized" — not a stored row.
+end note
+
+class ExaminationRecord {
+  +id : Identifier
+  +title : string
+  +medical_specialty : string [0..1]
+  +scheduled_date : date [0..1]
+  +scheduled_time : time [0..1]
+  +completed_date : date [0..1]
+  +status : {draft, planned, completed, cancelled, missed}
+  +location : string [0..1]
+  +notes : text [0..1]
+  +created_at : datetime <<tz-aware>>
+  +updated_at : datetime <<tz-aware>>
+}
+note right of ExaminationRecord
+  Status-dependent required fields:
+  - draft: title only
+  - planned / cancelled / missed: + scheduled_date
+  - completed: + completed_date (<= today)
+  Every create/update validates the complete
+  resulting record, not just the submitted diff.
+  "overdue" is derived at query time — never
+  a stored value (see domain_model.md §7).
+end note
+
+class Reminder {
+  +id : Identifier
+  +offset_days : positive integer
+  +due_date : date [0..1] <<derived: scheduled_date - offset_days>>
+  +is_active : boolean
+  +created_at : datetime <<tz-aware>>
+  +updated_at : datetime <<tz-aware>>
+}
+note right of Reminder
+  May be active only while its examination is
+  planned. Leaving planned deactivates it (not
+  deleted); returning to planned does not
+  auto-reactivate it. Persists across every
+  status change.
+end note
+
+class RecurrenceRule {
+  +id : Identifier
+  +interval : {monthly, six_months, yearly}
+  +created_at : datetime <<tz-aware>>
+  +updated_at : datetime <<tz-aware>>
+}
+note right of RecurrenceRule
+  Create/modify only while planned. The rule
+  itself persists unchanged across every status
+  change. Next-occurrence creation is idempotent
+  per (source, calculated due date).
+end note
+
+User "1" -- "*" ExaminationRecord : owns >
+ExaminationCategory "0..1" -- "*" ExaminationRecord : classifies >
+ExaminationRecord "1" -- "0..1" Reminder : has >
+ExaminationRecord "1" -- "0..1" RecurrenceRule : has >
+ExaminationRecord "0..1" -- "*" ExaminationRecord : source_occurrence\n(generates) >
+
+note as DeleteNote
+  Deleting an examination cascades to its
+  Reminder and RecurrenceRule. Deleting an
+  examination referenced by another's
+  source_occurrence sets that reference to
+  null instead of deleting or blocking it.
+end note
+
+@enduml
