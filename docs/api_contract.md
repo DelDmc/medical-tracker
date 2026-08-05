@@ -97,6 +97,21 @@ Rules involving multiple fields may use `non_field_errors`:
 
 No universal custom response envelope is used.
 
+### 3.5 Rate limit exceeded
+
+```http
+429 Too Many Requests
+Retry-After: 42
+```
+
+```json
+{
+  "detail": "Request was throttled. Expected available in 42 seconds."
+}
+```
+
+This response is returned by `POST /api/v1/auth/register/`, `POST /api/v1/auth/login/`, and `POST /api/v1/auth/refresh/` once the request's client IP address has exceeded the configured limit for that endpoint. The `Retry-After` header gives the number of seconds until the limit window resets.
+
 ## 4. Health Check
 
 ### `GET /api/v1/health/`

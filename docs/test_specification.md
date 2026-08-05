@@ -2210,6 +2210,24 @@ When a test case is implemented in code, the test's name or docstring must inclu
 
 ---
 
+#### TC-SEC-007-01 — Requests exceeding the configured limit are throttled
+**Requirement reference:** SEC-007  
+**Layer:** API integration test  
+**Given** a client IP address that has reached the configured request limit for `POST /api/v1/auth/login/`  
+**When** the client sends one more request to that endpoint  
+**Then** the response is `429 Too Many Requests` with a `Retry-After` header.
+
+---
+
+#### TC-SEC-007-02 — The rate limit resets after the throttle window elapses
+**Requirement reference:** SEC-007  
+**Layer:** API integration test  
+**Given** a client IP address that has been throttled on `POST /api/v1/auth/login/`  
+**When** the client retries after the `Retry-After` interval has elapsed  
+**Then** the request is accepted and evaluated normally.
+
+---
+
 ## 8. Test Cases — Privacy Requirements
 
 #### TC-PRV-001-01 — Stored and writable examination fields match the approved domain model
@@ -2380,8 +2398,8 @@ When a test case changes:
 
 ## 11. Traceability Summary
 
-- Requirement references represented: **71**
-- Test cases recorded: **255**
-- Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-005, PRV-003, TECH-002, TECH-003, TECH-006**
+- Requirement references represented: **72**
+- Test cases recorded: **257**
+- Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-005, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
 - Requirements verified by exactly one test case: all remaining requirement identifiers.
 - Test cases linked to more than one requirement: **0**

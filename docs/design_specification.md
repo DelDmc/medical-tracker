@@ -963,6 +963,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-SEC-007-01 — Rate limits for unauthenticated authentication endpoints
+**Status:** Accepted  
+**Requirement reference:** SEC-007  
+**Decision:** It is decided that `POST /api/v1/auth/register/` and `POST /api/v1/auth/login/` will each be limited to 10 requests per minute per client IP address, and `POST /api/v1/auth/refresh/` will be limited to 30 requests per minute per client IP address, enforced with Django REST Framework's throttling framework. A request over the limit will receive `429 Too Many Requests` with a `Retry-After` header giving the number of seconds until the limit window resets.  
+**Rationale:** These three endpoints are unauthenticated, state-changing, and internet-exposed, making them the primary surface for credential stuffing and registration spam; per-IP throttling limits abuse before any account-scoped state exists. DRF's built-in throttling classes avoid a bespoke rate-limiting implementation.  
+**Verification impact:** An API integration test will exceed each endpoint's configured limit and confirm that the next request returns `429 Too Many Requests` with a `Retry-After` header, and that requests succeed again once the window elapses.
+
+---
+
 ## 7. Privacy Design Decisions
 
 #### ADS-PRV-001-01 — Approved examination field whitelist
@@ -1071,9 +1080,9 @@ When a design decision changes:
 
 ## 10. Traceability Summary
 
-- Requirement references represented: **71**
-- Design decisions recorded: **111**
-- Accepted design decisions: **111**
+- Requirement references represented: **72**
+- Design decisions recorded: **112**
+- Accepted design decisions: **112**
 - Proposed design decisions: **0**
 - Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-044, SEC-005**
 - Design decisions linked to more than one requirement: **0**

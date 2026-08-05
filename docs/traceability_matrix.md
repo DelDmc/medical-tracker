@@ -32,6 +32,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | CSRF-cookie `HttpOnly` attribute | SEC-005 | ADS-SEC-005-07 |
 | CSRF-cookie environment attributes | SEC-005 | ADS-SEC-005-08 |
 | Uniform not-found response | SEC-006 | ADS-SEC-006-01 |
+| Rate limiting on unauthenticated auth endpoints | SEC-007 | ADS-SEC-007-01 |
 | Date, time, and timestamp representations | TECH-002 | ADS-TECH-002-01 |
 | `GET /api/v1/health/` | TECH-004 | ADS-TECH-004-01 |
 | `POST /api/v1/auth/register/` — account creation | FR-001 | ADS-FR-001-01 |

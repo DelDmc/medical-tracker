@@ -214,6 +214,9 @@ Verification statements identify the primary verification method. Detailed fixtu
 **SEC-006** — The application shall return the same not-found response when a requested examination record does not exist or belongs to another user.
 **Verification:** An API integration test shall confirm that both requests return the same HTTP status and response structure.
 
+**SEC-007** — The application shall rate-limit unauthenticated registration, login, and refresh requests and reject requests over the configured limit with `429 Too Many Requests`.
+**Verification:** An API integration test shall exceed the configured limit for each endpoint and confirm that further requests receive `429 Too Many Requests` until the limit window resets.
+
 ## 5. Privacy Requirements
 
 **PRV-001** — The application shall limit stored examination information to the appointment and examination metadata defined in the approved domain model.

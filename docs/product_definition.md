@@ -20,6 +20,10 @@ When documents differ, they have the following precedence:
 4. `domain_model.md`, `api_contract.md`, and `user_flows.md` — detailed design artifacts;
 5. `test_specification.md` — verification design linked to requirements.
 
+This precedence covers product-level and scope statements only — the product overview, target user, and the exclusions in §8. Per §7, this document must not introduce conflicting behavior, so where `design_specification.md` defines specific behavior through an accepted `ADS-*` decision, that decision governs regardless of rank; an apparent conflict there means this document's wording needs correcting to match, not that its rank overrides the decision.
+
+`traceability_matrix.md` is not part of this hierarchy: it is an administrative mapping from requirements to design decisions to API operations and does not itself define behavior.
+
 The product definition must be updated when an accepted requirement changes the product-level description.
 
 ## 3. Target User

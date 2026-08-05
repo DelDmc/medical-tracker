@@ -58,11 +58,6 @@ Maintenance rules:
 **Disposition:** Fix now
 **Finding:** FR-006 states a frontend integration test as its verification method, but `ADS-FR-006-02`, `ADS-FR-006-03`, and `ADS-FR-006-04` define backend behavior and `TC-FR-006-01` through `TC-FR-006-04` are API integration tests. FR-037 likewise states a frontend integration test, while the due-reminder filter is defined as a backend query in `api_contract.md` §14.4 and `ADS-FR-037-01` relies on that backend filtering. In both cases the requirement's stated verification method does not cover the behavior actually accepted beneath it.
 
-#### RF-08 — The source-of-truth hierarchy is internally inconsistent and incomplete
-**Documents:** `product_definition.md (15-21)`, `product_definition.md:148`
-**Disposition:** Needs decision
-**Finding:** §2 places `product_definition.md` at position 2, above `design_specification.md`, while §7 states that the same document only summarizes the requirements and "must not introduce conflicting behavior". A document that cannot introduce behavior cannot meaningfully outrank one that defines it. The hierarchy also omits `traceability_matrix.md` entirely, although that document is referenced as the authority for traceability by `requirements_specification.md:256`.
-
 #### RF-09 — The test specification points at the wrong section for its own counts
 **Documents:** `test_specification.md:15`, `test_specification.md:2370`, `test_specification.md:2381`
 **Disposition:** Fix now
@@ -76,11 +71,6 @@ Maintenance rules:
 **Finding:** The contract requires both `start_date` and `end_date`, fixes their format, and requires `start_date` not to be later than `end_date`. `ADS-FR-042-01` decides only that calendar data comes from a date-range query and how records are placed; it does not state the parameter rules. FR-042's verification method is a frontend integration test, and its decision's verification impact is likewise frontend-only, so no accepted verification exercises the parameter validation the contract promises.
 
 ## 5. Security and Design Gaps
-
-#### RF-11 — No rate limiting on unauthenticated state-changing endpoints
-**Documents:** `requirements_specification.md (197-215)`, `api_contract.md (31-98)`
-**Disposition:** In progress
-**Finding:** No requirement, decision, or contract statement limits the rate of registration, login, or refresh requests, and `429 Too Many Requests` is absent from the common-response set. Registration and login are unauthenticated, state-changing, and internet-exposed; the generic credential error prevents enumeration but does nothing against credential stuffing or registration spam. Being addressed as SEC-007.
 
 #### RF-12 — The refresh-token invalidation mechanism is never specified
 **Documents:** `design_specification.md (140-145)`, `design_specification.md (212-215)`, `design_specification.md (239-244)`, `design_specification.md (257-262)`
@@ -141,9 +131,9 @@ Maintenance rules:
 
 ## 7. Summary
 
-- Findings open: **20**
+- Findings open: **18**
 - Fix now: **5** — RF-05, RF-06, RF-07, RF-09, RF-10
-- Needs decision: **9** — RF-04, RF-08, RF-12, RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
-- In progress: **2** — RF-01, RF-11
+- Needs decision: **8** — RF-04, RF-12, RF-13, RF-14, RF-17, RF-18, RF-22, RF-23
+- In progress: **1** — RF-01
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
 - Accepted: **0**
