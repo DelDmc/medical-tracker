@@ -31,14 +31,7 @@ Maintenance rules:
 3. A finding must reference a location that can be checked, not a recollection.
 4. When a finding is deleted, the commit message states which `RF-NN` was resolved and where the fix landed.
 
-## 3. Cross-Document Inconsistencies
-
-#### RF-01 — Response indistinguishability is recorded at two different hierarchy levels
-**Documents:** `requirements_specification.md:214`, `design_specification.md (113-118)`, `traceability_matrix.md:47`, `test_specification.md:149`
-**Disposition:** In progress
-**Finding:** The same security principle — that a failure response must not disclose whether something exists — is a requirement for examination lookups (SEC-006) but only a design decision for login (`ADS-FR-005-05`). Two levels of the hierarchy express one principle, so a future non-disclosure decision has no consistent parent. The agreed fix is to broaden SEC-006 to cover both scopes and re-home `ADS-FR-005-05` as `ADS-SEC-006-02`, which also requires updating the matrix row and splitting the indistinguishability assertion out of `TC-FR-005-04` into a new `TC-SEC-006-02`.
-
-## 4. Security and Design Gaps
+## 3. Security and Design Gaps
 
 #### RF-15 — No security-header decisions exist
 **Documents:** `design_specification.md (995-1056)`
@@ -55,18 +48,18 @@ Maintenance rules:
 **Disposition:** Deferred
 **Finding:** A reminder offset must be a positive whole number, with no maximum. A very large offset produces a `due_date` far in the past, which is immediately due and stays due. Trigger: revisit when the due-reminder view is implemented.
 
-## 5. Repository Artifacts Outside `docs/`
+## 4. Repository Artifacts Outside `docs/`
 
 #### RF-20 — Required repository documentation does not exist
 **Documents:** `README.md`, `requirements_specification.md (248-249)`, `design_specification.md (1051-1056)`
 **Disposition:** Deferred
 **Finding:** TECH-007 requires documented local setup, test execution, migration, build, and deployment procedures, and `ADS-TECH-007-01` requires those instructions to be maintained in the repository and tied to its actual structure. `README.md` is empty. `.gitignore` is also empty, although `ADS-SEC-004-01` depends on excluding local `.env` files from version control. Trigger: `.gitignore` before the first backend commit; `README.md` before Phase 2 completes.
 
-## 6. Summary
+## 5. Summary
 
-- Findings open: **5**
+- Findings open: **4**
 - Fix now: **0**
 - Needs decision: **0**
-- In progress: **1** — RF-01
+- In progress: **0**
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
 - Accepted: **0**

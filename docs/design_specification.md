@@ -110,15 +110,6 @@ Each design decision contains:
 
 ---
 
-#### ADS-FR-005-05 — Generic invalid-credentials response
-**Status:** Accepted  
-**Requirement reference:** FR-005  
-**Decision:** It is decided that invalid login credentials will return one generic authentication error regardless of whether the submitted email exists.  
-**Rationale:** A generic error avoids disclosing account existence.  
-**Verification impact:** API integration tests will confirm that unknown-email and incorrect-password attempts return the same status and response structure.
-
----
-
 #### ADS-FR-005-06 — Access-token lifetime
 **Status:** Accepted
 **Requirement reference:** FR-005
@@ -1026,6 +1017,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-SEC-006-02 — Generic invalid-credentials response
+**Status:** Accepted  
+**Requirement reference:** SEC-006  
+**Decision:** It is decided that invalid login credentials will return one generic authentication error regardless of whether the submitted email exists.  
+**Rationale:** A generic error avoids disclosing account existence, applying the same non-disclosure principle as `ADS-SEC-006-01` to the login endpoint.  
+**Verification impact:** API integration tests will confirm that unknown-email and incorrect-password attempts return the same status and response structure.
+
+---
+
 #### ADS-SEC-007-01 — Rate limits for unauthenticated authentication endpoints
 **Status:** Accepted  
 **Requirement reference:** SEC-007  
@@ -1147,6 +1147,6 @@ When a design decision changes:
 - Design decisions recorded: **119**
 - Accepted design decisions: **119**
 - Proposed design decisions: **0**
-- Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-042, FR-044, SEC-005**
+- Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-042, FR-044, SEC-005, SEC-006**
 - Design decisions linked to more than one requirement: **0**
 - Requirement statements duplicated from `requirements_specification.md`: **0**

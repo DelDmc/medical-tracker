@@ -216,8 +216,8 @@ Verification statements identify the primary verification method. Detailed fixtu
 **SEC-005** — The deployed backend shall accept browser requests only from configured frontend origins.
 **Verification:** A deployment integration test shall confirm that a configured origin is accepted and an unconfigured origin is rejected.
 
-**SEC-006** — The application shall return the same not-found response when a requested examination record does not exist or belongs to another user.
-**Verification:** An API integration test shall confirm that both requests return the same HTTP status and response structure.
+**SEC-006** — The application shall return an identical failure response regardless of the specific reason for failure, wherever a differing response would disclose whether a specific record or account exists. This applies at minimum to examination record lookup (identical `404 Not Found` for a missing record and a record owned by another user) and to login (identical `401 Unauthorized` for an unknown email and an incorrect password).
+**Verification:** An API integration test shall confirm that both examination-lookup failure cases return the same HTTP status and response structure, and that both login failure cases return the same HTTP status and response structure.
 
 **SEC-007** — The application shall rate-limit unauthenticated registration, login, and refresh requests and reject requests over the configured limit with `429 Too Many Requests`.
 **Verification:** An API integration test shall exceed the configured limit for each endpoint and confirm that further requests receive `429 Too Many Requests` until the limit window resets.

@@ -46,7 +46,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | Access-token signing algorithm and claims | FR-005 | ADS-FR-005-07 |
 | Login refresh-token cookie | FR-005, SEC-005 | ADS-FR-005-03, ADS-SEC-005-04 |
 | Frontend access-token storage and bearer transport | FR-005 | ADS-FR-005-04 |
-| Generic invalid-credentials response | FR-005 | ADS-FR-005-05 |
+| Generic invalid-credentials response | SEC-006 | ADS-SEC-006-02 |
 | `POST /api/v1/auth/logout/` request contract | FR-006, SEC-005 | ADS-FR-006-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-06 |
 | Logout refresh-token invalidation | FR-006 | ADS-FR-006-02 |
 | Access-token validity survives logout | FR-006 | ADS-FR-006-09 |

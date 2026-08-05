@@ -150,12 +150,12 @@ When a test case is implemented in code, the test's name or docstring must inclu
 
 ---
 
-#### TC-FR-005-04 — Login with an incorrect password returns the same generic authentication error
+#### TC-FR-005-04 — Login with an incorrect password returns a generic authentication error
 **Requirement reference:** FR-005  
 **Layer:** API integration test  
 **Given** a registered account with a known email and password  
 **When** the client submits a CSRF-protected `POST /api/v1/auth/login/` with the correct email and an incorrect password  
-**Then** the response has the identical `401 Unauthorized` status and body as TC-FR-005-03.
+**Then** the response is `401 Unauthorized` with body `{"detail": "Invalid credentials."}`.
 
 ---
 
@@ -2336,6 +2336,15 @@ When a test case is implemented in code, the test's name or docstring must inclu
 
 ---
 
+#### TC-SEC-006-02 — An unknown email and an incorrect password return identical login failure responses
+**Requirement reference:** SEC-006  
+**Layer:** API integration test  
+**Given** a login attempt with an unknown email and a login attempt with a registered account's correct email but an incorrect password  
+**When** both requests are submitted to `POST /api/v1/auth/login/`  
+**Then** both responses have the identical `401 Unauthorized` status and body structure.
+
+---
+
 #### TC-SEC-007-01 — Requests exceeding the configured limit are throttled
 **Requirement reference:** SEC-007  
 **Layer:** API integration test  
@@ -2525,7 +2534,7 @@ When a test case changes:
 ## 11. Traceability Summary
 
 - Requirement references represented: **73**
-- Test cases recorded: **271**
-- Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, FR-048, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-003, SEC-005, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
+- Test cases recorded: **272**
+- Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, FR-048, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-003, SEC-005, SEC-006, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
 - Requirements verified by exactly one test case: all remaining requirement identifiers.
 - Test cases linked to more than one requirement: **0**
