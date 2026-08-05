@@ -62,21 +62,11 @@ Maintenance rules:
 **Disposition:** Deferred
 **Finding:** TECH-007 requires documented local setup, test execution, migration, build, and deployment procedures, and `ADS-TECH-007-01` requires those instructions to be maintained in the repository and tied to its actual structure. `README.md` is empty. `.gitignore` is also empty, although `ADS-SEC-004-01` depends on excluding local `.env` files from version control. Trigger: `.gitignore` before the first backend commit; `README.md` before Phase 2 completes.
 
-#### RF-22 — Historical log entries plan filenames and a structure the project did not adopt
-**Documents:** `DEVELOPMENT_LOG.md (135-143)`, `DEVELOPMENT_LOG.md (202-210)`
-**Disposition:** Needs decision
-**Finding:** The 18.07.2026 and 19.07.2026 entries plan `domain-model.md`, `api-contract.md`, `user-flows.md`, and a `docs/decisions/` directory of numbered decision records. The repository uses underscored filenames and records all decisions in a single `design_specification.md`. The current status and phase table have since been corrected, but these entries still describe a structure that does not exist. Decide whether historical daily entries may be corrected in place or must remain exactly as written, in which case a superseding note is added instead.
-
-#### RF-23 — Historical log entries use field names the domain model does not have
-**Documents:** `DEVELOPMENT_LOG.md (128-129)`, `DEVELOPMENT_LOG.md (195-196)`
-**Disposition:** Needs decision
-**Finding:** Two open business rules in the 18.07.2026 and 19.07.2026 entries are written in terms of `scheduled_at` and `completed_at`. The accepted model uses `scheduled_date`, a separate optional `scheduled_time`, and `completed_date`, and both questions have since been answered by accepted requirements and decisions. Resolution depends on the same decision as RF-22.
-
 ## 6. Summary
 
-- Findings open: **7**
+- Findings open: **5**
 - Fix now: **0**
-- Needs decision: **2** — RF-22, RF-23
+- Needs decision: **0**
 - In progress: **1** — RF-01
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
 - Accepted: **0**

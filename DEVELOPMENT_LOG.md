@@ -43,6 +43,7 @@ Record the current documentation-review state, preserve active specification fin
 - [+] Re-verified the documentation suite and confirmed that `docs/test_specification.md` is present and accepted.
 - [+] Seeded the findings document with active review findings, including response indistinguishability, rate limiting, token-state, password-policy, API-contract, and repository-documentation concerns.
 - [+] Updated this development log's current status and phase table to reflect the documentation-first project state.
+- [+] Resolved `docs/review_findings.md` RF-22 and RF-23 by adding a note (below) superseding the 18.07.2026 and 19.07.2026 entries' planned file structure and field names, without altering those entries.
 
 ### Files Created or Modified
 
@@ -91,6 +92,10 @@ Record the current documentation-review state, preserve active specification fin
 - Resolve RF-01 before finalizing SEC-007 response semantics.
 - Decide whether registration's duplicate-email error is an accepted account-existence disclosure or should change.
 - Define refresh-token server-side state, reuse behavior, and seven-day session tracking before authentication implementation.
+
+### Note: Superseding Earlier Planned Structure (RF-22, RF-23)
+
+The 18.07.2026 and 19.07.2026 entries' "Tomorrow's Plan" sections describe creating `domain-model.md`, `api-contract.md`, `user-flows.md`, and a `docs/decisions/` directory of numbered decision records, and pose open business-rule questions using `scheduled_at`/`completed_at`. Those entries are left unchanged below, as an accurate record of what was planned and asked at the time. For a current reader: the adopted filenames use underscores (`domain_model.md`, `api_contract.md`, `user_flows.md`), all decisions are recorded in a single `design_specification.md` rather than a `docs/decisions/` directory, and the accepted domain model uses `scheduled_date`, a separate optional `scheduled_time`, and `completed_date` rather than `scheduled_at`/`completed_at`. Both open business-rule questions from those entries have since been answered by the accepted requirements and design decisions.
 
 ### Development Record
 
