@@ -53,7 +53,7 @@ Maintenance rules:
 #### RF-20 — Required repository documentation does not exist
 **Documents:** `README.md`, `requirements_specification.md (248-249)`, `design_specification.md (1051-1056)`
 **Disposition:** Deferred
-**Finding:** TECH-007 requires documented local setup, test execution, migration, build, and deployment procedures, and `ADS-TECH-007-01` requires those instructions to be maintained in the repository and tied to its actual structure. `README.md` is empty. `.gitignore` is also empty, although `ADS-SEC-004-01` depends on excluding local `.env` files from version control. Trigger: `.gitignore` before the first backend commit; `README.md` before Phase 2 completes.
+**Finding:** TECH-007 requires documented local setup, test execution, migration, build, and deployment procedures, and `ADS-TECH-007-01` requires those instructions to be maintained in the repository and tied to its actual structure. `README.md` is empty. Trigger: before Phase 2 completes.
 
 ## 5. Summary
 
