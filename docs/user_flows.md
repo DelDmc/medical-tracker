@@ -556,3 +556,24 @@ Invalid filter or ordering values are rejected with a validation error.
 - primary navigation, forms, dialogs, and examination actions are operable using touch, mouse, and keyboard input;
 - primary actions use semantic controls, visible keyboard focus, correctly labelled fields, and focus-managed modal dialogs;
 - no primary action depends exclusively on hover, pointer gestures, or color.
+
+## 25. Change Account Password
+
+**Requirement reference:** FR-048
+
+### Preconditions
+
+- the user is authenticated.
+
+1. The user opens account settings and selects change password.
+2. The user enters their current password and a new password.
+3. The frontend sends `POST /api/v1/account/password/` with `current_password` and `new_password`.
+4. The backend verifies `current_password` against the stored hash and validates `new_password` against the accepted password policy.
+5. On success, the backend updates the stored password and returns `200 OK` with an empty body.
+6. The application displays a confirmation and clears the password fields from client state.
+
+### Failure behavior
+
+- an incorrect `current_password` displays an error adjacent to that field and the stored password remains unchanged;
+- a `new_password` failing the accepted password policy displays an error adjacent to that field and the stored password remains unchanged;
+- an unauthenticated request follows the session-expiration or authentication-failure flow.

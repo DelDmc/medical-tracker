@@ -40,11 +40,6 @@ Maintenance rules:
 
 ## 4. Security and Design Gaps
 
-#### RF-14 — Password change is referenced but exists nowhere else
-**Documents:** `design_specification.md:870`
-**Disposition:** Needs decision
-**Finding:** `ADS-SEC-003-01` requires that "all account creation and password changes" use Django's password API. No requirement, endpoint, user flow, or explicit exclusion covers password change or password reset, so the decision constrains a capability the product does not define.
-
 #### RF-15 — No security-header decisions exist
 **Documents:** `design_specification.md (995-1056)`
 **Disposition:** Deferred
@@ -89,9 +84,9 @@ Maintenance rules:
 
 ## 6. Summary
 
-- Findings open: **10**
+- Findings open: **9**
 - Fix now: **0**
-- Needs decision: **5** — RF-14, RF-17, RF-18, RF-22, RF-23
+- Needs decision: **4** — RF-17, RF-18, RF-22, RF-23
 - In progress: **1** — RF-01
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
 - Accepted: **0**

@@ -68,6 +68,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | Failed initialization refresh outcome | FR-008 | ADS-FR-008-03 |
 | Single-flight refresh coordination | FR-008 | ADS-FR-008-04 |
 | `GET` and `PATCH /api/v1/account/` | FR-009 | ADS-FR-009-01 |
+| `POST /api/v1/account/password/` authenticated password change | FR-048 | ADS-FR-048-01 |
 | Draft examination creation | FR-010 | ADS-FR-010-01 |
 | Planned examination creation | FR-011 | ADS-FR-011-01 |
 | Examination status values | FR-012 | ADS-FR-012-01 |

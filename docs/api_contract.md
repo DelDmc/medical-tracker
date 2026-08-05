@@ -400,6 +400,42 @@ Success:
 
 Changing the account timezone does not alter the stored instant represented by existing timezone-aware timestamps.
 
+### 6.3 Change password
+
+#### `POST /api/v1/account/password/`
+
+Authentication: required.
+
+Request:
+
+```json
+{
+  "current_password": "example-password",
+  "new_password": "new-example-password"
+}
+```
+
+Validation:
+
+- `current_password` is required and must match the authenticated account's stored password;
+- `new_password` is required and follows the same rules as registration (§5.2): between eight and 128 characters, not a commonly used password, not entirely numeric, and not closely resembling the account's email address;
+- neither password value is ever returned.
+
+Success:
+
+```http
+200 OK
+```
+
+The response body is empty.
+
+Failure:
+
+- an incorrect `current_password` returns `400 Bad Request` with a field-level error and the stored password is unchanged;
+- a `new_password` failing validation returns `400 Bad Request` with a field-level error and the stored password is unchanged.
+
+Password reset for an unauthenticated user is out of scope for the MVP (see `product_definition.md` §8).
+
 ## 7. Categories
 
 ### `GET /api/v1/categories/`

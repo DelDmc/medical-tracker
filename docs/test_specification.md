@@ -439,6 +439,33 @@ When a test case is implemented in code, the test's name or docstring must inclu
 
 ---
 
+#### TC-FR-048-01 — Password change succeeds with a correct current password and a compliant new password
+**Requirement reference:** FR-048  
+**Layer:** API integration test  
+**Given** an authenticated user  
+**When** the client submits `POST /api/v1/account/password/` with the correct `current_password` and a `new_password` that satisfies the accepted password policy  
+**Then** the response is `200 OK` with an empty body, and a subsequent login succeeds only with the new password.
+
+---
+
+#### TC-FR-048-02 — Password change is rejected for an incorrect current password
+**Requirement reference:** FR-048  
+**Layer:** API validation test  
+**Given** an authenticated user  
+**When** the client submits `POST /api/v1/account/password/` with an incorrect `current_password`  
+**Then** the response is `400 Bad Request` with a field-level error, and the stored password is unchanged.
+
+---
+
+#### TC-FR-048-03 — Password change is rejected when the new password fails the accepted policy
+**Requirement reference:** FR-048  
+**Layer:** API validation test  
+**Given** an authenticated user and the correct `current_password`  
+**When** the client submits `POST /api/v1/account/password/` with a `new_password` that fails the accepted password policy (for example, shorter than eight characters)  
+**Then** the response is `400 Bad Request` with a field-level error, and the stored password is unchanged.
+
+---
+
 ### 5.2 Examination Records
 
 #### TC-FR-010-01 — Draft creation preserves title and supplied optional information
@@ -2470,8 +2497,8 @@ When a test case changes:
 
 ## 11. Traceability Summary
 
-- Requirement references represented: **72**
-- Test cases recorded: **265**
-- Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-003, SEC-005, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
+- Requirement references represented: **73**
+- Test cases recorded: **268**
+- Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, FR-048, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-003, SEC-005, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
 - Requirements verified by exactly one test case: all remaining requirement identifiers.
 - Test cases linked to more than one requirement: **0**

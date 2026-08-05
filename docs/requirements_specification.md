@@ -168,6 +168,11 @@ Verification statements identify the primary verification method. Detailed fixtu
 **FR-047** — The application shall display the number of overdue examinations on the dashboard.
 **Verification:** An API integration test shall confirm that the dashboard response contains the correct overdue examination count.
 
+### 2.8 Account Management
+
+**FR-048** — The application shall allow an authenticated user to change their password by submitting their current password and a new password.
+**Verification:** An API integration test shall submit a correct current password with a valid new password and confirm the account can subsequently authenticate only with the new password, and shall confirm that an incorrect current password or a new password failing the accepted password policy is rejected without changing the stored password.
+
 ## 3. User Experience Requirements
 
 **UX-001** — The application shall use a mobile-first responsive layout on phone, tablet, and desktop screen sizes.

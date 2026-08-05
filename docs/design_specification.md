@@ -326,6 +326,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-FR-048-01 — Authenticated password change
+**Status:** Accepted  
+**Requirement reference:** FR-048  
+**Decision:** It is decided that authenticated password change will be provided through `POST /api/v1/account/password/`, using the standard authenticated (bearer-token) domain-API permission with no CSRF requirement. The request will carry `current_password` and `new_password`. The backend will verify `current_password` against the stored hash and validate `new_password` against the password policy accepted in `ADS-FR-003-01` and `ADS-SEC-003-01` before calling Django's password-setting API; a failure of either check will reject the request without modifying the stored password. Success will return `200 OK` with an empty body. Password reset for an unauthenticated user is out of scope for the MVP.  
+**Rationale:** Reusing the domain-API bearer-authentication pattern avoids a bespoke authentication path; verifying the current password prevents a bare access token from silently taking over the account; reusing the existing password policy keeps registration and change consistent. Password reset depends on out-of-band delivery (typically email), which is itself excluded from this MVP, so it is excluded alongside it rather than built on a non-standard substitute.  
+**Verification impact:** An API integration test will submit a correct current password with a compliant new password and confirm subsequent login requires the new password; will submit an incorrect current password and confirm the stored password is unchanged; and will submit a new password failing the accepted policy and confirm rejection.
+
+---
+
 ### 4.2 Examination Records
 
 #### ADS-FR-010-01 — Draft examination creation
@@ -1107,9 +1116,9 @@ When a design decision changes:
 
 ## 10. Traceability Summary
 
-- Requirement references represented: **72**
-- Design decisions recorded: **115**
-- Accepted design decisions: **115**
+- Requirement references represented: **73**
+- Design decisions recorded: **116**
+- Accepted design decisions: **116**
 - Proposed design decisions: **0**
 - Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-042, FR-044, SEC-005**
 - Design decisions linked to more than one requirement: **0**
