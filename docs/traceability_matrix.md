@@ -48,6 +48,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | Generic invalid-credentials response | FR-005 | ADS-FR-005-05 |
 | `POST /api/v1/auth/logout/` request contract | FR-006, SEC-005 | ADS-FR-006-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-06 |
 | Logout refresh-token invalidation | FR-006 | ADS-FR-006-02 |
+| Access-token validity survives logout | FR-006 | ADS-FR-006-09 |
 | Logout refresh-cookie clearing | FR-006, SEC-005 | ADS-FR-006-03, ADS-SEC-005-04 |
 | Idempotent logout response | FR-006 | ADS-FR-006-04 |
 | Immediate local session-state clearing | FR-006 | ADS-FR-006-05 |

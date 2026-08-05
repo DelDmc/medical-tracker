@@ -50,11 +50,6 @@ Maintenance rules:
 **Disposition:** Deferred
 **Finding:** MVP list endpoints return complete JSON arrays with pagination excluded from the contract, and the calendar endpoint places no maximum span on its date range. Both response sizes grow with stored data and with a caller-chosen range. Trigger: revisit when pagination is implemented, or as soon as any account is expected to hold a large number of records.
 
-#### RF-17 — Logout does not end access-token validity
-**Documents:** `design_specification.md (140-145)`, `design_specification.md (122-127)`, `user_flows.md (85-94)`
-**Disposition:** Needs decision
-**Finding:** Logout invalidates the refresh token and clears client state, but a bearer access token already issued remains valid until its own expiry, up to ten minutes after logout. This is a normal consequence of stateless access tokens, but it is documented nowhere, so a reader cannot tell whether it is intended.
-
 #### RF-18 — JWT algorithm and claim set are unspecified
 **Documents:** `design_specification.md (86-127)`, `design_specification.md:879`
 **Disposition:** Needs decision
@@ -84,9 +79,9 @@ Maintenance rules:
 
 ## 6. Summary
 
-- Findings open: **9**
+- Findings open: **8**
 - Fix now: **0**
-- Needs decision: **4** — RF-17, RF-18, RF-22, RF-23
+- Needs decision: **3** — RF-18, RF-22, RF-23
 - In progress: **1** — RF-01
 - Deferred: **4** — RF-15, RF-16, RF-19, RF-20
 - Accepted: **0**

@@ -295,6 +295,15 @@ When a test case is implemented in code, the test's name or docstring must inclu
 
 ---
 
+#### TC-FR-006-14 — A pre-logout access token remains valid until its own expiration
+**Requirement reference:** FR-006  
+**Layer:** API integration test  
+**Given** an access token issued before logout, with logout completed and the refresh token invalidated  
+**When** the client submits a protected request using that access token before its ten-minute expiration has elapsed  
+**Then** the request succeeds.
+
+---
+
 #### TC-FR-007-01 — A valid refresh token returns a new access token
 **Requirement reference:** FR-007  
 **Layer:** API integration test  
@@ -2498,7 +2507,7 @@ When a test case changes:
 ## 11. Traceability Summary
 
 - Requirement references represented: **73**
-- Test cases recorded: **268**
+- Test cases recorded: **269**
 - Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, FR-048, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-003, SEC-005, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
 - Requirements verified by exactly one test case: all remaining requirement identifiers.
 - Test cases linked to more than one requirement: **0**

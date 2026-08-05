@@ -146,6 +146,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-FR-006-09 — Access-token validity survives logout
+**Status:** Accepted  
+**Requirement reference:** FR-006  
+**Decision:** It is decided that logout will not revoke an already-issued access token; a bearer access token obtained before logout remains valid, and continues to grant access to protected endpoints, until its own ten-minute expiration (`ADS-FR-005-06`).  
+**Rationale:** The access token is a stateless, self-verifying JWT with no server-side revocation state by design (`ADS-FR-005-06`), and checking it against a denylist on every protected request would reintroduce the per-request database lookup that a short-lived stateless token exists to avoid. The exposure window this leaves open is bounded to the token's own ten-minute lifetime.  
+**Verification impact:** An API integration test will confirm that an access token issued before logout continues to authenticate protected requests until its own expiration.
+
+---
+
 #### ADS-FR-006-03 — Logout refresh-cookie clearing
 **Status:** Accepted  
 **Requirement reference:** FR-006  
@@ -1117,8 +1126,8 @@ When a design decision changes:
 ## 10. Traceability Summary
 
 - Requirement references represented: **73**
-- Design decisions recorded: **116**
-- Accepted design decisions: **116**
+- Design decisions recorded: **117**
+- Accepted design decisions: **117**
 - Proposed design decisions: **0**
 - Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-042, FR-044, SEC-005**
 - Design decisions linked to more than one requirement: **0**

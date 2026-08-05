@@ -97,6 +97,8 @@ The refresh-token session carries an absolute maximum lifetime of seven days fro
 9. While `medical_tracker.logout_intent` exists, later protected-application initialization does not attempt session restoration.
 10. A later successful login removes the logout-intent marker.
 
+Logout invalidates the refresh token but not an already-issued access token: a bearer access token obtained before logout remains valid, on the backend, until its own ten-minute expiration, even though the frontend has already discarded it from memory in step 3. This is an accepted, bounded consequence of the stateless access token, not a defect.
+
 ## 5. Update Account Timezone
 
 **Requirement references:** FR-009, UX-007
