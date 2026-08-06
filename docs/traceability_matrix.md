@@ -14,7 +14,7 @@ It is an administrative mapping document. It does not define product behavior, d
 - When a requirement or decision is added, removed, superseded, or materially changed, affected rows must be updated.
 - One API operation may map to several requirements and decisions.
 - Requirements that are purely frontend, deployment, documentation, or internal persistence concerns may have no direct API-operation row.
-- A mapped design decision may be accepted or proposed; `design_specification.md` remains authoritative for design-decision status.
+- A mapped requirement or design decision may carry any status (`Draft`, `Accepted`, `Rejected`, `Obsolete`); `requirements_specification.md` and `design_specification.md` remain authoritative for status.
 
 ## 3. API Traceability
 

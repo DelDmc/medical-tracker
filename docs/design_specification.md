@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This document records proposed and accepted implementation design decisions for the Medical Tracker Application MVP.
+This document records draft and accepted implementation design decisions for the Medical Tracker Application MVP.
 
 `requirements_specification.md` remains the source of truth for required behavior and verification. This document references requirement identifiers for traceability but does not reproduce requirement statements or verification criteria. A design decision must not change, weaken, combine, or replace a requirement.
 
@@ -12,7 +12,7 @@ This document records proposed and accepted implementation design decisions for 
 
 Every design decision recorded in this document is accepted. Each decision also carries its own status, and that per-decision status is authoritative.
 
-No design decision in this document is accepted merely because it is recorded here. A decision marked **Proposed** must be reviewed and accepted before the affected implementation begins. Section 10 records the current accepted and proposed decision counts.
+Each design decision carries a **Status** of **Draft**, **Accepted**, **Rejected**, or **Obsolete** — the same vocabulary used for requirements in `requirements_specification.md`. No design decision in this document is accepted merely because it is recorded here. A decision marked **Draft** must be reviewed and accepted before the affected implementation begins. A decision whose status is **Rejected** or **Obsolete** also carries a **Comment** explaining why, immediately after its **Status** line; the decision's text is not deleted — it remains in this document with its status and comment as a record of what was considered. Section 10 records the current status counts.
 
 ## 3. Traceability Rules
 
@@ -29,6 +29,7 @@ Each design decision contains:
 
 - a unique `ADS` identifier;
 - status;
+- a comment, when its status is **Rejected** or **Obsolete**;
 - exactly one requirement identifier;
 - decision;
 - rationale;
@@ -1131,7 +1132,7 @@ Each design decision contains:
 
 ## 9. Change Control
 
-A proposed design decision becomes accepted only after review.
+A **Draft** design decision becomes **Accepted** only after review.
 
 When a design decision changes:
 
@@ -1139,14 +1140,17 @@ When a design decision changes:
 2. confirm that the requirement remains satisfied;
 3. update the domain model, API contract, user flow, test specification, and implementation tasks where applicable;
 4. preserve the requirement identifier;
-5. add another design decision under the same requirement when the new concern is separate rather than expanding one decision to cover another requirement.
+5. add another design decision under the same requirement when the new concern is separate rather than expanding one decision to cover another requirement;
+6. a decision moving to **Rejected** or **Obsolete** is not deleted — set its status and add a **Comment** explaining why, immediately after the **Status** line.
 
 ## 10. Traceability Summary
 
 - Requirement references represented: **73**
 - Design decisions recorded: **119**
 - Accepted design decisions: **119**
-- Proposed design decisions: **0**
+- Draft design decisions: **0**
+- Rejected design decisions: **0**
+- Obsolete design decisions: **0**
 - Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-042, FR-044, SEC-005, SEC-006**
 - Design decisions linked to more than one requirement: **0**
 - Requirement statements duplicated from `requirements_specification.md`: **0**

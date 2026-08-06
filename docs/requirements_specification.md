@@ -8,13 +8,16 @@ Each requirement contains:
 
 - a unique identifier;
 - a status;
+- a comment, when its status is **Rejected** or **Obsolete**;
 - a verification method describing how the requirement will be tested.
 
 Verification statements identify the primary verification method. Detailed fixtures, test data, endpoint paths, and assertions belong in the test plan and test code.
 
 ## 2. Requirement Status
 
-Each requirement carries a **Status** of **Accepted**, **Draft**, **Rejected**, or **Obsolete**.
+Each requirement carries a **Status** of **Draft**, **Accepted**, **Rejected**, or **Obsolete** — the same vocabulary used for design decisions in `design_specification.md`.
+
+A requirement whose status is **Rejected** or **Obsolete** also carries a **Comment** explaining why, immediately after its **Status** line. The requirement's text is not deleted when it leaves **Accepted** — it remains in this document with its status and comment as a record of what was considered.
 
 Every requirement recorded in this document is currently **Accepted**.
 
