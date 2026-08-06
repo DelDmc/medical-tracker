@@ -44,14 +44,14 @@ Maintenance rules:
 **Finding:** MVP list endpoints return complete JSON arrays with pagination excluded from the contract, and the calendar endpoint places no maximum span on its date range. Both response sizes grow with stored data and with a caller-chosen range. Trigger: revisit when pagination is implemented, or as soon as any account is expected to hold a large number of records.
 
 #### RF-19 — `offset_days` has no upper bound
-**Documents:** `api_contract.md:724`, `design_specification.md (569-574)`, `requirements_specification.md (126-127)`
+**Documents:** `api_contract.md:724`, `design_specification.md (569-574)`, `requirements_specification.md (167-169)`
 **Disposition:** Deferred
 **Finding:** A reminder offset must be a positive whole number, with no maximum. A very large offset produces a `due_date` far in the past, which is immediately due and stays due. Trigger: revisit when the due-reminder view is implemented.
 
 ## 4. Repository Artifacts Outside `docs/`
 
 #### RF-20 — Required repository documentation does not exist
-**Documents:** `README.md`, `requirements_specification.md (248-249)`, `design_specification.md (1051-1056)`
+**Documents:** `README.md`, `requirements_specification.md (335-337)`, `design_specification.md (1051-1056)`
 **Disposition:** Deferred
 **Finding:** TECH-007 requires documented local setup, test execution, migration, build, and deployment procedures, and `ADS-TECH-007-01` requires those instructions to be maintained in the repository and tied to its actual structure. `README.md` is empty. Trigger: before Phase 2 completes.
 

@@ -52,6 +52,7 @@ Core rules that recur throughout the spec and are easy to violate accidentally:
 
 ## Working in `docs/`
 
+- `docs/requirements_specification.md` requirements each carry a `Status` (`Accepted`, `Draft`, `Rejected`, or `Obsolete`); every requirement is currently `Accepted`. What happens to a requirement's text and its downstream `ADS-*`/`TC-*` linkage when it leaves `Accepted` is not yet decided — don't invent a retention or gating rule; ask first.
 - `docs/design_specification.md` decisions are all `Accepted`; a new decision should also be Accepted unless you have a concrete reason to mark it `Proposed` pending review — check Section 10's traceability summary counts and update them if you add/remove decisions.
 - Follow the existing per-decision structure exactly: unique `ADS-<REQ>-NN` id, status, single requirement reference, "It is decided ..." decision text, rationale, verification impact.
 - `docs/test_specification.md` holds one Given/When/Then test case per scenario, each with a unique `TC-<REQ-ID>-NN` id and exactly one requirement reference — mirrors the `ADS-<REQ-ID>-NN` pattern. When you write the actual test in code later, put its `TC-*` id in the test name or docstring so the link back to this spec is traceable; don't invent a new id scheme per test file. Update Section 11's traceability summary counts whenever you add or remove a test case.
