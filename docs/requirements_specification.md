@@ -63,6 +63,10 @@ Every requirement recorded in this document is currently **Accepted**.
 
 ### 2.2 Examination Records
 
+**FR-012** — The application shall support the examination statuses `draft`, `planned`, `completed`, `cancelled`, and `missed`.
+**Status:** Accepted
+**Verification:** An API validation test shall confirm that every supported status is accepted and that any other status is rejected.
+
 **FR-010** — The application shall allow an authenticated user to create a draft examination record by providing a title and any available optional examination information.
 **Status:** Accepted
 **Verification:** An API integration test shall create a draft with a title and scheduled date but without a category or scheduled time and confirm that all submitted values are preserved.
@@ -70,10 +74,6 @@ Every requirement recorded in this document is currently **Accepted**.
 **FR-011** — The application shall allow an authenticated user to create a planned examination record by providing a title and scheduled date.
 **Status:** Accepted
 **Verification:** An API integration test shall create a planned examination with a title and scheduled date but without a category or scheduled time and confirm that the record is saved with the `planned` status.
-
-**FR-012** — The application shall support the examination statuses `draft`, `planned`, `completed`, `cancelled`, and `missed`.
-**Status:** Accepted
-**Verification:** A serializer validation test shall confirm that every supported status is accepted and that any other status is rejected.
 
 **FR-013** — The application shall allow an authenticated user to store an optional medical specialty, location, and general notes for an examination record.
 **Status:** Accepted
