@@ -15,6 +15,10 @@ Verification statements identify the primary verification method. Detailed fixtu
 
 ## 2. Requirement Status
 
+**Status:** Accepted
+
+This document's own Status is **Draft** whenever at least one recorded requirement is **Draft**, and **Accepted** otherwise; a requirement's **Rejected** or **Obsolete** status does not affect it. Each requirement also carries its own status, and that per-requirement status is authoritative.
+
 Each requirement carries a **Status** of **Draft**, **Accepted**, **Rejected**, or **Obsolete** — the same vocabulary used for design decisions in `design_specification.md`.
 
 A requirement whose status is **Rejected** or **Obsolete** also carries a **Comment** explaining why, immediately after its **Status** line. The requirement's text is not deleted when it leaves **Accepted** — it remains in this document with its status and comment as a record of what was considered.
@@ -349,3 +353,4 @@ Every requirement recorded in this document is currently **Accepted**.
 - Detailed design documents and API contracts are not required to reproduce requirement or design-decision identifiers.
 - New requirements shall receive the next available identifier within their category.
 - Architecture decisions, technology selections, and release-governance rules shall be documented outside this requirements specification.
+- When a requirement's status changes to or from **Draft**, update this document's own Status (Section 2) to match — **Draft** if any requirement is **Draft**, **Accepted** otherwise.

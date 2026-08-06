@@ -10,7 +10,7 @@ This document records draft and accepted implementation design decisions for the
 
 **Status:** Accepted
 
-Every design decision recorded in this document is accepted. Each decision also carries its own status, and that per-decision status is authoritative.
+This document's own Status is **Draft** whenever at least one recorded decision is **Draft**, and **Accepted** otherwise; a decision's **Rejected** or **Obsolete** status does not affect it. Each decision also carries its own status, and that per-decision status is authoritative.
 
 Each design decision carries a **Status** of **Draft**, **Accepted**, **Rejected**, or **Obsolete** — the same vocabulary used for requirements in `requirements_specification.md`. No design decision in this document is accepted merely because it is recorded here. A decision marked **Draft** must be reviewed and accepted before the affected implementation begins. A decision whose status is **Rejected** or **Obsolete** also carries a **Comment** explaining why, immediately after its **Status** line; the decision's text is not deleted — it remains in this document with its status and comment as a record of what was considered. Section 10 records the current status counts.
 
@@ -1141,7 +1141,8 @@ When a design decision changes:
 3. update the domain model, API contract, user flow, test specification, and implementation tasks where applicable;
 4. preserve the requirement identifier;
 5. add another design decision under the same requirement when the new concern is separate rather than expanding one decision to cover another requirement;
-6. a decision moving to **Rejected** or **Obsolete** is not deleted — set its status and add a **Comment** explaining why, immediately after the **Status** line.
+6. a decision moving to **Rejected** or **Obsolete** is not deleted — set its status and add a **Comment** explaining why, immediately after the **Status** line;
+7. when a decision's status changes to or from **Draft**, update this document's own Status (Section 2) to match — **Draft** if any decision is **Draft**, **Accepted** otherwise.
 
 ## 10. Traceability Summary
 
