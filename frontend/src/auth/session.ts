@@ -14,9 +14,11 @@ export type SessionUser = {
 export type SessionState = {
   accessToken: string | null
   user: SessionUser | null
+  /** The last session ended because it could not be renewed (ADS-FR-008-02). */
+  expired: boolean
 }
 
-const EMPTY: SessionState = { accessToken: null, user: null }
+const EMPTY: SessionState = { accessToken: null, user: null, expired: false }
 
 let state: SessionState = EMPTY
 let csrfToken: string | null = null
@@ -35,7 +37,7 @@ export const session = {
   getAccessToken: () => state.accessToken,
 
   signIn(accessToken: string, user: SessionUser | null) {
-    state = { accessToken, user }
+    state = { accessToken, user, expired: false }
     emit()
   },
   setAccessToken(accessToken: string) {
@@ -49,6 +51,11 @@ export const session = {
   /** Drop the access token and user. The CSRF token deliberately survives (§4 step 3). */
   clear() {
     state = EMPTY
+    emit()
+  },
+  /** An active session could not be refreshed: end it and remember why. */
+  expire() {
+    state = { ...EMPTY, expired: true }
     emit()
   },
 

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 
-import { apiRequest } from '../api/client'
+import { apiRequest } from '../api/authenticated'
 import { ACCESS_TOKEN, API, CSRF_TOKEN, logInThroughUi, mockAuthApi } from '../test/authApi'
 import { renderApp } from '../test/render'
 import { server } from '../test/server'

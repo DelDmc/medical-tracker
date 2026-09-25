@@ -45,6 +45,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/AccessToken'
           description: ''
+  /api/v1/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: |-
+        `POST /api/v1/auth/refresh/` — rotate the refresh token (ADS-FR-007-01…10).
+
+        The token is read only from the `refresh_token` cookie; there is no JSON body. On
+        success the submitted token is revoked and replaced by one carrying the same
+        `session_start` (so the seven-day session is never extended). Every invalid,
+        expired, revoked, malformed or missing token gets the same 401, no credentials,
+        and a cleared cookie.
+      tags:
+      - auth
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+          description: ''
   /api/v1/auth/register/:
     post:
       operationId: auth_register_create

@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.db import IntegrityError, transaction
 from django.middleware.csrf import get_token
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
@@ -7,17 +8,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import tokens
-from .cookies import set_refresh_cookie
+from .cookies import REFRESH_COOKIE_NAME, clear_refresh_cookie, set_refresh_cookie
 from .csrf import enforce_csrf
+from .models import RevokedRefreshToken, User
 from .serializers import (
     AccessTokenSerializer,
     AccountSerializer,
     LoginSerializer,
     RegistrationSerializer,
 )
-from .throttles import LoginRateThrottle, RegisterRateThrottle
+from .throttles import LoginRateThrottle, RefreshRateThrottle, RegisterRateThrottle
 
 INVALID_CREDENTIALS = {"detail": "Invalid credentials."}
+INVALID_REFRESH_TOKEN = {"detail": "Refresh token is invalid or expired."}
 
 
 class RegisterView(APIView):
@@ -82,4 +85,43 @@ class LoginView(APIView):
         refresh = tokens.issue_refresh_token(user, session_start=tokens.current_timestamp())
         response = Response({"access_token": access.token})
         set_refresh_cookie(response, refresh)
+        return response
+
+
+class RefreshView(APIView):
+    """`POST /api/v1/auth/refresh/` — rotate the refresh token (ADS-FR-007-01…10).
+
+    The token is read only from the `refresh_token` cookie; there is no JSON body. On
+    success the submitted token is revoked and replaced by one carrying the same
+    `session_start` (so the seven-day session is never extended). Every invalid,
+    expired, revoked, malformed or missing token gets the same 401, no credentials,
+    and a cleared cookie.
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [RefreshRateThrottle]
+
+    @extend_schema(auth=[], request=None, responses={200: AccessTokenSerializer})
+    def post(self, request):
+        enforce_csrf(request)
+        try:
+            payload = tokens.decode_refresh_token(request.COOKIES.get(REFRESH_COOKIE_NAME))
+            user = User.objects.get(pk=int(payload["sub"]), is_active=True)
+            with transaction.atomic():
+                # Inserting the jti is the revocation check itself: a token already
+                # revoked (or being rotated concurrently) violates the unique jti.
+                RevokedRefreshToken.objects.create(
+                    jti=payload["jti"], expires_at=tokens.IssuedToken("", payload).expires_at
+                )
+                replacement = tokens.issue_refresh_token(
+                    user, session_start=payload["session_start"]
+                )
+        except (tokens.TokenError, User.DoesNotExist, ValueError, IntegrityError):
+            response = Response(INVALID_REFRESH_TOKEN, status=status.HTTP_401_UNAUTHORIZED)
+            clear_refresh_cookie(response)
+            return response
+
+        response = Response({"access_token": tokens.issue_access_token(user).token})
+        set_refresh_cookie(response, replacement)
         return response

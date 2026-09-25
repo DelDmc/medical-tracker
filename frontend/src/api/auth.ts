@@ -51,3 +51,24 @@ export async function login(email: string, password: string): Promise<string> {
   })
   return access_token
 }
+
+let refreshInFlight: Promise<string> | null = null
+
+/**
+ * `POST /api/v1/auth/refresh/` — rotate the refresh cookie and store the new access
+ * token in memory. At most one refresh is in flight per application instance; every
+ * caller during that time awaits the same result (ADS-FR-008-04).
+ */
+export function refreshAccessToken(): Promise<string> {
+  if (!refreshInFlight) {
+    refreshInFlight = csrfProtected<{ access_token: string }>('/auth/refresh/')
+      .then(({ access_token }) => {
+        session.setAccessToken(access_token)
+        return access_token
+      })
+      .finally(() => {
+        refreshInFlight = null
+      })
+  }
+  return refreshInFlight
+}

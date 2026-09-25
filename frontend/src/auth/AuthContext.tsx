@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from 'react'
 import type { ReactNode } from 'react'
 
 import { login as apiLogin } from '../api/auth'
@@ -8,6 +16,7 @@ import { session, type SessionUser } from './session'
 type AuthValue = {
   user: SessionUser | null
   isAuthenticated: boolean
+  sessionExpired: boolean
   logIn: (email: string, password: string) => Promise<void>
 }
 
@@ -15,6 +24,12 @@ const AuthContext = createContext<AuthValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot)
+  const queryClient = useQueryClient()
+
+  // Another account's data must never outlive the session that fetched it.
+  useEffect(() => {
+    if (!snapshot.accessToken) queryClient.clear()
+  }, [snapshot.accessToken, queryClient])
 
   const logIn = useCallback(async (email: string, password: string) => {
     const accessToken = await apiLogin(email, password)
@@ -24,7 +39,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<AuthValue>(
-    () => ({ user: snapshot.user, isAuthenticated: Boolean(snapshot.accessToken), logIn }),
+    () => ({
+      user: snapshot.user,
+      isAuthenticated: Boolean(snapshot.accessToken),
+      sessionExpired: snapshot.expired,
+      logIn,
+    }),
     [snapshot, logIn],
   )
 

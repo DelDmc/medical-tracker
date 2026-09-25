@@ -1,10 +1,9 @@
 /**
  * The single HTTP layer between the frontend and the backend API (ADS-TECH-001-01).
  * Every request goes through `request`; nothing else calls `fetch`. Protected
- * endpoints go through `apiRequest`, which adds the in-memory bearer token.
+ * endpoints go through `apiRequest` (./authenticated.ts), which adds the in-memory
+ * bearer token and recovers from an expired one.
  */
-
-import { session } from '../auth/session'
 
 export const API_BASE_URL = `${(import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')}/api/v1`
 
@@ -68,20 +67,4 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
   if (!response.ok) throw new ApiError(response.status, data)
   return data as T
-}
-
-/**
- * A protected request: `Authorization: Bearer <access token>` from memory, no browser
- * credentials (api_contract.md §5.1).
- *
- * Seam for Slice 3: a 401 here is where the single-flight refresh and the one replay
- * of the original request belong (ADS-FR-008-01, ADS-FR-008-04).
- */
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const token = session.getAccessToken()
-  return request<T>(path, {
-    ...options,
-    credentials: false,
-    headers: { ...options.headers, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-  })
 }
