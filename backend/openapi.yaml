@@ -4,6 +4,48 @@ info:
   version: 1.0.0
   description: JSON REST API for the Medical Tracker Application MVP (api_contract.md).
 paths:
+  /api/v1/account/:
+    get:
+      operationId: account_retrieve
+      description: |-
+        `GET` / `PATCH /api/v1/account/` — always the authenticated user's own account.
+
+        There is no identifier in the path, so no other account can be addressed
+        (ADS-FR-009-01). Changing the timezone leaves stored instants untouched.
+      tags:
+      - account
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+    patch:
+      operationId: account_partial_update
+      description: |-
+        `GET` / `PATCH /api/v1/account/` — always the authenticated user's own account.
+
+        There is no identifier in the path, so no other account can be addressed
+        (ADS-FR-009-01). Changing the timezone leaves stored instants untouched.
+      tags:
+      - account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAccountUpdateRequest'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
   /api/v1/auth/csrf/:
     get:
       operationId: auth_csrf_retrieve
@@ -172,6 +214,15 @@ components:
       required:
       - email
       - password
+    PatchedAccountUpdateRequest:
+      type: object
+      description: '`PATCH /api/v1/account/`: only `timezone` is writable (api_contract.md
+        §6.2).'
+      properties:
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
     RegistrationRequest:
       type: object
       description: '`POST /api/v1/auth/register/` (ADS-FR-001-01 … ADS-FR-004-01,
@@ -195,3 +246,8 @@ components:
       - email
       - password
       - timezone
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

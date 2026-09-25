@@ -1,4 +1,5 @@
 import { ensureCsrfToken, refreshAccessToken } from '../api/auth'
+import { loadAccount } from './loadAccount'
 import { hasLogoutIntent } from './logoutIntent'
 import { session } from './session'
 
@@ -27,11 +28,12 @@ export function restoreSession(): Promise<boolean> {
         await ensureCsrfToken()
         const accessToken = await refreshAccessToken()
         session.signIn(accessToken, session.getSnapshot().user)
-        return true
       } catch {
         session.clear()
         return false
       }
+      await loadAccount()
+      return true
     })()
   }
   return restoring

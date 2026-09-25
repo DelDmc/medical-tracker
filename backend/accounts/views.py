@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from django.db import IntegrityError, transaction
 from django.middleware.csrf import get_token
 from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import serializers, status
+from rest_framework import generics, serializers, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,6 +14,7 @@ from .models import RevokedRefreshToken, User, revoke_refresh_token
 from .serializers import (
     AccessTokenSerializer,
     AccountSerializer,
+    AccountUpdateSerializer,
     LoginSerializer,
     RegistrationSerializer,
 )
@@ -152,3 +153,25 @@ class LogoutView(APIView):
         response = Response(status=status.HTTP_204_NO_CONTENT)
         clear_refresh_cookie(response)
         return response
+
+
+class AccountView(generics.RetrieveUpdateAPIView):
+    """`GET` / `PATCH /api/v1/account/` — always the authenticated user's own account.
+
+    There is no identifier in the path, so no other account can be addressed
+    (ADS-FR-009-01). Changing the timezone leaves stored instants untouched.
+    """
+
+    serializer_class = AccountUpdateSerializer
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def get_object(self):
+        return self.request.user
+
+    @extend_schema(responses={200: AccountSerializer})
+    def get(self, request, *args, **kwargs):
+        return Response(AccountSerializer(request.user).data)
+
+    @extend_schema(request=AccountUpdateSerializer, responses={200: AccountSerializer})
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)

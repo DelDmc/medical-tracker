@@ -2,6 +2,7 @@ import { Navigate, type RouteObject } from 'react-router'
 
 import { PublicOnly, RequireAuth } from '../auth/guards'
 import { AboutPage } from '../pages/AboutPage'
+import { AccountPage } from '../pages/AccountPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { LoginPage } from '../pages/LoginPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
@@ -24,7 +25,10 @@ export const routes: RouteObject[] = [
       },
       {
         element: <RequireAuth />,
-        children: [{ path: '/dashboard', element: <DashboardPage /> }],
+        children: [
+          { path: '/dashboard', element: <DashboardPage /> },
+          { path: '/account', element: <AccountPage /> },
+        ],
       },
       { path: '*', element: <NotFoundPage /> },
     ],

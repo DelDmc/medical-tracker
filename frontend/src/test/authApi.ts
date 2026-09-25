@@ -36,6 +36,7 @@ export function mockAuthApi(
     refreshedTokens?: string[]
     refresh?: () => Response | Promise<Response>
     logout?: () => Response | Promise<Response>
+    account?: { id: number; email: string; timezone: string }
   } = {},
 ) {
   const calls = {
@@ -59,6 +60,11 @@ export function mockAuthApi(
       if (options.refresh) return options.refresh()
       return HttpResponse.json({ access_token: refreshed.shift() ?? 'another-refreshed-token' })
     }),
+    http.get(`${API}/account/`, () =>
+      HttpResponse.json(
+        options.account ?? { id: 1, email: 'person@example.com', timezone: 'Europe/Warsaw' },
+      ),
+    ),
     http.post(`${API}/auth/logout/`, async ({ request }) => {
       calls.logout.push(await record(request))
       if (options.logout) return options.logout()

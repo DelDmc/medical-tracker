@@ -9,3 +9,7 @@ auth_patterns = [
     path("refresh/", views.RefreshView.as_view(), name="auth-refresh"),
     path("logout/", views.LogoutView.as_view(), name="auth-logout"),
 ]
+
+account_patterns = [
+    path("", views.AccountView.as_view(), name="account"),
+]

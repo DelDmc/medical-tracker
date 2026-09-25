@@ -49,6 +49,18 @@ class AccountSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "email", "timezone"]
 
 
+class AccountUpdateSerializer(serializers.ModelSerializer):
+    """`PATCH /api/v1/account/`: only `timezone` is writable (api_contract.md §6.2)."""
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "timezone"]
+        read_only_fields = ["id", "email"]
+
+    def validate_timezone(self, value):
+        return validate_supported_timezone(value)
+
+
 class RegistrationSerializer(serializers.Serializer):
     """`POST /api/v1/auth/register/` (ADS-FR-001-01 … ADS-FR-004-01, ADS-SEC-003-01)."""
 

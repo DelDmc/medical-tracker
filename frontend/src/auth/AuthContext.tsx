@@ -12,6 +12,7 @@ import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 
 import { login as apiLogin, logout as apiLogout } from '../api/auth'
+import { loadAccount } from './loadAccount'
 import { clearLogoutIntent, setLogoutIntent } from './logoutIntent'
 import { session, type SessionUser } from './session'
 
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session.signIn(accessToken, { email })
     // A successful login ends any earlier logout intent (ADS-FR-006-07).
     clearLogoutIntent()
+    await loadAccount()
   }, [])
 
   /**

@@ -15,6 +15,7 @@ const PUBLIC_NAV: NavItem[] = [
 
 const AUTHENTICATED_NAV: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard' },
+  { to: '/account', label: 'Account' },
   { to: '/about', label: 'About' },
 ]
 
