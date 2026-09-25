@@ -1,0 +1,26 @@
+[project]
+name = "medical-tracker-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.development"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+# Test-case tests are named test_tc_<req>_<nn>_<slug> (IMPLEMENTATION_PLAN.md §3.3).
+python_functions = ["test_*"]
+addopts = "-ra --strict-markers"
+markers = [
+    "deployment: runs against a deployed environment; skipped unless DEPLOYMENT_BASE_URL is set",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ"]
+
+[tool.ruff.lint.per-file-ignores]
+"*/migrations/*" = ["E501"]

@@ -1,0 +1,64 @@
+import { useId, useState } from 'react'
+import { Link, NavLink, Outlet } from 'react-router'
+
+import styles from './Layout.module.css'
+
+type NavItem = { to: string; label: string }
+
+const PUBLIC_NAV: NavItem[] = [{ to: '/about', label: 'About' }]
+
+/** The page frame shared by every route: header, primary navigation, main, footer. */
+export function Layout() {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const navId = useId()
+  const closeMenu = () => setMenuOpen(false)
+
+  return (
+    <div className={styles.app}>
+      <a className="skip-link" href="#main">
+        Skip to main content
+      </a>
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <Link to="/" className={styles.brand} onClick={closeMenu}>
+            <span className={styles.brandMark} aria-hidden="true">
+              +
+            </span>
+            Medical Tracker
+          </Link>
+          <button
+            type="button"
+            className={`button button-secondary ${styles.menuButton}`}
+            aria-expanded={menuOpen}
+            aria-controls={navId}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            Menu
+          </button>
+          <nav className={styles.nav} aria-label="Primary">
+            <ul
+              id={navId}
+              className={`${styles.navList} ${menuOpen ? styles.navListOpen : ''}`}
+            >
+              {PUBLIC_NAV.map((item) => (
+                <li key={item.to}>
+                  <NavLink to={item.to} className={styles.navLink} onClick={closeMenu}>
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </header>
+      <main id="main" className={styles.main} tabIndex={-1}>
+        <Outlet />
+      </main>
+      <footer className={styles.footer}>
+        <p>
+          An organizational tool only — not medical advice. <Link to="/about">About this app</Link>
+        </p>
+      </footer>
+    </div>
+  )
+}

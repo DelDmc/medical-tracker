@@ -17,10 +17,10 @@ This file records daily project progress, technical decisions, verification work
 
 ## Current Project Status
 
-- **Current phase:** Implementation (Phase 2 — Architecture and Repository Setup)
-- **Current milestone:** Slice 0 — walking skeleton
+- **Current phase:** Implementation (Phase 3 — Authentication)
+- **Current milestone:** Slice 1 — registration end to end
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 0 — walking skeleton
+- **Next major deliverable:** Slice 1 — registration end to end
 - **Last updated:** 2026-09-25
 
 ---
@@ -31,6 +31,59 @@ This file records daily project progress, technical decisions, verification work
 Copy the template below and place the new entry directly under this comment.
 Use an exact date and a short description of the day's main focus.
 -->
+## 25.09.2026 — Implementation kickoff: walking skeleton
+
+### Daily Objective
+
+Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.md` slice by slice.
+
+### Completed Today
+
+- [+] Task 0.1 — recorded the confirmed branching workflow and decisions D1–D12 in the new non-normative `docs/technology_decisions.md`; `README.md` points at it and at `IMPLEMENTATION_PLAN.md`. `CLAUDE.md` was not edited: it is deleted in the owner's working tree.
+- [+] **Slice 0 — walking skeleton (complete).** Django project with a typed environment reader and separate development/production settings (production fails fast and rejects wildcard origins), `GET /api/v1/health/`, the clock service, repository secret scanning, OpenAPI generation (`backend/openapi.yaml`), the React/Vite app shell with its test stack, the non-clinical purpose page, and README setup/test instructions. Test cases passing: `TC-TECH-003-01/02/03`, `TC-TECH-004-01`, `TC-TECH-005-01`, `TC-SEC-001-11`, `TC-SEC-005-03`, `TC-SEC-004-01`, `TC-PRV-003-01`, `TC-PRV-003-02`.
+
+### Files Created or Modified
+
+| File or directory | Change | Reason |
+|---|---|---|
+| `docs/technology_decisions.md` | Created | D9 — technology decisions record |
+| `backend/` | Django project, settings, health endpoint, tests, `openapi.yaml` | Slice 0 |
+| `frontend/` | Vite + React + TypeScript app shell, purpose page, tests | Slice 0 |
+| `scripts/secret-scan.sh`, `.secrets.baseline` | Created | `TC-SEC-004-01` |
+| `README.md` | Branching, local setup, and test sections | Tasks 0.1 and 0.9 |
+
+### Technical Decisions
+
+| Decision | Reason | Alternatives considered |
+|---|---|---|
+| Django 5.2 LTS | Long support window for a portfolio MVP; supported by every pinned package | Django 6.x |
+| Frontend packages pinned to the newest majors that still run on Node 20 (React Router 7, Vitest 4, jsdom 27, jest-dom 6.9) | D8 fixes Node 20; the newest majors of those packages require Node 22 | Changing D8 — the owner's call |
+| The secret scan writes every historical file version out under its original path | A single concatenated patch bypassed detect-secrets' filename filters and flagged lockfile hashes | Excluding lock files by pathspec |
+| Two audited false positives in `docs/api_contract.md` are recorded in `.secrets.baseline` rather than edited | The contract is normative; the flagged values are its example passwords | Editing the contract |
+
+### Tests and Verification
+
+| Test, command, or manual check | Result | Notes |
+|---|---|---|
+| `cd backend && pytest` | Passed | 9 tests |
+| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 2 tests |
+| `bash scripts/secret-scan.sh` | Passed | A planted key fails it in the tree and, in a scratch clone, when present only in history |
+| README followed verbatim in a fresh clone | Passed | Backend and frontend installed, migrated, tested, and both dev servers answered |
+
+### Problems and Blockers
+
+| Problem | Impact | Current understanding | Next action |
+|---|---|---|---|
+| Node 20 (D8) left upstream support on 2026-04-30 | The newest frontend tool majors require Node 22; hosting platforms may drop Node 20 builds | Pinned versions work on Node 20 | Owner to decide whether to move D8 to Node 22 before Slice 19 |
+| The installed Node is v19.9.0 (Task 0.2 is owner-run) | Frontend commands need Node 20 | Verified with a Node 20.20.2 binary in a session scratch directory | Owner to install Node 20 (for example `nvm install 20`) |
+
+### Development Record
+
+- **Branch:** `project/mvp`, with `feature/s00-walking-skeleton` squash-merged
+- **Pull request:** `Not created`
+
+---
+
 ## 05.08.2026 — Resolve all active review findings; prepare `main` for implementation handoff
 
 ### Daily Objective
@@ -377,7 +430,7 @@ Update this table when a phase changes status.
 | Phase | Status | Started | Completed | Notes |
 |---|---|---|---|---|
 | 1. Product Definition | In progress | 2026-07-18 | — | Core product definition, requirements, and specification suite exist; active review findings are being resolved before implementation |
-| 2. Architecture and Repository Setup | In progress | 2026-07-18 | — | Monorepo skeleton exists; backend and frontend implementation directories are still empty |
+| 2. Architecture and Repository Setup | Completed | 2026-07-18 | 2026-09-25 | Slice 0: backend and frontend projects, settings, health check, test stacks, secret scan, OpenAPI generation |
 | 3. Authentication | Not started | — | — | Behavior is documented; implementation has not started |
 | 4. Examination Records | Not started | — | — | Behavior is documented; implementation has not started |
 | 5. Planning and Recurrence | Not started | — | — | Behavior is documented; implementation has not started |

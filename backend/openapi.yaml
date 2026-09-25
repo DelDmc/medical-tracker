@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: Medical Tracker API
+  version: 1.0.0
+  description: JSON REST API for the Medical Tracker Application MVP (api_contract.md).
+paths:
+  /api/v1/health/:
+    get:
+      operationId: health_retrieve
+      description: '`GET /api/v1/health/` — ADS-TECH-004-01. Exposes no configuration
+        or secret value.'
+      tags:
+      - health
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          description: ''
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+      - status

@@ -41,3 +41,20 @@ Assumption identifiers match `IMPLEMENTATION_PLAN.md` §2.1 and are never reused
 | A5 | Secret scanning uses `detect-secrets`. | Only the `TC-SEC-004-01` command changes. |
 | A6 | `PUT /api/v1/examinations/{id}/` is not implemented; `api_contract.md` §12 documents `PATCH` only. | A contract change would be needed first. |
 | A7 | The registration and account timezone lists come from the browser (`Intl.supportedValuesOf('timeZone')`, with a static fallback); the backend stays authoritative. | A served list would need a new endpoint in `api_contract.md` first. |
+
+## 4. Implementation Record
+
+What the decisions above look like in the repository. Updated by the task that introduces each item.
+
+### 4.1 Backend (D2, D3, D4, D5, D6, A4)
+
+- **Framework and packages** — pinned in `backend/requirements.txt`: Django 5.2 (LTS), Django REST Framework, `django-cors-headers`, PyJWT, `psycopg` 3, `drf-spectacular` (OpenAPI generation), `tzdata` (a consistent IANA database on every host) and `gunicorn` (the production WSGI server). Development and test tools are pinned in `backend/requirements-dev.txt`; tool configuration lives in `backend/pyproject.toml`.
+- **Settings layout (D5)** — `config/settings/env.py` holds the typed reader (`str`, `bool`, `int`, `list`, `database_url`) and origin validation; `base.py` holds shared settings; `development.py` and `production.py` each import `base` and nothing else. `production.py` reads every mandatory value without a default. `manage.py` loads an optional `backend/.env` for local convenience; the WSGI/ASGI entry points and the test suite never read it.
+- **Environment variables** — documented, with placeholders only, in `backend/.env.example`.
+
+### 4.2 Frontend (D7, D8, A7)
+
+- **Packages** — pinned exactly in `frontend/package.json` (lockfile `frontend/package-lock.json`): React 19, React Router 7, TanStack Query 5, Vite 8, TypeScript 5.9, Vitest 4 with jsdom, React Testing Library, `@testing-library/jest-dom`, `@testing-library/user-event`, MSW 2, and ESLint with `typescript-eslint` and `eslint-plugin-react-hooks`.
+- **Node (D8)** — `frontend/.nvmrc` pins major 20 and `package.json` requires `>=20.19` (Vite 8's floor). Node 20 left upstream support on 2026-04-30, and the newest majors of React Router (8), Vitest (5), jsdom (30) and `@testing-library/jest-dom` (6.10+) require Node 22; the versions above are the newest that still run on Node 20. Moving to Node 22 would be a change to D8 and is the owner's call.
+- **Styling** — `src/styles/global.css` holds design tokens and shared primitives (buttons, form fields, alerts); component-specific layout uses CSS Modules.
+- **Test environment** — Vitest runs with `TZ=Pacific/Honolulu`, so any date-only value that is accidentally routed through a UTC conversion renders on the previous day and fails the suite.

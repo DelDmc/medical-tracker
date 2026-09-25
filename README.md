@@ -2,13 +2,13 @@
 
 A portfolio project for organizing personal medical appointments and examination history — one place to record completed examinations, prepare draft records, plan upcoming examinations, and configure basic reminders and recurrence. It is an organizational tool only: it does not provide medical advice, diagnoses, treatment recommendations, or emergency assistance.
 
-Planned stack: Django REST Framework backend (JSON API under `/api/v1/`) + React frontend (mobile-first, responsive).
+Stack: Django REST Framework backend (JSON API under `/api/v1/`) + React frontend (mobile-first, responsive).
 
 ## Project Status
 
-**Documentation-only, pre-implementation.** `backend/` and `frontend/` are empty placeholder directories — no Django project, no React project, no dependency manifests exist yet. There are no build, lint, or test commands to run.
+**Implementation in progress** on the `project/mvp` branch, slice by slice, following [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md). `backend/` holds the Django REST Framework project and `frontend/` the React application; both have runnable test suites (see [Running the Tests](#running-the-tests)).
 
-The `docs/` suite below is a complete, decision-level specification: functional requirements, accepted design decisions, domain model, API contract, and user flows for the application described above. It is the plan to implement against.
+The `docs/` suite below is a complete, decision-level specification: functional requirements, accepted design decisions, domain model, API contract, and user flows for the application described above. It is the plan the implementation follows.
 
 Progress is tracked day-by-day in [`DEVELOPMENT_LOG.md`](DEVELOPMENT_LOG.md).
 
@@ -41,6 +41,96 @@ Supporting documents:
 
 PlantUML diagrams (domain class diagram, authentication and key sequence flows) live under [`docs/diagrams/`](docs/diagrams/).
 
-## Setup, Build, and Deployment
+## Local Setup
 
-Not yet documented — there is no implementation to run. This section will be filled in once `backend/` and `frontend/` contain real projects.
+### Prerequisites
+
+- **Python 3.12** or newer, with the `venv` module.
+- **Node.js 20** (at least 20.19) and **npm 10** — the version is pinned in [`frontend/.nvmrc`](frontend/.nvmrc); with nvm, `nvm install && nvm use` inside `frontend/` selects it.
+- **Git**.
+
+The backend uses SQLite locally, so no database server is needed.
+
+### Backend
+
+From the repository root:
+
+```bash
+cd backend
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py runserver 8000
+```
+
+The API is then served under `http://localhost:8000/api/v1/`; `http://localhost:8000/api/v1/health/` answers `{"status": "ok"}`.
+
+`manage.py` reads `backend/.env` (never committed) for local development. Every variable is documented in [`backend/.env.example`](backend/.env.example):
+
+| Variable | Local development | Production |
+|---|---|---|
+| `DJANGO_SETTINGS_MODULE` | `config.settings.development` (the `manage.py` default) | `config.settings.production` |
+| `DJANGO_SECRET_KEY` | Optional — without it a random value is generated per process, so sessions end when the server restarts | Required |
+| `JWT_SIGNING_KEY` | Optional — same behavior as above | Required |
+| `DJANGO_ALLOWED_HOSTS` | Optional — defaults to `localhost,127.0.0.1,[::1]` | Required |
+| `FRONTEND_ORIGINS` | Optional — defaults to `http://localhost:5173` | Required; explicit `scheme://host[:port]` origins, no wildcards |
+| `DATABASE_URL` | Optional — unset means `backend/db.sqlite3` | Required; `postgres://…` URL |
+| `DJANGO_DEBUG` | Optional — defaults to `true` | Ignored; production always runs with debug off |
+| `DJANGO_SECURE_SSL_REDIRECT` | Not used | Optional — defaults to `true` |
+
+To give the two signing secrets stable local values (so sessions survive a server restart), replace the placeholders in `backend/.env` with generated values, for example the output of:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+
+### Frontend
+
+In a second terminal, from the repository root:
+
+```bash
+cd frontend
+npm ci
+cp .env.example .env.local
+npm run dev
+```
+
+The application is then served at `http://localhost:5173`. `VITE_API_BASE_URL` in `frontend/.env.local` points it at the backend (`http://localhost:8000` by default; see [`frontend/.env.example`](frontend/.env.example)). Use `localhost`, not `127.0.0.1`, for both halves: the authentication cookies are `SameSite=Lax` locally and are only sent between same-site origins.
+
+## Running the Tests
+
+Every automated test carries the identifier of the test case it implements from [`docs/test_specification.md`](docs/test_specification.md) — `test_tc_fr_001_01_…` in Python, `it('TC-FR-020-01 — …')` in TypeScript — so a single case can be selected by its identifier.
+
+### Backend
+
+```bash
+cd backend
+. .venv/bin/activate
+pytest                      # the whole suite
+pytest -k tc_tech_004_01    # one test case
+ruff check . && ruff format --check .
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm run test                          # the whole suite
+npx vitest run -t 'TC-PRV-003-01'     # one test case
+npm run lint
+```
+
+### Repository secret scan
+
+`scripts/secret-scan.sh` scans the tracked files and the full Git history with `detect-secrets` (installed into the backend virtualenv by `requirements-dev.txt`) and fails on anything not recorded in [`.secrets.baseline`](.secrets.baseline) as an audited false positive. The backend suite runs it as `TC-SEC-004-01`; to run it on its own, from the repository root:
+
+```bash
+. backend/.venv/bin/activate
+bash scripts/secret-scan.sh
+```
+
+## Build and Deployment
+
+Not yet documented: database migration, production build, and deployment procedures are added as the corresponding implementation slices land.
