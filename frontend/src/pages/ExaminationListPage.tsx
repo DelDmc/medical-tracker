@@ -1,13 +1,25 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link, useLocation } from 'react-router'
+import { Link, useLocation, useSearchParams } from 'react-router'
 
-import { examinationKeys, listExaminations } from '../api/examinations'
+import { examinationKeys, listExaminations, type ExaminationListParams } from '../api/examinations'
+import { ExaminationFilters, FILTER_KEYS } from '../examinations/ExaminationFilters'
 import { ExaminationResults } from '../examinations/ExaminationResults'
+
+function paramsFrom(searchParams: URLSearchParams): ExaminationListParams {
+  const params: ExaminationListParams = {}
+  for (const key of FILTER_KEYS) {
+    const value = searchParams.get(key)
+    if (value) params[key] = value
+  }
+  return params
+}
 
 export function ExaminationListPage() {
   const location = useLocation()
   const message = (location.state as { message?: string } | null)?.message
-  const params = {}
+  const [searchParams, setSearchParams] = useSearchParams()
+  const params = paramsFrom(searchParams)
+  const filtered = Object.keys(params).length > 0
   const query = useQuery({
     queryKey: examinationKeys.list(params),
     queryFn: () => listExaminations(params),
@@ -26,15 +38,20 @@ export function ExaminationListPage() {
           <p>{message}</p>
         </div>
       ) : null}
+      <ExaminationFilters searchParams={searchParams} setSearchParams={setSearchParams} />
       <ExaminationResults
         query={query}
         empty={
-          <>
-            <p>You have no examinations yet.</p>
-            <p>
-              <Link to="/examinations/new">Add your first examination</Link>
-            </p>
-          </>
+          filtered ? (
+            <p>No examinations match these filters.</p>
+          ) : (
+            <>
+              <p>You have no examinations yet.</p>
+              <p>
+                <Link to="/examinations/new">Add your first examination</Link>
+              </p>
+            </>
+          )
         }
       />
     </section>

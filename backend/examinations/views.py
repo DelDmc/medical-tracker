@@ -1,8 +1,14 @@
+from django.db.models import Case, IntegerField, Value, When
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics
 
 from .models import ExaminationCategory
 from .querysets import OwnedExaminationMixin
-from .serializers import CategorySerializer, ExaminationSerializer
+from .serializers import (
+    CategorySerializer,
+    ExaminationListQuerySerializer,
+    ExaminationSerializer,
+)
 
 
 class CategoryListView(generics.ListAPIView):
@@ -12,10 +18,47 @@ class CategoryListView(generics.ListAPIView):
     serializer_class = CategorySerializer
 
 
+def order_by_scheduled_date(queryset, ordering):
+    """Order by scheduled date with undated records last in *both* directions.
+
+    Null placement is spelled out rather than left to the database, because SQLite and
+    PostgreSQL disagree about it (ADS-FR-030-01). Equal dates fall back to the
+    identifier, so ties come back in the same order every time.
+    """
+    undated_last = Case(
+        When(scheduled_date__isnull=True, then=Value(1)),
+        default=Value(0),
+        output_field=IntegerField(),
+    )
+    return queryset.annotate(undated=undated_last).order_by("undated", ordering, "id")
+
+
 class ExaminationListCreateView(OwnedExaminationMixin, generics.ListCreateAPIView):
-    """`GET` / `POST /api/v1/examinations/` — only the caller's records; a JSON array."""
+    """`GET` / `POST /api/v1/examinations/` — only the caller's records; a JSON array.
+
+    The list accepts `search`, `status`, `category` and `ordering`; `status` and
+    `category` combine with AND semantics (ADS-FR-028-01 … ADS-FR-030-01).
+    """
 
     serializer_class = ExaminationSerializer
+
+    def filter_queryset(self, queryset):
+        params = ExaminationListQuerySerializer(data=self.request.query_params)
+        params.is_valid(raise_exception=True)
+        filters = params.validated_data
+        if search := filters.get("search"):
+            queryset = queryset.filter(title__icontains=search)
+        if status := filters.get("status"):
+            queryset = queryset.filter(status=status)
+        if category := filters.get("category"):
+            queryset = queryset.filter(category=category)
+        if ordering := filters.get("ordering"):
+            queryset = order_by_scheduled_date(queryset, ordering)
+        return queryset
+
+    @extend_schema(parameters=[ExaminationListQuerySerializer])
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         # Ownership is assigned here, never taken from the request (ADS-SEC-002-01).

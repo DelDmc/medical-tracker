@@ -183,8 +183,52 @@ paths:
   /api/v1/examinations/:
     get:
       operationId: examinations_list
-      description: '`GET` / `POST /api/v1/examinations/` — only the caller''s records;
-        a JSON array.'
+      description: |-
+        `GET` / `POST /api/v1/examinations/` — only the caller's records; a JSON array.
+
+        The list accepts `search`, `status`, `category` and `ordering`; `status` and
+        `category` combine with AND semantics (ADS-FR-028-01 … ADS-FR-030-01).
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: A category identifier.
+      - in: query
+        name: ordering
+        schema:
+          enum:
+          - scheduled_date
+          - -scheduled_date
+          type: string
+          minLength: 1
+        description: |-
+          * `scheduled_date` - scheduled_date
+          * `-scheduled_date` - -scheduled_date
+      - in: query
+        name: search
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description: Case-insensitive containment on the title.
+      - in: query
+        name: status
+        schema:
+          enum:
+          - draft
+          - planned
+          - completed
+          - cancelled
+          - missed
+          type: string
+          minLength: 1
+        description: |-
+          * `draft` - draft
+          * `planned` - planned
+          * `completed` - completed
+          * `cancelled` - cancelled
+          * `missed` - missed
       tags:
       - examinations
       security:
@@ -200,8 +244,11 @@ paths:
           description: ''
     post:
       operationId: examinations_create
-      description: '`GET` / `POST /api/v1/examinations/` — only the caller''s records;
-        a JSON array.'
+      description: |-
+        `GET` / `POST /api/v1/examinations/` — only the caller's records; a JSON array.
+
+        The list accepts `search`, `status`, `category` and `ordering`; `status` and
+        `category` combine with AND semantics (ADS-FR-028-01 … ADS-FR-030-01).
       tags:
       - examinations
       requestBody:

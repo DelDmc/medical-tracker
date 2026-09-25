@@ -5,7 +5,7 @@ from rest_framework import serializers
 
 from config.clock import user_local_now
 
-from .models import ExaminationCategory, ExaminationRecord
+from .models import ExaminationCategory, ExaminationRecord, ExaminationStatus
 from .time_state import OVERDUE, UPCOMING, time_state_for
 from .validators import validate_resulting_record
 
@@ -111,3 +111,23 @@ class ExaminationSerializer(serializers.ModelSerializer):
         resulting.update(attrs)
         validate_resulting_record(resulting, self.context["request"].user)
         return attrs
+
+
+class ExaminationListQuerySerializer(serializers.Serializer):
+    """Query parameters of `GET /api/v1/examinations/` (api_contract.md §9.1).
+
+    Every supplied value is validated; an unsupported one is a 400.
+    """
+
+    ORDERINGS = ("scheduled_date", "-scheduled_date")
+
+    search = serializers.CharField(
+        required=False, max_length=200, help_text="Case-insensitive containment on the title."
+    )
+    status = serializers.ChoiceField(choices=ExaminationStatus.values, required=False)
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=ExaminationCategory.objects.all(),
+        required=False,
+        help_text="A category identifier.",
+    )
+    ordering = serializers.ChoiceField(choices=ORDERINGS, required=False)
