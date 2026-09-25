@@ -1482,7 +1482,7 @@ python manage.py runserver   # then GET /api/v1/health/ from the browser or a te
 **Read before starting:** `docs/user_flows.md` §17; `docs/test_specification.md` `TC-FR-037-01` (the fixture is three reminders — due-active, future-active, due-inactive — and only the first may render).
 **Do:**
 1. Build the due-reminders area consuming `GET /api/v1/reminders/?state=due`, rendering each reminder's examination title and `due_date` through `formatCalendarDate`.
-2. Render only what the endpoint returns — do not re-filter client-side; the backend is the single definition of "due".
+2. The backend is the single definition of "due", and the request asks for `state=due`; the component still renders only reminders that are active and due on or before the account-local date, because `ADS-FR-037-01` ("render only those reminders") and `TC-FR-037-01` (the endpoint mock returns a due-active, a future-active and a due-inactive reminder, and only the first may render) require it. *(Corrected 2026-09-25: this step previously said "do not re-filter client-side", which contradicted `TC-FR-037-01`.)*
 3. Implement the test.
 **Test cases to implement:** `TC-FR-037-01` (Frontend integration test) — only the due active reminder is displayed.
 **Acceptance criteria:** the test passes and asserts the **absence** of the other two fixtures.

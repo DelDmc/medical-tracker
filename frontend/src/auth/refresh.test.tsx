@@ -14,7 +14,7 @@ const EXPIRED_MESSAGE = /your session has expired/i
 function protectedEndpoint(validToken: string) {
   const attempts: (string | null)[] = []
   server.use(
-    http.get(`${API}/examinations/`, ({ request }) => {
+    http.get(`${API}/categories/`, ({ request }) => {
       const authorization = request.headers.get('authorization')
       attempts.push(authorization)
       if (authorization === `Bearer ${validToken}`) return HttpResponse.json([])
@@ -55,7 +55,7 @@ describe('session refresh', () => {
     const attempts = protectedEndpoint('fresh-token')
     session.signIn('stale-token', { email: 'person@example.com' })
 
-    await expect(apiRequest('/examinations/')).resolves.toEqual([])
+    await expect(apiRequest('/categories/')).resolves.toEqual([])
 
     expect(calls.refresh).toHaveLength(1)
     expect(attempts).toEqual(['Bearer stale-token', 'Bearer fresh-token'])
@@ -70,7 +70,7 @@ describe('session refresh', () => {
     await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
 
     await act(async () => {
-      await expect(apiRequest('/examinations/')).rejects.toBeInstanceOf(SessionExpiredError)
+      await expect(apiRequest('/categories/')).rejects.toBeInstanceOf(SessionExpiredError)
     })
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Log in' })).toBeInTheDocument()
@@ -114,9 +114,9 @@ describe('session refresh', () => {
     session.signIn('stale-token', { email: 'person@example.com' })
 
     const results = await Promise.all([
-      apiRequest('/examinations/'),
-      apiRequest('/examinations/'),
-      apiRequest('/examinations/'),
+      apiRequest('/categories/'),
+      apiRequest('/categories/'),
+      apiRequest('/categories/'),
     ])
 
     expect(results).toEqual([[], [], []])

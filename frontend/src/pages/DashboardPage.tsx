@@ -1,4 +1,5 @@
 import { useAuth } from '../auth/AuthContext'
+import { DueReminders } from '../examinations/DueReminders'
 
 export function DashboardPage() {
   const { user } = useAuth()
@@ -6,6 +7,7 @@ export function DashboardPage() {
     <section className="page" aria-labelledby="dashboard-title">
       <h1 id="dashboard-title">Dashboard</h1>
       {user ? <p className="muted">Signed in as {user.email}</p> : null}
+      <DueReminders />
     </section>
   )
 }

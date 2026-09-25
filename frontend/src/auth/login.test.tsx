@@ -39,12 +39,12 @@ describe('login', () => {
     // Subsequent protected requests carry it as a bearer token.
     const authorization: (string | null)[] = []
     server.use(
-      http.get(`${API}/examinations/`, ({ request }) => {
+      http.get(`${API}/categories/`, ({ request }) => {
         authorization.push(request.headers.get('authorization'))
         return HttpResponse.json([])
       }),
     )
-    await apiRequest('/examinations/')
+    await apiRequest('/categories/')
     expect(authorization).toEqual([`Bearer ${ACCESS_TOKEN}`])
   })
 

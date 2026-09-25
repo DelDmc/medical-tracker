@@ -15,6 +15,8 @@ export const defaultHandlers = [
   http.get(`${API}/categories/`, () => HttpResponse.json(CATEGORIES)),
   http.get(`${API}/examinations/:id/reminder/`, notFound),
   http.get(`${API}/examinations/:id/recurrence/`, notFound),
+  http.get(`${API}/reminders/`, () => HttpResponse.json([])),
+  http.get(`${API}/examinations/`, () => HttpResponse.json([])),
 ]
 
 /** The MSW server every test shares; `server.resetHandlers()` restores the defaults. */

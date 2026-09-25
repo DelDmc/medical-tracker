@@ -133,7 +133,7 @@ describe('CSRF token handling', () => {
     })
     const calls = mockAuthApi({ refreshedTokens: ['refreshed-token'] })
     server.use(
-      http.get(`${API}/examinations/`, ({ request }) =>
+      http.get(`${API}/categories/`, ({ request }) =>
         request.headers.get('authorization') === 'Bearer refreshed-token'
           ? HttpResponse.json([])
           : HttpResponse.json({ detail: 'expired' }, { status: 401 }),
@@ -143,7 +143,7 @@ describe('CSRF token handling', () => {
     renderApp('/login')
     await logInThroughUi(user) // login
     expect(session.getAccessToken()).toBe(ACCESS_TOKEN)
-    await act(() => apiRequest('/examinations/')) // refresh after a 401
+    await act(() => apiRequest('/categories/')) // refresh after a 401
     const nav = screen.getByRole('navigation', { name: 'Primary' })
     await user.click(within(nav).getByRole('button', { name: 'Log out' })) // logout
     await expectLoginPage()

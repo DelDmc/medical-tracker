@@ -11,3 +11,7 @@ examination_patterns = [
     path("<int:pk>/", views.ExaminationDetailView.as_view(), name="examination-detail"),
     path("<int:pk>/reminder/", views.ReminderView.as_view(), name="examination-reminder"),
 ]
+
+reminder_patterns = [
+    path("", views.DueReminderListView.as_view(), name="reminder-list"),
+]

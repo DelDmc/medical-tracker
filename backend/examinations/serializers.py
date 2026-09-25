@@ -177,3 +177,9 @@ class ExaminationListQuerySerializer(serializers.Serializer):
             "response field, whose values are upcoming, overdue or null."
         ),
     )
+
+
+class DueReminderQuerySerializer(serializers.Serializer):
+    """`GET /api/v1/reminders/` query: `state=due` is the one supported view (§14.4)."""
+
+    state = serializers.ChoiceField(choices=["due"])

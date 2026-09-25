@@ -6,10 +6,13 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import ExaminationCategory
+from config.clock import user_local_date
+
+from .models import ExaminationCategory, Reminder
 from .querysets import OwnedExaminationMixin
 from .serializers import (
     CategorySerializer,
+    DueReminderQuerySerializer,
     ExaminationListQuerySerializer,
     ExaminationSerializer,
     ReminderCreateSerializer,
@@ -141,3 +144,29 @@ class ReminderView(OwnedExaminationMixin, APIView):
             require_planned(examination, REMINDER_REQUIRES_PLANNED)
         reminder = serializer.save()
         return Response(ReminderSerializer(reminder).data)
+
+
+class DueReminderListView(generics.ListAPIView):
+    """`GET /api/v1/reminders/?state=due` (ADS-FR-037-01, domain_model.md §6.6).
+
+    Active reminders due on or before the user's current local date, on the user's own
+    examinations only. The backend is the single definition of "due".
+    """
+
+    serializer_class = ReminderSerializer
+
+    def get_queryset(self):
+        params = DueReminderQuerySerializer(data=self.request.query_params)
+        params.is_valid(raise_exception=True)
+        user = self.request.user
+        return (
+            Reminder.objects.filter(
+                examination__user=user, is_active=True, due_date__lte=user_local_date(user)
+            )
+            .select_related("examination")
+            .order_by("due_date", "id")
+        )
+
+    @extend_schema(parameters=[DueReminderQuerySerializer])
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)

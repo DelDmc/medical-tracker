@@ -18,9 +18,9 @@ This file records daily project progress, technical decisions, verification work
 ## Current Project Status
 
 - **Current phase:** Implementation (Phase 3 — Authentication)
-- **Current milestone:** Slice 12 — reminder lifecycle and the due-reminders view
+- **Current milestone:** Slice 13 — recurrence rules
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 12 — reminder lifecycle and the due-reminders view
+- **Next major deliverable:** Slice 13 — recurrence rules
 - **Last updated:** 2026-09-25
 
 ---
@@ -52,6 +52,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 - [+] **Slice 9 — list search, filters, and ordering (complete).** Validated `search`/`status`/`category`/`ordering` parameters (400 on invalid values, AND semantics, explicit nulls-last placement with an identifier tiebreak) and the matching list controls. `FR-028`, `FR-029`, `FR-030` close. Test cases passing: `TC-FR-028-01`, `TC-FR-029-01/02/03`, `TC-FR-030-01/02/03`.
 - [+] **Slice 10 — derived time states: past, upcoming, overdue (complete).** Past/upcoming/overdue queryset filters beside `time_state_for` in the one time-state module (a supporting check proves they never disagree), `?time_state=` on the list, and the matching list views. `FR-031`–`FR-034` close. Test cases passing: `TC-FR-019-01/02`, `TC-FR-031-01…06`, `TC-FR-032-01…05`, `TC-FR-033-01…05`, `TC-FR-034-01`.
 - [+] **Slice 11 — reminders: configuration and due-date calculation (complete).** `GET`/`POST`/`PATCH /api/v1/examinations/{id}/reminder/` with `due_date = scheduled_date − offset_days` (recalculated on every reminder or examination save, null without a date), the planned-only rule for creation, offset changes and reactivation (disabling always allowed), and the reminder settings on the detail page. `FR-017`, `FR-035`, `FR-036` close. Test cases passing: `TC-FR-017-01/02/03`, `TC-FR-035-01…19`, `TC-FR-036-01…04`, `TC-SEC-001-02`, `TC-SEC-002-04`.
+- [+] **Slice 12 — reminder lifecycle and the due-reminders view (complete).** Leaving `planned` deactivates the reminder in the same transaction (returning to `planned` does not reactivate it), `GET /api/v1/reminders/?state=due`, and the dashboard's due-reminders area. `RF-19`'s trigger fired and is escalated below. `FR-037`, `FR-038` close. Test cases passing: `TC-FR-037-01/02`, `TC-FR-038-01…05`.
 
 ### Files Created or Modified
 
@@ -76,8 +77,8 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 
 | Test, command, or manual check | Result | Notes |
 |---|---|---|
-| `cd backend && pytest` | Passed | 158 tests |
-| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 35 tests |
+| `cd backend && pytest` | Passed | 164 tests |
+| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 36 tests |
 | `bash scripts/secret-scan.sh` | Passed | A planted key fails it in the tree and, in a scratch clone, when present only in history |
 | README followed verbatim in a fresh clone | Passed | Backend and frontend installed, migrated, tested, and both dev servers answered |
 
@@ -87,6 +88,8 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 |---|---|---|---|
 | Node 20 (D8) left upstream support on 2026-04-30 | Hosting platforms may drop Node 20 builds | **Resolved:** the owner moved D8 to Node 22 LTS | `.nvmrc` 22, `engines >=22.12`; suite verified on Node 22.23.3 |
 | The installed Node is v19.9.0 (Task 0.2 is owner-run) | Frontend commands need Node 22 | Verified with Node binaries in a session scratch directory | Owner to install Node 22 (for example `nvm install 22`) |
+| `RF-19` trigger fired (Task 12.2): `offset_days` has no upper bound | A very large offset yields a `due_date` far in the past, so the reminder is due immediately and stays due until turned off | The field is specified as "a positive whole number" with no maximum (`FR-035`, `ADS-FR-035-01`, `api_contract.md` §14); no bound was invented | Owner to decide whether to add a maximum (a requirement and design change); `RF-19` stays open |
+| `IMPLEMENTATION_PLAN.md` Task 12.4 told the due-reminders view not to filter client-side, contradicting `TC-FR-037-01` | Following the plan would fail the specified test | The plan is non-normative; `ADS-FR-037-01` and `TC-FR-037-01` govern | Implemented per the specification; the plan's step corrected |
 
 ### Development Record
 
