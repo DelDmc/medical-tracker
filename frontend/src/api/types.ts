@@ -85,3 +85,22 @@ export type RecurrenceRule = {
   created_at: string
   updated_at: string
 }
+
+/** A calendar entry's state: the stored status, or `overdue` (api_contract.md §17). */
+export type CalendarState = 'planned' | 'completed' | 'cancelled' | 'missed' | 'overdue'
+
+export type CalendarEntry = {
+  calendar_date: string
+  state: CalendarState
+  examination: Pick<
+    Examination,
+    | 'id'
+    | 'title'
+    | 'category'
+    | 'scheduled_date'
+    | 'scheduled_time'
+    | 'completed_date'
+    | 'status'
+    | 'time_state'
+  >
+}

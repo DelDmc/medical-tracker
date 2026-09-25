@@ -1,3 +1,4 @@
+import re
 from collections.abc import Mapping
 
 from drf_spectacular.utils import extend_schema_field
@@ -211,3 +212,56 @@ class RecurrenceRuleSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.DateField(allow_null=True, read_only=True))
     def get_next_due_date(self, rule):
         return next_due_date(rule.examination.scheduled_date, rule.interval)
+
+
+class StrictDateField(serializers.DateField):
+    """A calendar date written exactly as `YYYY-MM-DD` (api_contract.md §2, §17).
+
+    Python's ISO parser also accepts forms such as `20260801`; those are rejected here.
+    """
+
+    PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+    def to_internal_value(self, value):
+        if not isinstance(value, str) or not self.PATTERN.match(value):
+            self.fail("invalid", format="YYYY-MM-DD")
+        return super().to_internal_value(value)
+
+
+class CalendarQuerySerializer(serializers.Serializer):
+    """`GET /api/v1/calendar/` parameters (ADS-FR-042-02): both required, start <= end."""
+
+    start_date = StrictDateField(help_text="First date of the range, YYYY-MM-DD, inclusive.")
+    end_date = StrictDateField(help_text="Last date of the range, YYYY-MM-DD, inclusive.")
+
+    def validate(self, attrs):
+        if attrs["start_date"] > attrs["end_date"]:
+            raise serializers.ValidationError(
+                {"start_date": ["The start date must not be later than the end date."]}
+            )
+        return attrs
+
+
+class CalendarExaminationSerializer(ExaminationSerializer):
+    """The examination subset carried by a calendar entry (api_contract.md §17)."""
+
+    class Meta(ExaminationSerializer.Meta):
+        fields = [
+            "id",
+            "title",
+            "category",
+            "scheduled_date",
+            "scheduled_time",
+            "completed_date",
+            "status",
+            "time_state",
+        ]
+
+
+CALENDAR_STATES = [*ExaminationStatus.values[1:], OVERDUE]
+
+
+class CalendarEntrySerializer(serializers.Serializer):
+    calendar_date = serializers.DateField()
+    state = serializers.ChoiceField(choices=CALENDAR_STATES)
+    examination = CalendarExaminationSerializer()

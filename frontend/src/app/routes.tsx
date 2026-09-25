@@ -1,6 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router'
 
 import { PublicOnly, RequireAuth } from '../auth/guards'
+import { CalendarPage } from '../calendar/CalendarPage'
 import { AboutPage } from '../pages/AboutPage'
 import { AccountPage } from '../pages/AccountPage'
 import { DashboardPage } from '../pages/DashboardPage'
@@ -33,6 +34,7 @@ export const routes: RouteObject[] = [
           { path: '/dashboard', element: <DashboardPage /> },
           { path: '/account', element: <AccountPage /> },
           { path: '/examinations', element: <ExaminationListPage /> },
+          { path: '/calendar', element: <CalendarPage /> },
           { path: '/examinations/new', element: <NewExaminationPage /> },
           { path: '/examinations/:id', element: <ExaminationDetailPage /> },
           { path: '/examinations/:id/edit', element: <EditExaminationPage /> },

@@ -21,3 +21,7 @@ examination_patterns = [
 reminder_patterns = [
     path("", views.DueReminderListView.as_view(), name="reminder-list"),
 ]
+
+calendar_patterns = [
+    path("", views.CalendarView.as_view(), name="calendar"),
+]

@@ -8,9 +8,12 @@ from rest_framework.views import APIView
 
 from config.clock import user_local_date
 
+from .calendar import calendar_entries
 from .models import ExaminationCategory, Reminder
 from .querysets import OwnedExaminationMixin
 from .serializers import (
+    CalendarEntrySerializer,
+    CalendarQuerySerializer,
     CategorySerializer,
     DueReminderQuerySerializer,
     ExaminationListQuerySerializer,
@@ -250,3 +253,27 @@ class NextOccurrenceView(OwnedExaminationMixin, APIView):
             ExaminationSerializer(occurrence, context=context).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
+
+
+class CalendarView(OwnedExaminationMixin, APIView):
+    """`GET /api/v1/calendar/?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD` (§17).
+
+    The caller's examinations placed on their status-specific date within the
+    inclusive range, as a JSON array of entries.
+    """
+
+    @extend_schema(
+        parameters=[CalendarQuerySerializer], responses={200: CalendarEntrySerializer(many=True)}
+    )
+    def get(self, request):
+        params = CalendarQuerySerializer(data=request.query_params)
+        params.is_valid(raise_exception=True)
+        local_now = self.get_local_now()
+        entries = calendar_entries(
+            self.get_queryset(),
+            params.validated_data["start_date"],
+            params.validated_data["end_date"],
+            local_now,
+        )
+        context = {"request": request, "local_now": local_now}
+        return Response(CalendarEntrySerializer(entries, many=True, context=context).data)
