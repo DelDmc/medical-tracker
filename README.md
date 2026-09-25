@@ -61,9 +61,12 @@ python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
 cp .env.example .env
+python -c "import pathlib, secrets; env = pathlib.Path('.env'); env.write_text(env.read_text().replace('<generate-a-long-random-value>', secrets.token_urlsafe(50)).replace('<generate-a-different-long-random-value>', secrets.token_urlsafe(50)))"
 python manage.py migrate
 python manage.py runserver 8000
 ```
+
+The `python -c` line replaces the two signing-secret placeholders in `backend/.env` with generated random values, so sessions survive a server restart. `migrate` creates `backend/db.sqlite3` and seeds the eight examination categories (see [Database Migrations](#database-migrations)).
 
 The API is then served under `http://localhost:8000/api/v1/`; `http://localhost:8000/api/v1/health/` answers `{"status": "ok"}`.
 
@@ -72,15 +75,15 @@ The API is then served under `http://localhost:8000/api/v1/`; `http://localhost:
 | Variable | Local development | Production |
 |---|---|---|
 | `DJANGO_SETTINGS_MODULE` | `config.settings.development` (the `manage.py` default) | `config.settings.production` |
-| `DJANGO_SECRET_KEY` | Optional — without it a random value is generated per process, so sessions end when the server restarts | Required |
-| `JWT_SIGNING_KEY` | Optional — same behavior as above | Required |
+| `DJANGO_SECRET_KEY` | Optional — when blank, a random value is generated per process, so sessions end whenever the server restarts | Required |
+| `JWT_SIGNING_KEY` | Optional — same behavior as above | Required; distinct from `DJANGO_SECRET_KEY` |
 | `DJANGO_ALLOWED_HOSTS` | Optional — defaults to `localhost,127.0.0.1,[::1]` | Required |
 | `FRONTEND_ORIGINS` | Optional — defaults to `http://localhost:5173` | Required; explicit `scheme://host[:port]` origins, no wildcards |
 | `DATABASE_URL` | Optional — unset means `backend/db.sqlite3` | Required; `postgres://…` URL |
 | `DJANGO_DEBUG` | Optional — defaults to `true` | Ignored; production always runs with debug off |
 | `DJANGO_SECURE_SSL_REDIRECT` | Not used | Optional — defaults to `true` |
 
-To give the two signing secrets stable local values (so sessions survive a server restart), replace the placeholders in `backend/.env` with generated values, for example the output of:
+A new random value for either secret, for example to rotate one, is the output of:
 
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(50))"
@@ -131,6 +134,127 @@ npm run lint
 bash scripts/secret-scan.sh
 ```
 
-## Build and Deployment
+### API contract
 
-Not yet documented: database migration, production build, and deployment procedures are added as the corresponding implementation slices land.
+[`backend/openapi.yaml`](backend/openapi.yaml) is the OpenAPI contract generated from the implementation. The backend suite fails when it is stale; after changing an endpoint, regenerate and commit it:
+
+```bash
+cd backend
+. .venv/bin/activate
+python manage.py spectacular --file openapi.yaml
+```
+
+A running development server also serves it at `/api/v1/schema/` to authenticated requests.
+
+## Database Migrations
+
+Migrations live in `backend/accounts/migrations/` and `backend/examinations/migrations/`. `examinations/migrations/0002_seed_categories.py` is a data migration that creates the eight fixed examination categories, so a migrated database is ready to use with no fixture loading.
+
+Apply every pending migration — after the first setup and after pulling changes:
+
+```bash
+cd backend
+. .venv/bin/activate
+python manage.py migrate
+```
+
+After changing a model, generate the migration, commit it with the change, and confirm nothing is left ungenerated:
+
+```bash
+python manage.py makemigrations
+python manage.py makemigrations --check --dry-run
+```
+
+In production the same `migrate` command runs automatically before every deploy (see [Deployment](#deployment)), followed by `python manage.py createcachetable`, which creates the `django_cache` table the production settings use to share rate-limit counters between worker processes.
+
+## Production Builds
+
+### Backend
+
+The backend has no build output: the API serves JSON only, so there are no static files to collect. A production install is the runtime dependencies alone, and the process is served by Gunicorn through `config/wsgi.py`, which selects `config.settings.production` by default. These are the commands Render runs in [Deployment](#deployment) step 2, where the platform sets `PORT` and the production environment variables; they are not part of local setup:
+
+```bash
+cd backend
+pip install -r requirements.txt
+gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+```
+
+Production settings refuse to start unless `DJANGO_SECRET_KEY`, `JWT_SIGNING_KEY`, `DJANGO_ALLOWED_HOSTS`, `DATABASE_URL` and `FRONTEND_ORIGINS` are all set, and they reject a wildcard origin. Debug mode is always off, authentication cookies are `Secure` and `SameSite=None`, and plain-HTTP requests are redirected to HTTPS based on the platform's `X-Forwarded-Proto` header.
+
+### Frontend
+
+`VITE_API_BASE_URL` is compiled into the bundle, so set it to the backend origin the build will talk to:
+
+```bash
+cd frontend
+npm ci
+VITE_API_BASE_URL=https://<backend-host> npm run build
+```
+
+`npm run build` type-checks the project and writes a static site to `frontend/dist/`. `npm run preview` serves that build locally at `http://localhost:4173` for a last look. The site is a single-page application: any path that is not a file must be answered with `index.html`, which [`frontend/vercel.json`](frontend/vercel.json) configures on Vercel.
+
+## Deployment
+
+The backend and its PostgreSQL database run on [Render](https://render.com); the frontend is a static site on [Vercel](https://vercel.com) (decision D12 in [`docs/technology_decisions.md`](docs/technology_decisions.md)). Both platforms terminate HTTPS. The two halves stay on **separate origins**: the browser calls the Render origin directly, the production cookies are `SameSite=None; Secure` for exactly that reason, and the frontend must never proxy `/api/` through its own origin. Use paid Render plans — a free web service sleeps and a free database expires.
+
+Deploy from the branch that holds the release: `project/mvp` until the MVP is merged, `main` afterwards. Each platform deploys again automatically on every push to that branch.
+
+### 1. Create the database
+
+In the Render dashboard choose **New → Postgres**, pick a paid instance type and a region, and create it. From its **Connections** section copy the **Internal Database URL**.
+
+### 2. Create the backend web service
+
+Choose **New → Web Service**, connect the repository, and set:
+
+| Setting | Value |
+|---|---|
+| Language | Python 3 |
+| Branch | The release branch (see above) |
+| Region | The database's region, so the internal URL resolves |
+| Root Directory | `backend` |
+| Build Command | `pip install -r requirements.txt` |
+| Pre-Deploy Command | `python manage.py migrate --noinput && python manage.py createcachetable` |
+| Start Command | `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT` |
+| Instance Type | A paid type |
+| Health Check Path (under **Advanced**) | `/api/v1/health/` |
+
+Environment variables — secrets live only here, never in the repository:
+
+| Variable | Value |
+|---|---|
+| `PYTHON_VERSION` | `3.12.3` |
+| `DJANGO_SETTINGS_MODULE` | `config.settings.production` — required: `manage.py` in the pre-deploy command would otherwise load the development settings |
+| `DJANGO_SECRET_KEY` | Click **Generate** |
+| `JWT_SIGNING_KEY` | Click **Generate** — a different value |
+| `DJANGO_ALLOWED_HOSTS` | The service's host name, e.g. `medical-tracker-api.onrender.com` — shown under the service name once it exists |
+| `DATABASE_URL` | The Internal Database URL from step 1 |
+| `FRONTEND_ORIGINS` | The Vercel production origin, e.g. `https://medical-tracker.vercel.app` — use the project name you will give Vercel in step 3; correct it in step 4 if Vercel assigns a different domain |
+
+Create the service. When the deploy finishes, `https://<service-host>/api/v1/health/` answers `{"status": "ok"}`. The deploy log shows the migrations, including `examinations.0002_seed_categories`.
+
+### 3. Create the frontend project
+
+In the Vercel dashboard choose **Add New → Project**, import the repository, and set:
+
+| Setting | Value |
+|---|---|
+| Project Name | The name used for `FRONTEND_ORIGINS` in step 2 |
+| Root Directory | `frontend` |
+| Framework Preset | Vite |
+| Install Command | `npm ci` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Environment variable `VITE_API_BASE_URL` | `https://<service-host>` — the Render origin from step 2, no trailing slash, no `/api/v1` |
+
+Create the project. Vercel builds the repository's default branch on import; if the release branch is a different one, set it as the project's production branch in the project settings and redeploy from it. Vercel takes the Node.js version from `engines` in `frontend/package.json`. `frontend/vercel.json` only sends unknown paths to `index.html` so that deep links such as `/examinations/12` load; it contains no `/api` rewrite, and none may be added. Because `VITE_API_BASE_URL` is compiled in, changing it takes a redeploy.
+
+### 4. Allow the frontend origin
+
+Copy the production domain Vercel shows for the project. If it differs from the `FRONTEND_ORIGINS` value set in step 2, update that variable on Render with **Save, rebuild, and deploy**. The value is the exact origin — `https://`, the host, a port only if one is used, no trailing slash and no wildcard. List several origins comma-separated only when each is meant to reach the API, such as a custom domain; Vercel preview deployments are rejected unless their origins are listed.
+
+### 5. Verify the deployment
+
+1. Open `https://<service-host>/api/v1/health/` and confirm `{"status": "ok"}`; open `http://<service-host>/api/v1/health/` and confirm it redirects to HTTPS.
+2. From the Vercel origin, register an account, log in, create an examination — the category list shows the eight seeded categories — and confirm it appears on the dashboard.
+3. Reload a deep link such as `/examinations` and confirm the page loads rather than a 404.

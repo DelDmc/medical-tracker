@@ -50,16 +50,13 @@ Maintenance rules:
 
 ## 4. Repository Artifacts Outside `docs/`
 
-#### RF-20 — Required repository documentation does not exist
-**Documents:** `README.md`, `requirements_specification.md (335-337)`, `design_specification.md (1051-1056)`
-**Disposition:** Deferred
-**Finding:** TECH-007 requires documented local setup, test execution, migration, build, and deployment procedures, and `ADS-TECH-007-01` requires those instructions to be maintained in the repository and tied to its actual structure. `README.md` is empty. Trigger: before Phase 2 completes.
+No open findings.
 
 ## 5. Summary
 
-- Findings open: **4**
+- Findings open: **3**
 - Fix now: **0**
 - Needs decision: **0**
 - In progress: **0**
-- Deferred: **4** — RF-15, RF-16, RF-19, RF-20
+- Deferred: **3** — RF-15, RF-16, RF-19
 - Accepted: **0**

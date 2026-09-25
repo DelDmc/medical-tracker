@@ -1,11 +1,20 @@
 from django.contrib.auth import authenticate
 from django.db import IntegrityError, transaction
 from django.middleware.csrf import get_token
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
 from rest_framework import generics, serializers, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from config.schema import (
+    CSRF_FAILURE,
+    ERROR_DETAIL,
+    RETRY_AFTER,
+    THROTTLED,
+    UNAUTHENTICATED,
+    VALIDATION_FAILURE,
+)
 
 from . import tokens
 from .cookies import REFRESH_COOKIE_NAME, clear_refresh_cookie, set_refresh_cookie
@@ -24,6 +33,17 @@ from .throttles import LoginRateThrottle, RefreshRateThrottle, RegisterRateThrot
 INVALID_CREDENTIALS = {"detail": "Invalid credentials."}
 INVALID_REFRESH_TOKEN = {"detail": "Refresh token is invalid or expired."}
 
+INVALID_CREDENTIALS_RESPONSE = OpenApiResponse(
+    ERROR_DETAIL,
+    description="Invalid credentials: the same response for an unknown email and a "
+    "wrong password (api_contract.md §5.4).",
+)
+INVALID_REFRESH_TOKEN_RESPONSE = OpenApiResponse(
+    ERROR_DETAIL,
+    description="The refresh token is expired, revoked, malformed, missing or "
+    "otherwise invalid; the cookie is cleared (api_contract.md §5.5).",
+)
+
 
 class RegisterView(APIView):
     """`POST /api/v1/auth/register/` — no bearer token, browser credentials, or CSRF."""
@@ -32,7 +52,12 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [RegisterRateThrottle]
 
-    @extend_schema(auth=[], request=RegistrationSerializer, responses={201: AccountSerializer})
+    @extend_schema(
+        auth=[],
+        request=RegistrationSerializer,
+        parameters=[RETRY_AFTER],
+        responses={201: AccountSerializer, 400: VALIDATION_FAILURE, 429: THROTTLED},
+    )
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -70,7 +95,18 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]
 
-    @extend_schema(auth=[], request=LoginSerializer, responses={200: AccessTokenSerializer})
+    @extend_schema(
+        auth=[],
+        request=LoginSerializer,
+        parameters=[RETRY_AFTER],
+        responses={
+            200: AccessTokenSerializer,
+            400: VALIDATION_FAILURE,
+            401: INVALID_CREDENTIALS_RESPONSE,
+            403: CSRF_FAILURE,
+            429: THROTTLED,
+        },
+    )
     def post(self, request):
         enforce_csrf(request)
         serializer = LoginSerializer(data=request.data)
@@ -104,7 +140,17 @@ class RefreshView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [RefreshRateThrottle]
 
-    @extend_schema(auth=[], request=None, responses={200: AccessTokenSerializer})
+    @extend_schema(
+        auth=[],
+        request=None,
+        parameters=[RETRY_AFTER],
+        responses={
+            200: AccessTokenSerializer,
+            401: INVALID_REFRESH_TOKEN_RESPONSE,
+            403: CSRF_FAILURE,
+            429: THROTTLED,
+        },
+    )
     def post(self, request):
         enforce_csrf(request)
         try:
@@ -141,7 +187,7 @@ class LogoutView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
-    @extend_schema(auth=[], request=None, responses={204: None})
+    @extend_schema(auth=[], request=None, responses={204: None, 403: CSRF_FAILURE})
     def post(self, request):
         enforce_csrf(request)
         try:
@@ -169,11 +215,14 @@ class AccountView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
-    @extend_schema(responses={200: AccountSerializer})
+    @extend_schema(responses={200: AccountSerializer, 401: UNAUTHENTICATED})
     def get(self, request, *args, **kwargs):
         return Response(AccountSerializer(request.user).data)
 
-    @extend_schema(request=AccountUpdateSerializer, responses={200: AccountSerializer})
+    @extend_schema(
+        request=AccountUpdateSerializer,
+        responses={200: AccountSerializer, 400: VALIDATION_FAILURE, 401: UNAUTHENTICATED},
+    )
     def patch(self, request, *args, **kwargs):
         return super().patch(request, *args, **kwargs)
 
@@ -184,7 +233,10 @@ class PasswordChangeView(APIView):
     Success is `200 OK` with an empty body; neither password is ever returned.
     """
 
-    @extend_schema(request=PasswordChangeSerializer, responses={200: None})
+    @extend_schema(
+        request=PasswordChangeSerializer,
+        responses={200: None, 400: VALIDATION_FAILURE, 401: UNAUTHENTICATED},
+    )
     def post(self, request):
         serializer = PasswordChangeSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)

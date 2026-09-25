@@ -1,12 +1,13 @@
 from django.db import IntegrityError, transaction
 from django.db.models import Case, IntegerField, Value, When
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics, serializers, status
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from config.clock import user_local_date
+from config.schema import NOT_FOUND, UNAUTHENTICATED, VALIDATION_FAILURE
 
 from .calendar import calendar_entries
 from .dashboard import dashboard_data
@@ -42,6 +43,9 @@ REMINDER_EXISTS = "This examination already has a reminder."
 RECURRENCE_EXISTS = "This examination already has a recurrence rule."
 
 
+@extend_schema_view(
+    get=extend_schema(responses={200: CategorySerializer(many=True), 401: UNAUTHENTICATED})
+)
 class CategoryListView(generics.ListAPIView):
     """`GET /api/v1/categories/` — read-only; no create, update or delete route exists."""
 
@@ -64,6 +68,11 @@ def order_by_scheduled_date(queryset, ordering):
     return queryset.annotate(undated=undated_last).order_by("undated", ordering, "id")
 
 
+@extend_schema_view(
+    post=extend_schema(
+        responses={201: ExaminationSerializer, 400: VALIDATION_FAILURE, 401: UNAUTHENTICATED}
+    )
+)
 class ExaminationListCreateView(OwnedExaminationMixin, generics.ListCreateAPIView):
     """`GET` / `POST /api/v1/examinations/` — only the caller's records; a JSON array.
 
@@ -90,7 +99,14 @@ class ExaminationListCreateView(OwnedExaminationMixin, generics.ListCreateAPIVie
             queryset = order_by_scheduled_date(queryset, ordering)
         return queryset
 
-    @extend_schema(parameters=[ExaminationListQuerySerializer])
+    @extend_schema(
+        parameters=[ExaminationListQuerySerializer],
+        responses={
+            200: ExaminationSerializer(many=True),
+            400: VALIDATION_FAILURE,
+            401: UNAUTHENTICATED,
+        },
+    )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
@@ -99,6 +115,18 @@ class ExaminationListCreateView(OwnedExaminationMixin, generics.ListCreateAPIVie
         serializer.save(user=self.request.user)
 
 
+@extend_schema_view(
+    get=extend_schema(responses={200: ExaminationSerializer, 401: UNAUTHENTICATED, 404: NOT_FOUND}),
+    patch=extend_schema(
+        responses={
+            200: ExaminationSerializer,
+            400: VALIDATION_FAILURE,
+            401: UNAUTHENTICATED,
+            404: NOT_FOUND,
+        }
+    ),
+    delete=extend_schema(responses={204: None, 401: UNAUTHENTICATED, 404: NOT_FOUND}),
+)
 class ExaminationDetailView(OwnedExaminationMixin, generics.RetrieveUpdateDestroyAPIView):
     """`GET` / `PATCH` / `DELETE /api/v1/examinations/{id}/`.
 
@@ -129,12 +157,20 @@ class ReminderView(OwnedExaminationMixin, APIView):
             raise NotFound()
         return reminder
 
-    @extend_schema(responses={200: ReminderSerializer})
+    @extend_schema(responses={200: ReminderSerializer, 401: UNAUTHENTICATED, 404: NOT_FOUND})
     def get(self, request, pk):
         reminder = self.get_reminder_or_404(self.get_examination())
         return Response(ReminderSerializer(reminder).data)
 
-    @extend_schema(request=ReminderCreateSerializer, responses={201: ReminderSerializer})
+    @extend_schema(
+        request=ReminderCreateSerializer,
+        responses={
+            201: ReminderSerializer,
+            400: VALIDATION_FAILURE,
+            401: UNAUTHENTICATED,
+            404: NOT_FOUND,
+        },
+    )
     def post(self, request, pk):
         examination = self.get_examination()
         if get_reminder(examination) is not None:
@@ -149,7 +185,15 @@ class ReminderView(OwnedExaminationMixin, APIView):
             raise serializers.ValidationError({"non_field_errors": [REMINDER_EXISTS]}) from None
         return Response(ReminderSerializer(reminder).data, status=status.HTTP_201_CREATED)
 
-    @extend_schema(request=ReminderUpdateSerializer, responses={200: ReminderSerializer})
+    @extend_schema(
+        request=ReminderUpdateSerializer,
+        responses={
+            200: ReminderSerializer,
+            400: VALIDATION_FAILURE,
+            401: UNAUTHENTICATED,
+            404: NOT_FOUND,
+        },
+    )
     def patch(self, request, pk):
         examination = self.get_examination()
         reminder = self.get_reminder_or_404(examination)
@@ -183,7 +227,14 @@ class DueReminderListView(generics.ListAPIView):
             .order_by("due_date", "id")
         )
 
-    @extend_schema(parameters=[DueReminderQuerySerializer])
+    @extend_schema(
+        parameters=[DueReminderQuerySerializer],
+        responses={
+            200: ReminderSerializer(many=True),
+            400: VALIDATION_FAILURE,
+            401: UNAUTHENTICATED,
+        },
+    )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
@@ -203,12 +254,20 @@ class RecurrenceView(OwnedExaminationMixin, APIView):
             raise NotFound()
         return rule
 
-    @extend_schema(responses={200: RecurrenceRuleSerializer})
+    @extend_schema(responses={200: RecurrenceRuleSerializer, 401: UNAUTHENTICATED, 404: NOT_FOUND})
     def get(self, request, pk):
         rule = self.get_rule_or_404(self.get_examination())
         return Response(RecurrenceRuleSerializer(rule).data)
 
-    @extend_schema(request=RecurrenceRuleSerializer, responses={201: RecurrenceRuleSerializer})
+    @extend_schema(
+        request=RecurrenceRuleSerializer,
+        responses={
+            201: RecurrenceRuleSerializer,
+            400: VALIDATION_FAILURE,
+            401: UNAUTHENTICATED,
+            404: NOT_FOUND,
+        },
+    )
     def post(self, request, pk):
         examination = self.get_examination()
         if get_recurrence_rule(examination) is not None:
@@ -223,7 +282,15 @@ class RecurrenceView(OwnedExaminationMixin, APIView):
             raise serializers.ValidationError({"non_field_errors": [RECURRENCE_EXISTS]}) from None
         return Response(RecurrenceRuleSerializer(rule).data, status=status.HTTP_201_CREATED)
 
-    @extend_schema(request=RecurrenceRuleSerializer, responses={200: RecurrenceRuleSerializer})
+    @extend_schema(
+        request=RecurrenceRuleSerializer,
+        responses={
+            200: RecurrenceRuleSerializer,
+            400: VALIDATION_FAILURE,
+            401: UNAUTHENTICATED,
+            404: NOT_FOUND,
+        },
+    )
     def patch(self, request, pk):
         examination = self.get_examination()
         rule = self.get_rule_or_404(examination)
@@ -242,7 +309,16 @@ class NextOccurrenceView(OwnedExaminationMixin, APIView):
     without a scheduled date or recurrence rule, is a 400.
     """
 
-    @extend_schema(request=None, responses={200: ExaminationSerializer, 201: ExaminationSerializer})
+    @extend_schema(
+        request=None,
+        responses={
+            200: ExaminationSerializer,
+            201: ExaminationSerializer,
+            400: VALIDATION_FAILURE,
+            401: UNAUTHENTICATED,
+            404: NOT_FOUND,
+        },
+    )
     def post(self, request, pk):
         source = self.get_examination()
         try:
@@ -265,7 +341,12 @@ class CalendarView(OwnedExaminationMixin, APIView):
     """
 
     @extend_schema(
-        parameters=[CalendarQuerySerializer], responses={200: CalendarEntrySerializer(many=True)}
+        parameters=[CalendarQuerySerializer],
+        responses={
+            200: CalendarEntrySerializer(many=True),
+            400: VALIDATION_FAILURE,
+            401: UNAUTHENTICATED,
+        },
     )
     def get(self, request):
         params = CalendarQuerySerializer(data=request.query_params)
@@ -284,7 +365,7 @@ class CalendarView(OwnedExaminationMixin, APIView):
 class DashboardView(OwnedExaminationMixin, APIView):
     """`GET /api/v1/dashboard/` — the caller's collections and counts in one response."""
 
-    @extend_schema(responses={200: DashboardSerializer})
+    @extend_schema(responses={200: DashboardSerializer, 401: UNAUTHENTICATED})
     def get(self, request):
         local_now = self.get_local_now()
         data = dashboard_data(self.get_queryset(), request.user, local_now)

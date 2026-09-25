@@ -55,7 +55,8 @@ class ExaminationSerializer(serializers.ModelSerializer):
     )
 
     user_id = serializers.IntegerField(read_only=True)
-    category = CategorySerializer(read_only=True)
+    # Both may be null (api_contract.md §8.1); allow_null puts that in the OpenAPI schema.
+    category = CategorySerializer(read_only=True, allow_null=True)
     category_id = serializers.PrimaryKeyRelatedField(
         source="category",
         queryset=ExaminationCategory.objects.all(),
@@ -63,7 +64,7 @@ class ExaminationSerializer(serializers.ModelSerializer):
         required=False,
         write_only=True,
     )
-    source_occurrence = serializers.PrimaryKeyRelatedField(read_only=True)
+    source_occurrence = serializers.PrimaryKeyRelatedField(read_only=True, allow_null=True)
     time_state = serializers.SerializerMethodField()
 
     class Meta:

@@ -17,10 +17,10 @@ This file records daily project progress, technical decisions, verification work
 
 ## Current Project Status
 
-- **Current phase:** Implementation (Phase 3 — Authentication)
-- **Current milestone:** Slice 18 — repository documentation and the OpenAPI contract
+- **Current phase:** Implementation (Phase 8 — Deployment)
+- **Current milestone:** Slice 19 — deployment (configuration prepared; the owner deploys)
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 18 — repository documentation and the OpenAPI contract
+- **Next major deliverable:** Slice 19 — deployment (configuration prepared; the owner deploys)
 - **Last updated:** 2026-09-25
 
 ---
@@ -58,6 +58,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 - [+] **Slice 15 — monthly calendar (complete).** `GET /api/v1/calendar/` (strict `YYYY-MM-DD` range validation, status-specific placement, drafts and date-less records excluded, `overdue` state from the shared module) and the calendar page with five distinct label-plus-shape indicators and month navigation. `RF-16`'s calendar half was reached and is escalated below. `FR-019`, `FR-042`, `FR-043` close. Test cases passing: `TC-FR-019-03`, `TC-FR-042-01…09`, `TC-FR-043-01…05`, `TC-SEC-001-04`.
 - [+] **Slice 16 — dashboard (complete).** `GET /api/v1/dashboard/` (upcoming and overdue from the shared collection queries, `overdue_count` from the same overdue result, recently completed filtered → ordered → limited to five, zero-filled counts) and the dashboard page. `FR-044`–`FR-047` and `SEC-001` close; Phases 4, 5 and 6 are complete. Test cases passing: `TC-FR-044-01…10`, `TC-FR-045-01`, `TC-FR-046-01/02`, `TC-FR-047-01`, `TC-SEC-001-05`.
 - [+] **Slice 17 — cross-cutting UX review (complete).** Documented reviews in `docs/reviews/`: responsive at 320 / 768 / 1280 CSS px (Firefox 155; no horizontal scrolling on any page; seven layout defects found and fixed — CSS order hiding the Menu toggle, navigation and calendar-grid breakpoints moved to 1024 px, word breaking, tile and metadata widths, 44 px link targets) and input methods (all fifteen primary actions by touch, mouse and keyboard; visible focus at every keyboard stop; focus-managed delete dialog; one defect fixed). `UX-001` and `UX-008` close. Test cases passing: `TC-UX-001-01/02/03`, `TC-UX-008-01/02/03` (reviews).
+- [+] **Slice 18 — repository documentation and the OpenAPI contract (complete).** `README.md` now covers local setup (including generated local signing secrets), tests, the secret scan, regenerating `openapi.yaml`, migrations, production builds, and the Render + Vercel deployment procedure; `frontend/vercel.json` adds the single-page-application fallback and no `/api` rewrite. The clean-environment review followed the README from two fresh clones. Pass 1 found one ambiguity (the Gunicorn command read as a local step), which was fixed; pass 2 needed no corrective step. The deployment section itself waits for the owner's deploy. `RF-20` resolved and deleted. The contract test walks all 25 operations over real HTTP and validates each response against `api_contract.md` and `openapi.yaml`. It found `source_occurrence` published as non-nullable, now fixed. Every operation now documents its contract error responses. `TECH-001` and `TECH-007` close. Test cases passing: `TC-TECH-001-01` (contract), `TC-TECH-007-01` (review).
 
 ### Files Created or Modified
 
@@ -68,6 +69,9 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 | `frontend/` | Vite + React + TypeScript app shell, purpose page, tests | Slice 0 |
 | `scripts/secret-scan.sh`, `.secrets.baseline` | Created | `TC-SEC-004-01` |
 | `README.md` | Branching, local setup, and test sections | Tasks 0.1 and 0.9 |
+| `README.md`, `frontend/vercel.json` | Migrations, production builds, and the Render + Vercel deployment procedure | Task 18.1 (`RF-20` resolved) |
+| `docs/reviews/TC-TECH-007-01-clean-environment.md` | Created | `TC-TECH-007-01` |
+| `backend/tests/test_contract.py`, `backend/config/schema.py`, `backend/openapi.yaml` | Contract test; documented error responses | Task 18.2, `TC-TECH-001-01` |
 
 ### Technical Decisions
 
@@ -77,15 +81,18 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 | Frontend packages pinned to the newest majors that still run on Node 20 (React Router 7, Vitest 4, jsdom 27, jest-dom 6.9) | D8 fixes Node 20; the newest majors of those packages require Node 22 | Changing D8 — the owner's call |
 | The secret scan writes every historical file version out under its original path | A single concatenated patch bypassed detect-secrets' filename filters and flagged lockfile hashes | Excluding lock files by pathspec |
 | Two audited false positives in `docs/api_contract.md` are recorded in `.secrets.baseline` rather than edited | The contract is normative; the flagged values are its example passwords | Editing the contract |
+| The contract test runs a live server and speaks plain `http.client`, sending cookies back only within their `Path` | `TC-TECH-001-01` requires direct HTTP with no browser-specific behavior | Django's test client, which bypasses HTTP and keeps its own cookie jar |
+| Responses are validated against `openapi.yaml` with `jsonschema`, which drf-spectacular already requires, after converting OpenAPI 3.0 `nullable` | Makes the published schema testable against real responses | Key-set assertions alone, which cannot catch schema drift |
 
 ### Tests and Verification
 
 | Test, command, or manual check | Result | Notes |
 |---|---|---|
-| `cd backend && pytest` | Passed | 213 tests |
+| `cd backend && pytest` | Passed | 215 tests |
 | `cd frontend && npm run test && npm run lint && npm run build` | Passed | 46 tests |
 | `bash scripts/secret-scan.sh` | Passed | A planted key fails it in the tree and, in a scratch clone, when present only in history |
-| README followed verbatim in a fresh clone | Passed | Backend and frontend installed, migrated, tested, and both dev servers answered |
+| README followed verbatim in a fresh clone (`TC-TECH-007-01`) | Passed | Two passes. Pass 2 had no corrective step: setup, migrations, both dev servers, a browser walk from registration to the dashboard, both suites, the secret scan, contract regeneration and the production builds |
+| `pytest -k tc_tech_001_01 -v` after `spectacular --file openapi.yaml` | Passed | The regenerated schema matches the committed file |
 
 ### Problems and Blockers
 
@@ -455,7 +462,7 @@ Update this table when a phase changes status.
 | 4. Examination Records | Completed | 2026-09-25 | 2026-09-25 | Slices 7–10: categories, examinations CRUD, search/filter/order, past/upcoming/overdue |
 | 5. Planning and Recurrence | Completed | 2026-09-25 | 2026-09-25 | Slices 11–14: reminders, reminder lifecycle, recurrence, next occurrence |
 | 6. Calendar and Dashboard | Completed | 2026-09-25 | 2026-09-25 | Slices 15–16: monthly calendar, dashboard |
-| 7. Testing and Documentation | In progress | 2026-08-04 | — | Test specification exists and review findings are tracked; `README.md` and implementation test suites remain pending |
+| 7. Testing and Documentation | Completed | 2026-08-04 | 2026-09-25 | Slices 17–18: cross-cutting UX reviews, repository operating documentation with a clean-environment review, OpenAPI contract test |
 | 8. Deployment | Not started | — | — | Production deployment, migrations, and deployment verification have not started |
 
 Allowed statuses: `Not started`, `In progress`, `Blocked`, `Completed`, `Deferred`.
