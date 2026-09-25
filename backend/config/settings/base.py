@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     "accounts",
+    "examinations",
 ]
 
 MIDDLEWARE = [

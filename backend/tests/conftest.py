@@ -75,3 +75,35 @@ def make_user(db):
         return User.objects.create_user(email=email, password=password, timezone=timezone)
 
     return factory
+
+
+class BearerClient(APIClient):
+    """An API client authenticated as `user`, with a token issued at request time.
+
+    Issuing per request keeps the token valid however a test moves the frozen clock.
+    """
+
+    def __init__(self, user, **kwargs):
+        super().__init__(**kwargs)
+        self.user = user
+
+    def request(self, **kwargs):
+        from accounts.tokens import issue_access_token
+
+        kwargs["HTTP_AUTHORIZATION"] = f"Bearer {issue_access_token(self.user).token}"
+        return super().request(**kwargs)
+
+
+@pytest.fixture
+def client_for():
+    return BearerClient
+
+
+@pytest.fixture
+def owner(make_user):
+    return make_user(email="owner@example.com", timezone="Europe/Warsaw")
+
+
+@pytest.fixture
+def owner_client(owner):
+    return BearerClient(owner)

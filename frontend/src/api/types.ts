@@ -11,3 +11,54 @@ export type RegistrationRequest = {
   password: string
   timezone: string
 }
+
+export type ExaminationStatus = 'draft' | 'planned' | 'completed' | 'cancelled' | 'missed'
+
+export const EXAMINATION_STATUSES: ExaminationStatus[] = [
+  'draft',
+  'planned',
+  'completed',
+  'cancelled',
+  'missed',
+]
+
+/** The derived time state of a planned examination; `null` for every other record. */
+export type TimeState = 'upcoming' | 'overdue' | null
+
+export type Category = {
+  id: number
+  name: string
+  slug: string
+}
+
+/** api_contract.md §8.1 */
+export type Examination = {
+  id: number
+  user_id: number
+  category: Category | null
+  title: string
+  medical_specialty: string | null
+  scheduled_date: string | null
+  scheduled_time: string | null
+  completed_date: string | null
+  status: ExaminationStatus
+  location: string | null
+  notes: string | null
+  source_occurrence: number | null
+  time_state: TimeState
+  created_at: string
+  updated_at: string
+}
+
+/** The writable fields of an examination (api_contract.md §8.1, §10). */
+export type ExaminationInput = {
+  category_id: number | null
+  title: string
+  medical_specialty: string | null
+  scheduled_date: string | null
+  scheduled_time: string | null
+  completed_date: string | null
+  status: ExaminationStatus
+  location: string | null
+  notes: string | null
+}

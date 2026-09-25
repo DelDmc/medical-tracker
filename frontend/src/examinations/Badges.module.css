@@ -1,0 +1,55 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.15em 0.6em;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+
+.icon {
+  flex: none;
+  width: 1em;
+  height: 1em;
+}
+
+.draft {
+  color: var(--color-neutral);
+  background: var(--color-neutral-soft);
+  border-style: dashed;
+}
+
+.planned {
+  color: var(--color-info);
+  background: var(--color-info-soft);
+}
+
+.completed {
+  color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.cancelled {
+  color: var(--color-neutral);
+  background: var(--color-neutral-soft);
+}
+
+.missed {
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.upcoming {
+  color: var(--color-primary-strong);
+  background: var(--color-primary-soft);
+}
+
+.overdue {
+  color: #ffffff;
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+}

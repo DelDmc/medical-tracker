@@ -18,9 +18,9 @@ This file records daily project progress, technical decisions, verification work
 ## Current Project Status
 
 - **Current phase:** Implementation (Phase 3 — Authentication)
-- **Current milestone:** Slice 7 — categories, examination model, creation and list
+- **Current milestone:** Slice 8 — examination detail, edit, and delete
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 7 — categories, examination model, creation and list
+- **Next major deliverable:** Slice 8 — examination detail, edit, and delete
 - **Last updated:** 2026-09-25
 
 ---
@@ -47,6 +47,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 - [+] **Slice 4 — logout (complete).** `POST /api/v1/auth/logout/` revokes a valid refresh token and always answers an empty 204 with a cleared cookie; the frontend writes the logout-intent marker, clears in-memory state before sending, and opens the login page whatever the outcome. `FR-006` closes. Test cases passing: `TC-FR-006-01…14`, `TC-SEC-005-11`.
 - [+] **Slice 5 — account timezone and shared presentation (complete).** `GET`/`PATCH /api/v1/account/` (only `timezone` writable), the account settings page, the session loading the account after login and restore, and `src/format/datetime.ts` with separate instant and calendar-date paths. `FR-009` and `UX-007` close. Test cases passing: `TC-FR-009-01/02`, `TC-SEC-001-06`, `TC-UX-007-01/02`.
 - [+] **Slice 6 — password change (complete).** `POST /api/v1/account/password/` verifies the current password and applies the registration policy before `set_password`, and the account page has a change-password form that clears both values on success. `FR-048` closes; Phase 3 (Authentication) is complete. Test cases passing: `TC-FR-048-01/02/03`.
+- [+] **Slice 7 — categories, examination model, creation and list (complete).** Seeded read-only categories, the examination/reminder/recurrence models (exactly the approved fields), owner-scoped lookups, the shared time-state module and resulting-record validation, `POST`/`GET /api/v1/examinations/`, the examination form (draft and planned modes), the four-state list page, and the `TC-PRV-001-01` data-model review (`docs/reviews/`, confirmed by the owner). The owner also moved D8 to Node 22 LTS. Test cases passing: `TC-FR-010-01`, `TC-FR-011-01`, `TC-FR-012-01…06`, `TC-FR-014-01…07`, `TC-FR-015-01/02`, `TC-FR-020-01…04`, `TC-FR-025-01`, `TC-FR-026-01`, `TC-FR-027-01`, `TC-PRV-001-01` (review), `TC-PRV-002-01`, `TC-TECH-002-01/02/03`, `TC-UX-005-01/02`, `TC-UX-006-01`.
 
 ### Files Created or Modified
 
@@ -71,8 +72,8 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 
 | Test, command, or manual check | Result | Notes |
 |---|---|---|
-| `cd backend && pytest` | Passed | 67 tests |
-| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 25 tests |
+| `cd backend && pytest` | Passed | 90 tests |
+| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 33 tests |
 | `bash scripts/secret-scan.sh` | Passed | A planted key fails it in the tree and, in a scratch clone, when present only in history |
 | README followed verbatim in a fresh clone | Passed | Backend and frontend installed, migrated, tested, and both dev servers answered |
 
@@ -80,8 +81,8 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 
 | Problem | Impact | Current understanding | Next action |
 |---|---|---|---|
-| Node 20 (D8) left upstream support on 2026-04-30 | The newest frontend tool majors require Node 22; hosting platforms may drop Node 20 builds | Pinned versions work on Node 20 | Owner to decide whether to move D8 to Node 22 before Slice 19 |
-| The installed Node is v19.9.0 (Task 0.2 is owner-run) | Frontend commands need Node 20 | Verified with a Node 20.20.2 binary in a session scratch directory | Owner to install Node 20 (for example `nvm install 20`) |
+| Node 20 (D8) left upstream support on 2026-04-30 | Hosting platforms may drop Node 20 builds | **Resolved:** the owner moved D8 to Node 22 LTS | `.nvmrc` 22, `engines >=22.12`; suite verified on Node 22.23.3 |
+| The installed Node is v19.9.0 (Task 0.2 is owner-run) | Frontend commands need Node 22 | Verified with Node binaries in a session scratch directory | Owner to install Node 22 (for example `nvm install 22`) |
 
 ### Development Record
 
@@ -438,7 +439,7 @@ Update this table when a phase changes status.
 | 1. Product Definition | In progress | 2026-07-18 | — | Core product definition, requirements, and specification suite exist; active review findings are being resolved before implementation |
 | 2. Architecture and Repository Setup | Completed | 2026-07-18 | 2026-09-25 | Slice 0: backend and frontend projects, settings, health check, test stacks, secret scan, OpenAPI generation |
 | 3. Authentication | Completed | 2026-09-25 | 2026-09-25 | Slices 1–6: registration, login, refresh and session restore, logout, account timezone, password change |
-| 4. Examination Records | Not started | — | — | Behavior is documented; implementation has not started |
+| 4. Examination Records | In progress | 2026-09-25 | — | Slice 7 (categories, model, create, list) complete |
 | 5. Planning and Recurrence | Not started | — | — | Behavior is documented; implementation has not started |
 | 6. Calendar and Dashboard | Not started | — | — | Behavior is documented; implementation has not started |
 | 7. Testing and Documentation | In progress | 2026-08-04 | — | Test specification exists and review findings are tracked; `README.md` and implementation test suites remain pending |

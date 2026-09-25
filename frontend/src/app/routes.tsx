@@ -4,7 +4,9 @@ import { PublicOnly, RequireAuth } from '../auth/guards'
 import { AboutPage } from '../pages/AboutPage'
 import { AccountPage } from '../pages/AccountPage'
 import { DashboardPage } from '../pages/DashboardPage'
+import { ExaminationListPage } from '../pages/ExaminationListPage'
 import { LoginPage } from '../pages/LoginPage'
+import { NewExaminationPage } from '../pages/NewExaminationPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { RegisterPage } from '../pages/RegisterPage'
 import { Root } from './Root'
@@ -28,6 +30,8 @@ export const routes: RouteObject[] = [
         children: [
           { path: '/dashboard', element: <DashboardPage /> },
           { path: '/account', element: <AccountPage /> },
+          { path: '/examinations', element: <ExaminationListPage /> },
+          { path: '/examinations/new', element: <NewExaminationPage /> },
         ],
       },
       { path: '*', element: <NotFoundPage /> },

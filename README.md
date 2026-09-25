@@ -46,7 +46,7 @@ PlantUML diagrams (domain class diagram, authentication and key sequence flows) 
 ### Prerequisites
 
 - **Python 3.12** or newer, with the `venv` module.
-- **Node.js 20** (at least 20.19) and **npm 10** — the version is pinned in [`frontend/.nvmrc`](frontend/.nvmrc); with nvm, `nvm install && nvm use` inside `frontend/` selects it.
+- **Node.js 22** (at least 22.12) and **npm 10** — the version is pinned in [`frontend/.nvmrc`](frontend/.nvmrc); with nvm, `nvm install && nvm use` inside `frontend/` selects it.
 - **Git**.
 
 The backend uses SQLite locally, so no database server is needed.

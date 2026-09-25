@@ -45,7 +45,7 @@ Every item below was open when this plan was written. `requirements_specificatio
 | D5 | **Settings:** typed environment loader with separate development/production modules and fail-fast production validation, per `ADS-TECH-003-01`. | *Confirmed by owner* |
 | D6 | **Current local time:** one injectable clock service, so every frozen-clock `TC-*` case can control it. | *Confirmed by owner* |
 | D7 | **Frontend:** TypeScript + Vite + React Router + TanStack Query + CSS Modules + Vitest + React Testing Library + MSW. | *Confirmed by owner* |
-| D8 | **Node:** upgrade to 20 LTS. The installed v19.9.0 is refused by Vite 5+ and Vitest 1+ (`^18 \|\| >=20`). | *Confirmed by owner* |
+| D8 | **Node:** upgrade to 22 LTS (originally 20 LTS; changed by the owner on 2026-09-25 because Node 20 reached end of life on 2026-04-30). The installed v19.9.0 is refused by Vite 5+ and Vitest 1+. | *Confirmed by owner* |
 | D9 | **Technology decisions are recorded in a new non-normative `docs/technology_decisions.md`,** sitting outside the source-of-truth hierarchy exactly as `review_findings.md` does. The task that introduces a technology writes its entry. | *Confirmed by owner* |
 | D10 | **Deployment is in scope now** — Slice 19 closes `TECH-006` and the deployment-layer `SEC-005` cases. | *Confirmed by owner* |
 | D11 | **Accepted-status gating applies.** A task skips any requirement, decision, or test case not marked `Accepted`. All 73 requirements, 120 decisions and 274 test cases are `Accepted` today, so nothing is skipped; an item that later moves to `Draft` blocks its task and is escalated. | *Confirmed by owner* |

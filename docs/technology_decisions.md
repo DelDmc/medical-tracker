@@ -23,7 +23,7 @@ Decision identifiers match `IMPLEMENTATION_PLAN.md` §2. Identifiers are stable 
 | D5 | **Settings.** A typed environment reader (`config/settings/env.py`) with separate `development` and `production` modules over a shared `base`; production raises at import time when a mandatory value is absent. | Implements `ADS-TECH-003-01` and `ADS-TECH-005-01` with no fallback from production to development defaults. |
 | D6 | **Current time.** One injectable clock service (`config/clock.py`) is the only source of "now"; the user's local date and time are resolved from it through the account timezone. | Every frozen-clock `TC-*` case controls one function, and no code path can compute "today" in UTC or server-local time by accident. |
 | D7 | **Frontend.** TypeScript + Vite + React Router + TanStack Query + CSS Modules + Vitest + React Testing Library + MSW. | A typed single-page application with a fast build, declarative data fetching, scoped styles, and API mocking at the network boundary so tests exercise the real client code. |
-| D8 | **Node.** Node 20 LTS, pinned in `frontend/.nvmrc`. | Vite and Vitest refuse Node 19 (`^18 \|\| >=20`). |
+| D8 | **Node.** Node 22 LTS, pinned in `frontend/.nvmrc` (`package.json` requires `>=22.12`). Originally Node 20 LTS; **changed by the owner on 2026-09-25** because Node 20 left upstream support on 2026-04-30. | Vite and Vitest refuse Node 19, and hosting platforms drop end-of-life runtimes. |
 | D9 | **This document.** Technology decisions are recorded here, outside the source-of-truth hierarchy, by the task that introduces each technology. | Keeps technology selections out of the requirement-linked documents. |
 | D10 | **Deployment is in scope** for the MVP (Slice 19). | Closes `TECH-006` and the deployment-layer `SEC-005` cases. |
 | D11 | **Accepted-status gating.** Work skips any requirement, decision, or test case not marked `Accepted`; an item that moves to `Draft` blocks its task and is escalated. | Implementation never runs ahead of an unapproved specification change. |
@@ -36,7 +36,7 @@ Assumption identifiers match `IMPLEMENTATION_PLAN.md` §2.1 and are never reused
 | # | Assumption | Consequence if wrong |
 |---|---|---|
 | A2 | `curl`, `wget` and `docker` are denied to the coding agent, and no PostgreSQL client is installed locally. Steps that reach a deployment over the network are owner-run. | Only who runs the Slice 19 commands changes. |
-| A3 | Manual review artifacts live in `docs/reviews/<TC-ID>-<slug>.md`. | Fallback: record the review inside the day's `DEVELOPMENT_LOG.md` entry. |
+| A3 | Manual review artifacts live in `docs/reviews/<TC-ID>-<slug>.md`, each opening with a non-normative standing line. **Confirmed by the owner on 2026-09-25.** | Fallback: record the review inside the day's `DEVELOPMENT_LOG.md` entry. |
 | A4 | Python packaging uses `backend/requirements.txt` and `backend/requirements-dev.txt` for dependencies and `backend/pyproject.toml` for tool configuration. | Only the install commands change. |
 | A5 | Secret scanning uses `detect-secrets`. | Only the `TC-SEC-004-01` command changes. |
 | A6 | `PUT /api/v1/examinations/{id}/` is not implemented; `api_contract.md` §12 documents `PATCH` only. | A contract change would be needed first. |
@@ -55,6 +55,6 @@ What the decisions above look like in the repository. Updated by the task that i
 ### 4.2 Frontend (D7, D8, A7)
 
 - **Packages** — pinned exactly in `frontend/package.json` (lockfile `frontend/package-lock.json`): React 19, React Router 7, TanStack Query 5, Vite 8, TypeScript 5.9, Vitest 4 with jsdom, React Testing Library, `@testing-library/jest-dom`, `@testing-library/user-event`, MSW 2, and ESLint with `typescript-eslint` and `eslint-plugin-react-hooks`.
-- **Node (D8)** — `frontend/.nvmrc` pins major 20 and `package.json` requires `>=20.19` (Vite 8's floor). Node 20 left upstream support on 2026-04-30, and the newest majors of React Router (8), Vitest (5), jsdom (30) and `@testing-library/jest-dom` (6.10+) require Node 22; the versions above are the newest that still run on Node 20. Moving to Node 22 would be a change to D8 and is the owner's call.
+- **Node (D8)** — `frontend/.nvmrc` pins major 22 and `package.json` requires `>=22.12` (Vite 8's floor on that line). The pinned package versions were chosen while D8 still named Node 20 and run on both; newer majors (React Router 8, Vitest 5, jsdom 30) are now open to a later upgrade.
 - **Styling** — `src/styles/global.css` holds design tokens and shared primitives (buttons, form fields, alerts); component-specific layout uses CSS Modules.
 - **Test environment** — Vitest runs with `TZ=Pacific/Honolulu`, so any date-only value that is accidentally routed through a UTC conversion renders on the previous day and fails the suite.
