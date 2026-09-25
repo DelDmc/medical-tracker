@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -37,6 +38,23 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+AUTH_USER_MODEL = "accounts.User"
+
+# ADS-SEC-003-01: Django's default validator set, with similarity checked against the
+# account's email address. The 128-character maximum is enforced by the serializers.
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {"user_attributes": ("email",)},
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     # ADS-SEC-001-01: authenticated access is the default for every endpoint.
@@ -45,6 +63,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "UNAUTHENTICATED_USER": None,
+    # ADS-SEC-007-01: per client IP address.
+    "DEFAULT_THROTTLE_RATES": {"register": "10/min", "login": "10/min", "refresh": "30/min"},
 }
 
 SPECTACULAR_SETTINGS = {

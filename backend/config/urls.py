@@ -1,10 +1,12 @@
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView
 
+from accounts.urls import auth_patterns
 from config.views import HealthView
 
 api_v1_patterns = [
     path("health/", HealthView.as_view(), name="health"),
+    path("auth/", include(auth_patterns)),
     # The generated OpenAPI contract (ADS-TECH-001-01); authenticated like every
     # endpoint outside the ADS-SEC-001-01 exemptions.
     path("schema/", SpectacularAPIView.as_view(), name="schema"),

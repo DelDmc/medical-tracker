@@ -4,6 +4,26 @@ info:
   version: 1.0.0
   description: JSON REST API for the Medical Tracker Application MVP (api_contract.md).
 paths:
+  /api/v1/auth/register/:
+    post:
+      operationId: auth_register_create
+      description: '`POST /api/v1/auth/register/` — no bearer token, browser credentials,
+        or CSRF.'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
   /api/v1/health/:
     get:
       operationId: health_retrieve
@@ -20,6 +40,25 @@ paths:
           description: ''
 components:
   schemas:
+    Account:
+      type: object
+      description: 'The account representation: `id`, `email`, `timezone` (api_contract.md
+        §6.1).'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        timezone:
+          type: string
+          readOnly: true
+      required:
+      - email
+      - id
+      - timezone
     HealthResponse:
       type: object
       properties:
@@ -27,3 +66,26 @@ components:
           type: string
       required:
       - status
+    RegistrationRequest:
+      type: object
+      description: '`POST /api/v1/auth/register/` (ADS-FR-001-01 … ADS-FR-004-01,
+        ADS-SEC-003-01).'
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+          maxLength: 128
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+      required:
+      - email
+      - password
+      - timezone

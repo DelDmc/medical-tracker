@@ -6,8 +6,13 @@ export function HomePage() {
       <h1 id="home-title">Medical Tracker</h1>
       <div className="card">
         <p>Keep your medical appointments and examination history in one place.</p>
-        <p>
-          <Link to="/about">Read what this application is for</Link>
+        <p className="button-row">
+          <Link className="button button-primary" to="/register">
+            Create an account
+          </Link>
+          <Link className="button button-secondary" to="/about">
+            About this app
+          </Link>
         </p>
       </div>
     </section>

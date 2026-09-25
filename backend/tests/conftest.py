@@ -4,7 +4,10 @@ import sys
 from unittest import mock
 
 import pytest
+from django.core.cache import cache
 from rest_framework.test import APIClient
+
+DEFAULT_PASSWORD = "correct-horse-battery"  # pragma: allowlist secret
 
 SETTINGS_PACKAGE = "config.settings"
 BASE_MODULE = f"{SETTINGS_PACKAGE}.base"
@@ -45,3 +48,30 @@ def settings_env():
 def api_client():
     """An API client that enforces CSRF exactly as a browser request would experience it."""
     return APIClient(enforce_csrf_checks=True)
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    """Per-IP throttle counters live in the cache; clear them around every test (R7)."""
+    cache.clear()
+    yield
+    cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def fast_password_hashing(settings):
+    """Hash with a fast algorithm in tests. TC-SEC-003-01 restores the real hasher."""
+    settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+
+@pytest.fixture
+def make_user(db):
+    from accounts.models import User
+
+    created = iter(range(1, 10_000))
+
+    def factory(email=None, password=DEFAULT_PASSWORD, timezone="Europe/Warsaw"):
+        email = email or f"user{next(created)}@example.com"
+        return User.objects.create_user(email=email, password=password, timezone=timezone)
+
+    return factory

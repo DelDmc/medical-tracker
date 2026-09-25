@@ -5,7 +5,10 @@ import styles from './Layout.module.css'
 
 type NavItem = { to: string; label: string }
 
-const PUBLIC_NAV: NavItem[] = [{ to: '/about', label: 'About' }]
+const PUBLIC_NAV: NavItem[] = [
+  { to: '/register', label: 'Register' },
+  { to: '/about', label: 'About' },
+]
 
 /** The page frame shared by every route: header, primary navigation, main, footer. */
 export function Layout() {
