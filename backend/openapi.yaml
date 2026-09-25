@@ -219,6 +219,92 @@ paths:
               schema:
                 $ref: '#/components/schemas/Examination'
           description: ''
+  /api/v1/examinations/{id}/:
+    get:
+      operationId: examinations_retrieve
+      description: |-
+        `GET` / `PATCH` / `DELETE /api/v1/examinations/{id}/`.
+
+        The record is looked up only among the caller's own examinations, so a missing
+        record and another user's record get the same 404 (ADS-SEC-006-01). `PATCH` is
+        partial, but the complete resulting record is validated (ADS-FR-022-01); `PUT` is
+        not offered (api_contract.md §12). Deleting cascades to the reminder and the
+        recurrence rule and nulls `source_occurrence` on generated occurrences
+        (ADS-FR-023-01, ADS-FR-023-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Examination'
+          description: ''
+    patch:
+      operationId: examinations_partial_update
+      description: |-
+        `GET` / `PATCH` / `DELETE /api/v1/examinations/{id}/`.
+
+        The record is looked up only among the caller's own examinations, so a missing
+        record and another user's record get the same 404 (ADS-SEC-006-01). `PATCH` is
+        partial, but the complete resulting record is validated (ADS-FR-022-01); `PUT` is
+        not offered (api_contract.md §12). Deleting cascades to the reminder and the
+        recurrence rule and nulls `source_occurrence` on generated occurrences
+        (ADS-FR-023-01, ADS-FR-023-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedExaminationRequest'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Examination'
+          description: ''
+    delete:
+      operationId: examinations_destroy
+      description: |-
+        `GET` / `PATCH` / `DELETE /api/v1/examinations/{id}/`.
+
+        The record is looked up only among the caller's own examinations, so a missing
+        record and another user's record get the same 404 (ADS-SEC-006-01). `PATCH` is
+        partial, but the complete resulting record is validated (ADS-FR-022-01); `PUT` is
+        not offered (api_contract.md §12). Deleting cascades to the reminder and the
+        recurrence rule and nulls `source_occurrence` on generated occurrences
+        (ADS-FR-023-01, ADS-FR-023-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/health/:
     get:
       operationId: health_retrieve
@@ -460,6 +546,48 @@ components:
           type: string
           minLength: 1
           maxLength: 64
+    PatchedExaminationRequest:
+      type: object
+      description: |-
+        The examination representation and its create/update input (api_contract.md §8).
+
+        Ownership, the source occurrence, the derived time state and the audit instants
+        are never accepted from a client (§10); a request that sends one is rejected.
+        Every create and update validates the complete resulting record (§8.2).
+      properties:
+        category_id:
+          type: integer
+          writeOnly: true
+          nullable: true
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        medical_specialty:
+          type: string
+          nullable: true
+          maxLength: 200
+        scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        scheduled_time:
+          type: string
+          format: time
+          nullable: true
+        completed_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        location:
+          type: string
+          nullable: true
+          maxLength: 255
+        notes:
+          type: string
+          nullable: true
     RegistrationRequest:
       type: object
       description: '`POST /api/v1/auth/register/` (ADS-FR-001-01 … ADS-FR-004-01,

@@ -18,9 +18,9 @@ This file records daily project progress, technical decisions, verification work
 ## Current Project Status
 
 - **Current phase:** Implementation (Phase 3 — Authentication)
-- **Current milestone:** Slice 8 — examination detail, edit, and delete
+- **Current milestone:** Slice 9 — list search, filters, and ordering
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 8 — examination detail, edit, and delete
+- **Next major deliverable:** Slice 9 — list search, filters, and ordering
 - **Last updated:** 2026-09-25
 
 ---
@@ -48,6 +48,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 - [+] **Slice 5 — account timezone and shared presentation (complete).** `GET`/`PATCH /api/v1/account/` (only `timezone` writable), the account settings page, the session loading the account after login and restore, and `src/format/datetime.ts` with separate instant and calendar-date paths. `FR-009` and `UX-007` close. Test cases passing: `TC-FR-009-01/02`, `TC-SEC-001-06`, `TC-UX-007-01/02`.
 - [+] **Slice 6 — password change (complete).** `POST /api/v1/account/password/` verifies the current password and applies the registration policy before `set_password`, and the account page has a change-password form that clears both values on success. `FR-048` closes; Phase 3 (Authentication) is complete. Test cases passing: `TC-FR-048-01/02/03`.
 - [+] **Slice 7 — categories, examination model, creation and list (complete).** Seeded read-only categories, the examination/reminder/recurrence models (exactly the approved fields), owner-scoped lookups, the shared time-state module and resulting-record validation, `POST`/`GET /api/v1/examinations/`, the examination form (draft and planned modes), the four-state list page, and the `TC-PRV-001-01` data-model review (`docs/reviews/`, confirmed by the owner). The owner also moved D8 to Node 22 LTS. Test cases passing: `TC-FR-010-01`, `TC-FR-011-01`, `TC-FR-012-01…06`, `TC-FR-014-01…07`, `TC-FR-015-01/02`, `TC-FR-020-01…04`, `TC-FR-025-01`, `TC-FR-026-01`, `TC-FR-027-01`, `TC-PRV-001-01` (review), `TC-PRV-002-01`, `TC-TECH-002-01/02/03`, `TC-UX-005-01/02`, `TC-UX-006-01`.
+- [+] **Slice 8 — examination detail, edit, and delete (complete).** `GET`/`PATCH`/`DELETE /api/v1/examinations/{id}/` through the owner-scoped queryset (uniform 404, resulting-record validation on `PATCH`, no `PUT`), the detail and edit pages, and the focus-managed delete confirmation. `SEC-006` closes. Test cases passing: `TC-FR-013-01/02`, `TC-FR-016-01/02`, `TC-FR-021-01`, `TC-FR-022-01`, `TC-FR-023-01/02`, `TC-FR-024-01/02`, `TC-SEC-001-01`, `TC-SEC-002-01/02/03`, `TC-SEC-006-01`.
 
 ### Files Created or Modified
 
@@ -72,8 +73,8 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 
 | Test, command, or manual check | Result | Notes |
 |---|---|---|
-| `cd backend && pytest` | Passed | 90 tests |
-| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 33 tests |
+| `cd backend && pytest` | Passed | 103 tests |
+| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 35 tests |
 | `bash scripts/secret-scan.sh` | Passed | A planted key fails it in the tree and, in a scratch clone, when present only in history |
 | README followed verbatim in a fresh clone | Passed | Backend and frontend installed, migrated, tested, and both dev servers answered |
 

@@ -8,4 +8,5 @@ category_patterns = [
 
 examination_patterns = [
     path("", views.ExaminationListCreateView.as_view(), name="examination-list"),
+    path("<int:pk>/", views.ExaminationDetailView.as_view(), name="examination-detail"),
 ]

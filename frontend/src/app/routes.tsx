@@ -4,6 +4,8 @@ import { PublicOnly, RequireAuth } from '../auth/guards'
 import { AboutPage } from '../pages/AboutPage'
 import { AccountPage } from '../pages/AccountPage'
 import { DashboardPage } from '../pages/DashboardPage'
+import { EditExaminationPage } from '../pages/EditExaminationPage'
+import { ExaminationDetailPage } from '../pages/ExaminationDetailPage'
 import { ExaminationListPage } from '../pages/ExaminationListPage'
 import { LoginPage } from '../pages/LoginPage'
 import { NewExaminationPage } from '../pages/NewExaminationPage'
@@ -32,6 +34,8 @@ export const routes: RouteObject[] = [
           { path: '/account', element: <AccountPage /> },
           { path: '/examinations', element: <ExaminationListPage /> },
           { path: '/examinations/new', element: <NewExaminationPage /> },
+          { path: '/examinations/:id', element: <ExaminationDetailPage /> },
+          { path: '/examinations/:id/edit', element: <EditExaminationPage /> },
         ],
       },
       { path: '*', element: <NotFoundPage /> },
