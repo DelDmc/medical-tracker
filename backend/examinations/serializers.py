@@ -6,7 +6,7 @@ from rest_framework import serializers
 from config.clock import user_local_now
 
 from .models import ExaminationCategory, ExaminationRecord, ExaminationStatus
-from .time_state import OVERDUE, UPCOMING, time_state_for
+from .time_state import COLLECTIONS, OVERDUE, UPCOMING, time_state_for
 from .validators import validate_resulting_record
 
 READ_ONLY_REJECTED = "This field is read-only."
@@ -131,3 +131,11 @@ class ExaminationListQuerySerializer(serializers.Serializer):
         help_text="A category identifier.",
     )
     ordering = serializers.ChoiceField(choices=ORDERINGS, required=False)
+    time_state = serializers.ChoiceField(
+        choices=COLLECTIONS,
+        required=False,
+        help_text=(
+            "A derived collection: past, upcoming or overdue. Distinct from the time_state "
+            "response field, whose values are upcoming, overdue or null."
+        ),
+    )

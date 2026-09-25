@@ -186,8 +186,9 @@ paths:
       description: |-
         `GET` / `POST /api/v1/examinations/` — only the caller's records; a JSON array.
 
-        The list accepts `search`, `status`, `category` and `ordering`; `status` and
-        `category` combine with AND semantics (ADS-FR-028-01 … ADS-FR-030-01).
+        The list accepts `search`, `status`, `category`, `ordering` and `time_state`; all
+        supplied filters apply together (ADS-FR-028-01 … ADS-FR-032-01). `time_state`
+        selects the past, upcoming or overdue collection through examinations/time_state.py.
       parameters:
       - in: query
         name: category
@@ -229,6 +230,21 @@ paths:
           * `completed` - completed
           * `cancelled` - cancelled
           * `missed` - missed
+      - in: query
+        name: time_state
+        schema:
+          enum:
+          - past
+          - upcoming
+          - overdue
+          type: string
+          minLength: 1
+        description: |-
+          A derived collection: past, upcoming or overdue. Distinct from the time_state response field, whose values are upcoming, overdue or null.
+
+          * `past` - past
+          * `upcoming` - upcoming
+          * `overdue` - overdue
       tags:
       - examinations
       security:
@@ -247,8 +263,9 @@ paths:
       description: |-
         `GET` / `POST /api/v1/examinations/` — only the caller's records; a JSON array.
 
-        The list accepts `search`, `status`, `category` and `ordering`; `status` and
-        `category` combine with AND semantics (ADS-FR-028-01 … ADS-FR-030-01).
+        The list accepts `search`, `status`, `category`, `ordering` and `time_state`; all
+        supplied filters apply together (ADS-FR-028-01 … ADS-FR-032-01). `time_state`
+        selects the past, upcoming or overdue collection through examinations/time_state.py.
       tags:
       - examinations
       requestBody:

@@ -4,6 +4,12 @@ import { Link, useLocation, useSearchParams } from 'react-router'
 import { examinationKeys, listExaminations, type ExaminationListParams } from '../api/examinations'
 import { ExaminationFilters, FILTER_KEYS } from '../examinations/ExaminationFilters'
 import { ExaminationResults } from '../examinations/ExaminationResults'
+import { VIEWS, ViewSwitcher, type ExaminationView } from '../examinations/ViewSwitcher'
+
+function viewFrom(searchParams: URLSearchParams): ExaminationView {
+  const value = searchParams.get('time_state') ?? ''
+  return VIEWS.some((view) => view.value === value) ? (value as ExaminationView) : ''
+}
 
 function paramsFrom(searchParams: URLSearchParams): ExaminationListParams {
   const params: ExaminationListParams = {}
@@ -11,6 +17,8 @@ function paramsFrom(searchParams: URLSearchParams): ExaminationListParams {
     const value = searchParams.get(key)
     if (value) params[key] = value
   }
+  const view = viewFrom(searchParams)
+  if (view) params.time_state = view
   return params
 }
 
@@ -19,7 +27,8 @@ export function ExaminationListPage() {
   const message = (location.state as { message?: string } | null)?.message
   const [searchParams, setSearchParams] = useSearchParams()
   const params = paramsFrom(searchParams)
-  const filtered = Object.keys(params).length > 0
+  const view = viewFrom(searchParams)
+  const filtered = FILTER_KEYS.some((key) => params[key])
   const query = useQuery({
     queryKey: examinationKeys.list(params),
     queryFn: () => listExaminations(params),
@@ -38,12 +47,15 @@ export function ExaminationListPage() {
           <p>{message}</p>
         </div>
       ) : null}
+      <ViewSwitcher current={view} searchParams={searchParams} />
       <ExaminationFilters searchParams={searchParams} setSearchParams={setSearchParams} />
       <ExaminationResults
         query={query}
         empty={
           filtered ? (
             <p>No examinations match these filters.</p>
+          ) : view ? (
+            <p>{VIEWS.find((candidate) => candidate.value === view)?.empty}</p>
           ) : (
             <>
               <p>You have no examinations yet.</p>

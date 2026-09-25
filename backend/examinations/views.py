@@ -9,6 +9,7 @@ from .serializers import (
     ExaminationListQuerySerializer,
     ExaminationSerializer,
 )
+from .time_state import COLLECTION_QUERYSETS
 
 
 class CategoryListView(generics.ListAPIView):
@@ -36,8 +37,9 @@ def order_by_scheduled_date(queryset, ordering):
 class ExaminationListCreateView(OwnedExaminationMixin, generics.ListCreateAPIView):
     """`GET` / `POST /api/v1/examinations/` — only the caller's records; a JSON array.
 
-    The list accepts `search`, `status`, `category` and `ordering`; `status` and
-    `category` combine with AND semantics (ADS-FR-028-01 … ADS-FR-030-01).
+    The list accepts `search`, `status`, `category`, `ordering` and `time_state`; all
+    supplied filters apply together (ADS-FR-028-01 … ADS-FR-032-01). `time_state`
+    selects the past, upcoming or overdue collection through examinations/time_state.py.
     """
 
     serializer_class = ExaminationSerializer
@@ -52,6 +54,8 @@ class ExaminationListCreateView(OwnedExaminationMixin, generics.ListCreateAPIVie
             queryset = queryset.filter(status=status)
         if category := filters.get("category"):
             queryset = queryset.filter(category=category)
+        if collection := filters.get("time_state"):
+            queryset = COLLECTION_QUERYSETS[collection](queryset, self.get_local_now())
         if ordering := filters.get("ordering"):
             queryset = order_by_scheduled_date(queryset, ordering)
         return queryset
