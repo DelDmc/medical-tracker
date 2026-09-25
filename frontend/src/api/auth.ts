@@ -72,3 +72,8 @@ export function refreshAccessToken(): Promise<string> {
   }
   return refreshInFlight
 }
+
+/** `POST /api/v1/auth/logout/` — credentialed, CSRF-protected, no body; answers 204. */
+export async function logout(): Promise<void> {
+  await csrfProtected<null>('/auth/logout/')
+}

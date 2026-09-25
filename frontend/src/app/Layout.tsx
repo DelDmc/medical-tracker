@@ -20,7 +20,7 @@ const AUTHENTICATED_NAV: NavItem[] = [
 
 /** The page frame shared by every route: header, primary navigation, main, footer. */
 export function Layout() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, logOut } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const navId = useId()
   const closeMenu = () => setMenuOpen(false)
@@ -63,6 +63,20 @@ export function Layout() {
                   </NavLink>
                 </li>
               ))}
+              {isAuthenticated ? (
+                <li>
+                  <button
+                    type="button"
+                    className={styles.navButton}
+                    onClick={() => {
+                      closeMenu()
+                      void logOut()
+                    }}
+                  >
+                    Log out
+                  </button>
+                </li>
+              ) : null}
             </ul>
           </nav>
         </div>

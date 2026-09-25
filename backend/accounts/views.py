@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from . import tokens
 from .cookies import REFRESH_COOKIE_NAME, clear_refresh_cookie, set_refresh_cookie
 from .csrf import enforce_csrf
-from .models import RevokedRefreshToken, User
+from .models import RevokedRefreshToken, User, revoke_refresh_token
 from .serializers import (
     AccessTokenSerializer,
     AccountSerializer,
@@ -124,4 +124,31 @@ class RefreshView(APIView):
 
         response = Response({"access_token": tokens.issue_access_token(user).token})
         set_refresh_cookie(response, replacement)
+        return response
+
+
+class LogoutView(APIView):
+    """`POST /api/v1/auth/logout/` — CSRF-protected; reads the refresh cookie if present.
+
+    A valid refresh token is revoked (ADS-FR-006-02). Whatever the token's state —
+    valid, expired, revoked, invalid or missing — the response is the same empty 204
+    and the cookie is cleared (ADS-FR-006-03, ADS-FR-006-04). Access tokens already
+    issued stay valid until their own expiry (ADS-FR-006-09).
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(auth=[], request=None, responses={204: None})
+    def post(self, request):
+        enforce_csrf(request)
+        try:
+            payload = tokens.decode_refresh_token(request.COOKIES.get(REFRESH_COOKIE_NAME))
+        except tokens.TokenError:
+            payload = None
+        if payload is not None:
+            revoke_refresh_token(payload)
+
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        clear_refresh_cookie(response)
         return response
