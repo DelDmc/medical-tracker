@@ -19,5 +19,8 @@
 }
 
 .item a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
   font-weight: 600;
 }

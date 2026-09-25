@@ -109,7 +109,9 @@ export function ExaminationDetailPage() {
     <section className="page" aria-labelledby="examination-title">
       <div className={styles.header}>
         <p className="muted">
-          <Link to="/examinations">Examinations</Link>
+          <Link className={styles.backLink} to="/examinations">
+            <span aria-hidden="true">‹&nbsp;</span>All examinations
+          </Link>
         </p>
         <h1 id="examination-title">{examination.title}</h1>
         <div className={styles.badges}>

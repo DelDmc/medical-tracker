@@ -18,9 +18,9 @@ This file records daily project progress, technical decisions, verification work
 ## Current Project Status
 
 - **Current phase:** Implementation (Phase 3 — Authentication)
-- **Current milestone:** Slice 17 — cross-cutting UX review
+- **Current milestone:** Slice 18 — repository documentation and the OpenAPI contract
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 17 — cross-cutting UX review
+- **Next major deliverable:** Slice 18 — repository documentation and the OpenAPI contract
 - **Last updated:** 2026-09-25
 
 ---
@@ -57,6 +57,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 - [+] **Slice 14 — next occurrence (complete).** `POST /api/v1/examinations/{id}/next-occurrence/`, idempotent per (source, calculated date) — 201 then 200 with the same record — with the documented copied and emptied fields and no reminder or rule, plus the detail-page action. `FR-023` and `FR-041` close. Test cases passing: `TC-FR-041-01…07`, `TC-FR-023-03`.
 - [+] **Slice 15 — monthly calendar (complete).** `GET /api/v1/calendar/` (strict `YYYY-MM-DD` range validation, status-specific placement, drafts and date-less records excluded, `overdue` state from the shared module) and the calendar page with five distinct label-plus-shape indicators and month navigation. `RF-16`'s calendar half was reached and is escalated below. `FR-019`, `FR-042`, `FR-043` close. Test cases passing: `TC-FR-019-03`, `TC-FR-042-01…09`, `TC-FR-043-01…05`, `TC-SEC-001-04`.
 - [+] **Slice 16 — dashboard (complete).** `GET /api/v1/dashboard/` (upcoming and overdue from the shared collection queries, `overdue_count` from the same overdue result, recently completed filtered → ordered → limited to five, zero-filled counts) and the dashboard page. `FR-044`–`FR-047` and `SEC-001` close; Phases 4, 5 and 6 are complete. Test cases passing: `TC-FR-044-01…10`, `TC-FR-045-01`, `TC-FR-046-01/02`, `TC-FR-047-01`, `TC-SEC-001-05`.
+- [+] **Slice 17 — cross-cutting UX review (complete).** Documented reviews in `docs/reviews/`: responsive at 320 / 768 / 1280 CSS px (Firefox 155; no horizontal scrolling on any page; seven layout defects found and fixed — CSS order hiding the Menu toggle, navigation and calendar-grid breakpoints moved to 1024 px, word breaking, tile and metadata widths, 44 px link targets) and input methods (all fifteen primary actions by touch, mouse and keyboard; visible focus at every keyboard stop; focus-managed delete dialog; one defect fixed). `UX-001` and `UX-008` close. Test cases passing: `TC-UX-001-01/02/03`, `TC-UX-008-01/02/03` (reviews).
 
 ### Files Created or Modified
 

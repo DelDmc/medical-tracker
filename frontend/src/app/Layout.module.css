@@ -112,11 +112,21 @@
 
 @media (min-width: 768px) {
   .headerInner {
-    flex-wrap: nowrap;
     padding: var(--space-2) var(--space-5);
   }
 
-  .menuButton {
+  .main {
+    padding: var(--space-5);
+  }
+}
+
+/* The full navigation fits on one line from 1024px; below that it sits behind Menu. */
+@media (min-width: 1024px) {
+  .headerInner {
+    flex-wrap: nowrap;
+  }
+
+  .headerInner .menuButton {
     display: none;
   }
 
@@ -140,10 +150,6 @@
 
   .navLink[aria-current='page'] {
     box-shadow: inset 0 -3px 0 var(--color-primary);
-  }
-
-  .main {
-    padding: var(--space-5);
   }
 }
 

@@ -201,7 +201,7 @@ export function AccountPage() {
               Signed in as <strong>{query.data.email}</strong>
             </p>
           </div>
-          <TimezoneForm key={query.data.timezone} account={query.data} />
+          <TimezoneForm key={query.data.id} account={query.data} />
           <PasswordForm />
         </>
       )}

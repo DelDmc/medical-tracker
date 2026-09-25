@@ -7,6 +7,12 @@
   margin: 0;
 }
 
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+}
+
 .badges {
   display: flex;
   flex-wrap: wrap;
