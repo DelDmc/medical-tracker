@@ -11,6 +11,11 @@ examination_patterns = [
     path("<int:pk>/", views.ExaminationDetailView.as_view(), name="examination-detail"),
     path("<int:pk>/reminder/", views.ReminderView.as_view(), name="examination-reminder"),
     path("<int:pk>/recurrence/", views.RecurrenceView.as_view(), name="examination-recurrence"),
+    path(
+        "<int:pk>/next-occurrence/",
+        views.NextOccurrenceView.as_view(),
+        name="examination-next-occurrence",
+    ),
 ]
 
 reminder_patterns = [

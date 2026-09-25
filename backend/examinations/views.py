@@ -20,7 +20,12 @@ from .serializers import (
     ReminderSerializer,
     ReminderUpdateSerializer,
 )
-from .services import get_recurrence_rule, get_reminder
+from .services import (
+    NextOccurrenceError,
+    create_next_occurrence,
+    get_recurrence_rule,
+    get_reminder,
+)
 from .time_state import COLLECTION_QUERYSETS
 from .validators import (
     RECURRENCE_REQUIRES_PLANNED,
@@ -222,3 +227,26 @@ class RecurrenceView(OwnedExaminationMixin, APIView):
         require_planned(examination, RECURRENCE_REQUIRES_PLANNED)
         rule = serializer.save()
         return Response(RecurrenceRuleSerializer(rule).data)
+
+
+class NextOccurrenceView(OwnedExaminationMixin, APIView):
+    """`POST /api/v1/examinations/{id}/next-occurrence/` (api_contract.md §16).
+
+    `201 Created` with the new planned occurrence, or `200 OK` with the occurrence
+    already generated for the same source and calculated date. A draft source, or one
+    without a scheduled date or recurrence rule, is a 400.
+    """
+
+    @extend_schema(request=None, responses={200: ExaminationSerializer, 201: ExaminationSerializer})
+    def post(self, request, pk):
+        source = self.get_examination()
+        try:
+            occurrence, created = create_next_occurrence(source)
+        except NextOccurrenceError as error:
+            raise serializers.ValidationError({"non_field_errors": [str(error)]}) from None
+        occurrence = self.get_queryset().get(pk=occurrence.pk)
+        context = {"request": request, "local_now": self.get_local_now()}
+        return Response(
+            ExaminationSerializer(occurrence, context=context).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )

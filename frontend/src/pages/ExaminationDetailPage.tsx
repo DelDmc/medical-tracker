@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CategoryLabel, StatusBadge, TimeStateBadge } from '../examinations/Badges'
 import { ExaminationLoadError, ExaminationNotFound } from '../examinations/ExaminationStatusView'
 import { TIME_STATE_LABELS } from '../examinations/presentation'
+import { NextOccurrenceAction } from '../examinations/NextOccurrenceAction'
 import { RecurrenceSection } from '../examinations/RecurrenceSection'
 import { ReminderSection } from '../examinations/ReminderSection'
 import { useExaminationFromRoute } from '../examinations/useExamination'
@@ -141,7 +142,13 @@ export function ExaminationDetailPage() {
       <RecurrenceSection
         key={`recurrence-${examination.id}-${examination.status}`}
         examination={examination}
-      />
+      >
+        {(rule) =>
+          rule && examination.scheduled_date && examination.status !== 'draft' ? (
+            <NextOccurrenceAction examination={examination} />
+          ) : null
+        }
+      </RecurrenceSection>
       <ConfirmDialog
         open={confirmingDelete}
         title="Delete this examination?"

@@ -38,6 +38,14 @@ export function updateExamination(id: number, input: Partial<ExaminationInput>) 
   return apiRequest<Examination>(`/examinations/${id}/`, { method: 'PATCH', body: input })
 }
 
+/**
+ * `POST /api/v1/examinations/{id}/next-occurrence/`. A first request creates the
+ * occurrence (201) and a repeat returns the same one (200); both mean success.
+ */
+export function createNextOccurrence(id: number) {
+  return apiRequest<Examination>(`/examinations/${id}/next-occurrence/`, { method: 'POST' })
+}
+
 export function deleteExamination(id: number) {
   return apiRequest<null>(`/examinations/${id}/`, { method: 'DELETE' })
 }

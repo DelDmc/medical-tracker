@@ -369,6 +369,38 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/examinations/{id}/next-occurrence/:
+    post:
+      operationId: examinations_next_occurrence_create
+      description: |-
+        `POST /api/v1/examinations/{id}/next-occurrence/` (api_contract.md §16).
+
+        `201 Created` with the new planned occurrence, or `200 OK` with the occurrence
+        already generated for the same source and calculated date. A draft source, or one
+        without a scheduled date or recurrence rule, is a 400.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Examination'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Examination'
+          description: ''
   /api/v1/examinations/{id}/recurrence/:
     get:
       operationId: examinations_recurrence_retrieve
