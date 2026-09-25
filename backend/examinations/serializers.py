@@ -265,3 +265,28 @@ class CalendarEntrySerializer(serializers.Serializer):
     calendar_date = serializers.DateField()
     state = serializers.ChoiceField(choices=CALENDAR_STATES)
     examination = CalendarExaminationSerializer()
+
+
+class StatusCountsSerializer(serializers.Serializer):
+    draft = serializers.IntegerField()
+    planned = serializers.IntegerField()
+    completed = serializers.IntegerField()
+    cancelled = serializers.IntegerField()
+    missed = serializers.IntegerField()
+
+
+class CategoryCountSerializer(serializers.Serializer):
+    category = CategorySerializer()
+    count = serializers.IntegerField()
+
+
+class DashboardSerializer(serializers.Serializer):
+    """`GET /api/v1/dashboard/` (api_contract.md §18)."""
+
+    upcoming = ExaminationSerializer(many=True)
+    overdue = ExaminationSerializer(many=True)
+    recently_completed = ExaminationSerializer(many=True)
+    status_counts = StatusCountsSerializer()
+    category_counts = CategoryCountSerializer(many=True)
+    uncategorized_count = serializers.IntegerField()
+    overdue_count = serializers.IntegerField()

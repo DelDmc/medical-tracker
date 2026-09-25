@@ -25,3 +25,7 @@ reminder_patterns = [
 calendar_patterns = [
     path("", views.CalendarView.as_view(), name="calendar"),
 ]
+
+dashboard_patterns = [
+    path("", views.DashboardView.as_view(), name="dashboard"),
+]

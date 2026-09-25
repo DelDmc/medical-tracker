@@ -104,3 +104,14 @@ export type CalendarEntry = {
     | 'time_state'
   >
 }
+
+/** api_contract.md §18 */
+export type Dashboard = {
+  upcoming: Examination[]
+  overdue: Examination[]
+  recently_completed: Examination[]
+  status_counts: Record<ExaminationStatus, number>
+  category_counts: { category: Category; count: number }[]
+  uncategorized_count: number
+  overdue_count: number
+}

@@ -216,6 +216,22 @@ paths:
                 items:
                   $ref: '#/components/schemas/Category'
           description: ''
+  /api/v1/dashboard/:
+    get:
+      operationId: dashboard_retrieve
+      description: '`GET /api/v1/dashboard/` — the caller''s collections and counts
+        in one response.'
+      tags:
+      - dashboard
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+          description: ''
   /api/v1/examinations/:
     get:
       operationId: examinations_list
@@ -762,6 +778,16 @@ components:
       - id
       - name
       - slug
+    CategoryCount:
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/Category'
+        count:
+          type: integer
+      required:
+      - category
+      - count
     CsrfToken:
       type: object
       properties:
@@ -769,6 +795,40 @@ components:
           type: string
       required:
       - csrf_token
+    Dashboard:
+      type: object
+      description: '`GET /api/v1/dashboard/` (api_contract.md §18).'
+      properties:
+        upcoming:
+          type: array
+          items:
+            $ref: '#/components/schemas/Examination'
+        overdue:
+          type: array
+          items:
+            $ref: '#/components/schemas/Examination'
+        recently_completed:
+          type: array
+          items:
+            $ref: '#/components/schemas/Examination'
+        status_counts:
+          $ref: '#/components/schemas/StatusCounts'
+        category_counts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryCount'
+        uncategorized_count:
+          type: integer
+        overdue_count:
+          type: integer
+      required:
+      - category_counts
+      - overdue
+      - overdue_count
+      - recently_completed
+      - status_counts
+      - uncategorized_count
+      - upcoming
     Examination:
       type: object
       description: |-
@@ -1146,6 +1206,25 @@ components:
         * `cancelled` - cancelled
         * `missed` - missed
         * `overdue` - overdue
+    StatusCounts:
+      type: object
+      properties:
+        draft:
+          type: integer
+        planned:
+          type: integer
+        completed:
+          type: integer
+        cancelled:
+          type: integer
+        missed:
+          type: integer
+      required:
+      - cancelled
+      - completed
+      - draft
+      - missed
+      - planned
     StatusEnum:
       enum:
       - draft

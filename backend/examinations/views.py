@@ -9,12 +9,14 @@ from rest_framework.views import APIView
 from config.clock import user_local_date
 
 from .calendar import calendar_entries
+from .dashboard import dashboard_data
 from .models import ExaminationCategory, Reminder
 from .querysets import OwnedExaminationMixin
 from .serializers import (
     CalendarEntrySerializer,
     CalendarQuerySerializer,
     CategorySerializer,
+    DashboardSerializer,
     DueReminderQuerySerializer,
     ExaminationListQuerySerializer,
     ExaminationSerializer,
@@ -277,3 +279,14 @@ class CalendarView(OwnedExaminationMixin, APIView):
         )
         context = {"request": request, "local_now": local_now}
         return Response(CalendarEntrySerializer(entries, many=True, context=context).data)
+
+
+class DashboardView(OwnedExaminationMixin, APIView):
+    """`GET /api/v1/dashboard/` — the caller's collections and counts in one response."""
+
+    @extend_schema(responses={200: DashboardSerializer})
+    def get(self, request):
+        local_now = self.get_local_now()
+        data = dashboard_data(self.get_queryset(), request.user, local_now)
+        context = {"request": request, "local_now": local_now}
+        return Response(DashboardSerializer(data, context=context).data)

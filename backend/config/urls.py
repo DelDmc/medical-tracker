@@ -6,6 +6,7 @@ from config.views import HealthView
 from examinations.urls import (
     calendar_patterns,
     category_patterns,
+    dashboard_patterns,
     examination_patterns,
     reminder_patterns,
 )
@@ -18,6 +19,7 @@ api_v1_patterns = [
     path("examinations/", include(examination_patterns)),
     path("reminders/", include(reminder_patterns)),
     path("calendar/", include(calendar_patterns)),
+    path("dashboard/", include(dashboard_patterns)),
     # The generated OpenAPI contract (ADS-TECH-001-01); authenticated like every
     # endpoint outside the ADS-SEC-001-01 exemptions.
     path("schema/", SpectacularAPIView.as_view(), name="schema"),

@@ -18,9 +18,9 @@ This file records daily project progress, technical decisions, verification work
 ## Current Project Status
 
 - **Current phase:** Implementation (Phase 3 — Authentication)
-- **Current milestone:** Slice 16 — dashboard
+- **Current milestone:** Slice 17 — cross-cutting UX review
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 16 — dashboard
+- **Next major deliverable:** Slice 17 — cross-cutting UX review
 - **Last updated:** 2026-09-25
 
 ---
@@ -56,6 +56,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 - [+] **Slice 13 — recurrence rules (complete).** `GET`/`POST`/`PATCH /api/v1/examinations/{id}/recurrence/` (three intervals, planned-only create and update, retained across status changes), the single calendar-month arithmetic with last-valid-day clamping, and the recurrence settings on the detail page. `FR-018`, `FR-039`, `FR-040`, `SEC-002` close. Test cases passing: `TC-FR-018-01/02`, `TC-FR-039-01…10`, `TC-FR-040-01…06`, `TC-SEC-001-03`, `TC-SEC-002-05`.
 - [+] **Slice 14 — next occurrence (complete).** `POST /api/v1/examinations/{id}/next-occurrence/`, idempotent per (source, calculated date) — 201 then 200 with the same record — with the documented copied and emptied fields and no reminder or rule, plus the detail-page action. `FR-023` and `FR-041` close. Test cases passing: `TC-FR-041-01…07`, `TC-FR-023-03`.
 - [+] **Slice 15 — monthly calendar (complete).** `GET /api/v1/calendar/` (strict `YYYY-MM-DD` range validation, status-specific placement, drafts and date-less records excluded, `overdue` state from the shared module) and the calendar page with five distinct label-plus-shape indicators and month navigation. `RF-16`'s calendar half was reached and is escalated below. `FR-019`, `FR-042`, `FR-043` close. Test cases passing: `TC-FR-019-03`, `TC-FR-042-01…09`, `TC-FR-043-01…05`, `TC-SEC-001-04`.
+- [+] **Slice 16 — dashboard (complete).** `GET /api/v1/dashboard/` (upcoming and overdue from the shared collection queries, `overdue_count` from the same overdue result, recently completed filtered → ordered → limited to five, zero-filled counts) and the dashboard page. `FR-044`–`FR-047` and `SEC-001` close; Phases 4, 5 and 6 are complete. Test cases passing: `TC-FR-044-01…10`, `TC-FR-045-01`, `TC-FR-046-01/02`, `TC-FR-047-01`, `TC-SEC-001-05`.
 
 ### Files Created or Modified
 
@@ -80,8 +81,8 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 
 | Test, command, or manual check | Result | Notes |
 |---|---|---|
-| `cd backend && pytest` | Passed | 199 tests |
-| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 45 tests |
+| `cd backend && pytest` | Passed | 213 tests |
+| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 46 tests |
 | `bash scripts/secret-scan.sh` | Passed | A planted key fails it in the tree and, in a scratch clone, when present only in history |
 | README followed verbatim in a fresh clone | Passed | Backend and frontend installed, migrated, tested, and both dev servers answered |
 
@@ -450,9 +451,9 @@ Update this table when a phase changes status.
 | 1. Product Definition | In progress | 2026-07-18 | — | Core product definition, requirements, and specification suite exist; active review findings are being resolved before implementation |
 | 2. Architecture and Repository Setup | Completed | 2026-07-18 | 2026-09-25 | Slice 0: backend and frontend projects, settings, health check, test stacks, secret scan, OpenAPI generation |
 | 3. Authentication | Completed | 2026-09-25 | 2026-09-25 | Slices 1–6: registration, login, refresh and session restore, logout, account timezone, password change |
-| 4. Examination Records | In progress | 2026-09-25 | — | Slice 7 (categories, model, create, list) complete |
-| 5. Planning and Recurrence | In progress | 2026-09-25 | — | Slice 11 (reminders) complete |
-| 6. Calendar and Dashboard | In progress | 2026-09-25 | — | Slice 15 (calendar) complete |
+| 4. Examination Records | Completed | 2026-09-25 | 2026-09-25 | Slices 7–10: categories, examinations CRUD, search/filter/order, past/upcoming/overdue |
+| 5. Planning and Recurrence | Completed | 2026-09-25 | 2026-09-25 | Slices 11–14: reminders, reminder lifecycle, recurrence, next occurrence |
+| 6. Calendar and Dashboard | Completed | 2026-09-25 | 2026-09-25 | Slices 15–16: monthly calendar, dashboard |
 | 7. Testing and Documentation | In progress | 2026-08-04 | — | Test specification exists and review findings are tracked; `README.md` and implementation test suites remain pending |
 | 8. Deployment | Not started | — | — | Production deployment, migrations, and deployment verification have not started |
 
