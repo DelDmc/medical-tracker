@@ -21,6 +21,7 @@ REQUIRES_SCHEDULED_DATE = {
 SCHEDULED_DATE_REQUIRED = "A scheduled date is required for this status."
 COMPLETED_DATE_REQUIRED = "A completion date is required for this status."
 COMPLETED_DATE_IN_FUTURE = "The completion date cannot be later than today."
+REMINDER_REQUIRES_PLANNED = "Reminders can be set up only while the examination is planned."
 
 
 def validate_resulting_record(record: Mapping, user) -> None:
@@ -42,3 +43,15 @@ def validate_resulting_record(record: Mapping, user) -> None:
 
     if errors:
         raise serializers.ValidationError(errors)
+
+
+def require_planned(examination, message: str) -> None:
+    """Reject a reminder or recurrence change unless the examination is planned.
+
+    A business-rule error, reported under `non_field_errors` (api_contract.md §3.4).
+    Used for reminder creation, offset updates and reactivation (ADS-FR-017-01,
+    ADS-FR-035-02) and for recurrence creation and updates (ADS-FR-018-01,
+    ADS-FR-039-01).
+    """
+    if examination.status != ExaminationStatus.PLANNED:
+        raise serializers.ValidationError({"non_field_errors": [message]})

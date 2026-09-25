@@ -18,9 +18,9 @@ This file records daily project progress, technical decisions, verification work
 ## Current Project Status
 
 - **Current phase:** Implementation (Phase 3 — Authentication)
-- **Current milestone:** Slice 11 — reminders: configuration and due-date calculation
+- **Current milestone:** Slice 12 — reminder lifecycle and the due-reminders view
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 11 — reminders: configuration and due-date calculation
+- **Next major deliverable:** Slice 12 — reminder lifecycle and the due-reminders view
 - **Last updated:** 2026-09-25
 
 ---
@@ -51,6 +51,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 - [+] **Slice 8 — examination detail, edit, and delete (complete).** `GET`/`PATCH`/`DELETE /api/v1/examinations/{id}/` through the owner-scoped queryset (uniform 404, resulting-record validation on `PATCH`, no `PUT`), the detail and edit pages, and the focus-managed delete confirmation. `SEC-006` closes. Test cases passing: `TC-FR-013-01/02`, `TC-FR-016-01/02`, `TC-FR-021-01`, `TC-FR-022-01`, `TC-FR-023-01/02`, `TC-FR-024-01/02`, `TC-SEC-001-01`, `TC-SEC-002-01/02/03`, `TC-SEC-006-01`.
 - [+] **Slice 9 — list search, filters, and ordering (complete).** Validated `search`/`status`/`category`/`ordering` parameters (400 on invalid values, AND semantics, explicit nulls-last placement with an identifier tiebreak) and the matching list controls. `FR-028`, `FR-029`, `FR-030` close. Test cases passing: `TC-FR-028-01`, `TC-FR-029-01/02/03`, `TC-FR-030-01/02/03`.
 - [+] **Slice 10 — derived time states: past, upcoming, overdue (complete).** Past/upcoming/overdue queryset filters beside `time_state_for` in the one time-state module (a supporting check proves they never disagree), `?time_state=` on the list, and the matching list views. `FR-031`–`FR-034` close. Test cases passing: `TC-FR-019-01/02`, `TC-FR-031-01…06`, `TC-FR-032-01…05`, `TC-FR-033-01…05`, `TC-FR-034-01`.
+- [+] **Slice 11 — reminders: configuration and due-date calculation (complete).** `GET`/`POST`/`PATCH /api/v1/examinations/{id}/reminder/` with `due_date = scheduled_date − offset_days` (recalculated on every reminder or examination save, null without a date), the planned-only rule for creation, offset changes and reactivation (disabling always allowed), and the reminder settings on the detail page. `FR-017`, `FR-035`, `FR-036` close. Test cases passing: `TC-FR-017-01/02/03`, `TC-FR-035-01…19`, `TC-FR-036-01…04`, `TC-SEC-001-02`, `TC-SEC-002-04`.
 
 ### Files Created or Modified
 
@@ -75,7 +76,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 
 | Test, command, or manual check | Result | Notes |
 |---|---|---|
-| `cd backend && pytest` | Passed | 131 tests |
+| `cd backend && pytest` | Passed | 158 tests |
 | `cd frontend && npm run test && npm run lint && npm run build` | Passed | 35 tests |
 | `bash scripts/secret-scan.sh` | Passed | A planted key fails it in the tree and, in a scratch clone, when present only in history |
 | README followed verbatim in a fresh clone | Passed | Backend and frontend installed, migrated, tested, and both dev servers answered |
@@ -443,7 +444,7 @@ Update this table when a phase changes status.
 | 2. Architecture and Repository Setup | Completed | 2026-07-18 | 2026-09-25 | Slice 0: backend and frontend projects, settings, health check, test stacks, secret scan, OpenAPI generation |
 | 3. Authentication | Completed | 2026-09-25 | 2026-09-25 | Slices 1–6: registration, login, refresh and session restore, logout, account timezone, password change |
 | 4. Examination Records | In progress | 2026-09-25 | — | Slice 7 (categories, model, create, list) complete |
-| 5. Planning and Recurrence | Not started | — | — | Behavior is documented; implementation has not started |
+| 5. Planning and Recurrence | In progress | 2026-09-25 | — | Slice 11 (reminders) complete |
 | 6. Calendar and Dashboard | Not started | — | — | Behavior is documented; implementation has not started |
 | 7. Testing and Documentation | In progress | 2026-08-04 | — | Test specification exists and review findings are tracked; `README.md` and implementation test suites remain pending |
 | 8. Deployment | Not started | — | — | Production deployment, migrations, and deployment verification have not started |

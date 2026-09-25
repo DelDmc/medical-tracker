@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
@@ -130,6 +132,23 @@ class Reminder(TimestampedModel):
 
     def __str__(self):
         return f"Reminder {self.offset_days} days before {self.examination}"
+
+    def save(self, *args, **kwargs):
+        self.due_date = reminder_due_date(self.examination.scheduled_date, self.offset_days)
+        if kwargs.get("update_fields") is not None:
+            kwargs["update_fields"] = {*kwargs["update_fields"], "due_date"}
+        super().save(*args, **kwargs)
+
+
+def reminder_due_date(scheduled_date: date | None, offset_days: int) -> date | None:
+    """`scheduled_date - offset_days` in calendar days; `None` without a date (ADS-FR-036-01).
+
+    The one due-date calculation: `Reminder.save` applies it, and saving an
+    examination re-saves its reminder, so a changed date or offset always recalculates.
+    """
+    if scheduled_date is None:
+        return None
+    return scheduled_date - timedelta(days=offset_days)
 
 
 class RecurrenceInterval(models.TextChoices):

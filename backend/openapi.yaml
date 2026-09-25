@@ -369,6 +369,96 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/examinations/{id}/reminder/:
+    get:
+      operationId: examinations_reminder_retrieve
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/reminder/` (api_contract.md §14).
+
+        The examination is resolved only among the caller's own, so another user's
+        examination and a missing one — or a missing reminder — are the same 404.
+        Creation, offset changes and reactivation need a planned examination; disabling
+        does not (ADS-FR-035-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+          description: ''
+    post:
+      operationId: examinations_reminder_create
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/reminder/` (api_contract.md §14).
+
+        The examination is resolved only among the caller's own, so another user's
+        examination and a missing one — or a missing reminder — are the same 404.
+        Creation, offset changes and reactivation need a planned examination; disabling
+        does not (ADS-FR-035-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderCreateRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+          description: ''
+    patch:
+      operationId: examinations_reminder_partial_update
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/reminder/` (api_contract.md §14).
+
+        The examination is resolved only among the caller's own, so another user's
+        examination and a missing one — or a missing reminder — are the same 404.
+        Creation, offset changes and reactivation need a planned examination; disabling
+        does not (ADS-FR-035-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReminderUpdateRequest'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+          description: ''
   /api/v1/health/:
     get:
       operationId: health_retrieve
@@ -652,6 +742,15 @@ components:
         notes:
           type: string
           nullable: true
+    PatchedReminderUpdateRequest:
+      type: object
+      description: '`PATCH .../reminder/`: change the offset, disable, or re-enable.'
+      properties:
+        offset_days:
+          type: integer
+          minimum: 1
+        is_active:
+          type: boolean
     RegistrationRequest:
       type: object
       description: '`POST /api/v1/auth/register/` (ADS-FR-001-01 … ADS-FR-004-01,
@@ -675,6 +774,52 @@ components:
       - email
       - password
       - timezone
+    Reminder:
+      type: object
+      description: The reminder representation (api_contract.md §14).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        examination:
+          type: integer
+          readOnly: true
+        offset_days:
+          type: integer
+          minimum: 1
+          description: Whole days before the scheduled date; greater than zero.
+        due_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - due_date
+      - examination
+      - id
+      - offset_days
+      - updated_at
+    ReminderCreateRequest:
+      type: object
+      description: '`POST .../reminder/`: an offset only; a new reminder is active.'
+      properties:
+        offset_days:
+          type: integer
+          minimum: 1
+          description: Whole days before the scheduled date; greater than zero.
+      required:
+      - offset_days
     StatusEnum:
       enum:
       - draft

@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CategoryLabel, StatusBadge, TimeStateBadge } from '../examinations/Badges'
 import { ExaminationLoadError, ExaminationNotFound } from '../examinations/ExaminationStatusView'
 import { TIME_STATE_LABELS } from '../examinations/presentation'
+import { ReminderSection } from '../examinations/ReminderSection'
 import { useExaminationFromRoute } from '../examinations/useExamination'
 import { CalendarDate, CalendarTime, Instant } from '../format/DateTime'
 import styles from './ExaminationDetailPage.module.css'
@@ -132,6 +133,10 @@ export function ExaminationDetailPage() {
         </button>
       </div>
       <ExaminationDetails examination={examination} />
+      <ReminderSection
+        key={`${examination.id}-${examination.status}`}
+        examination={examination}
+      />
       <ConfirmDialog
         open={confirmingDelete}
         title="Delete this examination?"

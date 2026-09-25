@@ -62,3 +62,14 @@ export type ExaminationInput = {
   location: string | null
   notes: string | null
 }
+
+/** api_contract.md §14 */
+export type Reminder = {
+  id: number
+  examination: number
+  offset_days: number
+  due_date: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}

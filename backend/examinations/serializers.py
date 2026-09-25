@@ -5,7 +5,8 @@ from rest_framework import serializers
 
 from config.clock import user_local_now
 
-from .models import ExaminationCategory, ExaminationRecord, ExaminationStatus
+from .models import ExaminationCategory, ExaminationRecord, ExaminationStatus, Reminder
+from .services import update_examination
 from .time_state import COLLECTIONS, OVERDUE, UPCOMING, time_state_for
 from .validators import validate_resulting_record
 
@@ -111,6 +112,43 @@ class ExaminationSerializer(serializers.ModelSerializer):
         resulting.update(attrs)
         validate_resulting_record(resulting, self.context["request"].user)
         return attrs
+
+    def update(self, instance, validated_data):
+        return update_examination(instance, validated_data)
+
+
+class ReminderSerializer(serializers.ModelSerializer):
+    """The reminder representation (api_contract.md §14)."""
+
+    offset_days = serializers.IntegerField(
+        min_value=1, help_text="Whole days before the scheduled date; greater than zero."
+    )
+
+    class Meta:
+        model = Reminder
+        fields = [
+            "id",
+            "examination",
+            "offset_days",
+            "due_date",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "examination", "due_date", "created_at", "updated_at"]
+
+
+class ReminderCreateSerializer(ReminderSerializer):
+    """`POST .../reminder/`: an offset only; a new reminder is active."""
+
+    class Meta(ReminderSerializer.Meta):
+        read_only_fields = [*ReminderSerializer.Meta.read_only_fields, "is_active"]
+
+
+class ReminderUpdateSerializer(ReminderSerializer):
+    """`PATCH .../reminder/`: change the offset, disable, or re-enable."""
+
+    offset_days = serializers.IntegerField(min_value=1, required=False)
 
 
 class ExaminationListQuerySerializer(serializers.Serializer):
