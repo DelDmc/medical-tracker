@@ -22,6 +22,7 @@ SCHEDULED_DATE_REQUIRED = "A scheduled date is required for this status."
 COMPLETED_DATE_REQUIRED = "A completion date is required for this status."
 COMPLETED_DATE_IN_FUTURE = "The completion date cannot be later than today."
 REMINDER_REQUIRES_PLANNED = "Reminders can be set up only while the examination is planned."
+RECURRENCE_REQUIRES_PLANNED = "Recurrence can be set up only while the examination is planned."
 
 
 def validate_resulting_record(record: Mapping, user) -> None:

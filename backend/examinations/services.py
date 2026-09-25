@@ -2,13 +2,20 @@
 
 from django.db import transaction
 
-from .models import ExaminationRecord, ExaminationStatus, Reminder
+from .models import ExaminationRecord, ExaminationStatus, RecurrenceRule, Reminder
 
 
 def get_reminder(examination: ExaminationRecord) -> Reminder | None:
     try:
         return examination.reminder
     except Reminder.DoesNotExist:
+        return None
+
+
+def get_recurrence_rule(examination: ExaminationRecord) -> RecurrenceRule | None:
+    try:
+        return examination.recurrence_rule
+    except RecurrenceRule.DoesNotExist:
         return None
 
 

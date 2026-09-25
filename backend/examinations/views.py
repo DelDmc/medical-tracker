@@ -15,15 +15,21 @@ from .serializers import (
     DueReminderQuerySerializer,
     ExaminationListQuerySerializer,
     ExaminationSerializer,
+    RecurrenceRuleSerializer,
     ReminderCreateSerializer,
     ReminderSerializer,
     ReminderUpdateSerializer,
 )
-from .services import get_reminder
+from .services import get_recurrence_rule, get_reminder
 from .time_state import COLLECTION_QUERYSETS
-from .validators import REMINDER_REQUIRES_PLANNED, require_planned
+from .validators import (
+    RECURRENCE_REQUIRES_PLANNED,
+    REMINDER_REQUIRES_PLANNED,
+    require_planned,
+)
 
 REMINDER_EXISTS = "This examination already has a reminder."
+RECURRENCE_EXISTS = "This examination already has a recurrence rule."
 
 
 class CategoryListView(generics.ListAPIView):
@@ -170,3 +176,49 @@ class DueReminderListView(generics.ListAPIView):
     @extend_schema(parameters=[DueReminderQuerySerializer])
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
+
+class RecurrenceView(OwnedExaminationMixin, APIView):
+    """`GET` / `POST` / `PATCH /api/v1/examinations/{id}/recurrence/` (api_contract.md §15).
+
+    Resolved inside the caller's own examinations (a missing examination or rule is the
+    same 404). Creation and updates need a planned examination with a scheduled date
+    (ADS-FR-018-01, ADS-FR-039-01); a retained rule stays readable in any status and
+    is never changed by a status change (ADS-FR-039-02).
+    """
+
+    def get_rule_or_404(self, examination):
+        rule = get_recurrence_rule(examination)
+        if rule is None:
+            raise NotFound()
+        return rule
+
+    @extend_schema(responses={200: RecurrenceRuleSerializer})
+    def get(self, request, pk):
+        rule = self.get_rule_or_404(self.get_examination())
+        return Response(RecurrenceRuleSerializer(rule).data)
+
+    @extend_schema(request=RecurrenceRuleSerializer, responses={201: RecurrenceRuleSerializer})
+    def post(self, request, pk):
+        examination = self.get_examination()
+        if get_recurrence_rule(examination) is not None:
+            raise serializers.ValidationError({"non_field_errors": [RECURRENCE_EXISTS]})
+        serializer = RecurrenceRuleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        require_planned(examination, RECURRENCE_REQUIRES_PLANNED)
+        try:
+            with transaction.atomic():
+                rule = serializer.save(examination=examination)
+        except IntegrityError:
+            raise serializers.ValidationError({"non_field_errors": [RECURRENCE_EXISTS]}) from None
+        return Response(RecurrenceRuleSerializer(rule).data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(request=RecurrenceRuleSerializer, responses={200: RecurrenceRuleSerializer})
+    def patch(self, request, pk):
+        examination = self.get_examination()
+        rule = self.get_rule_or_404(examination)
+        serializer = RecurrenceRuleSerializer(rule, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        require_planned(examination, RECURRENCE_REQUIRES_PLANNED)
+        rule = serializer.save()
+        return Response(RecurrenceRuleSerializer(rule).data)

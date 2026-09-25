@@ -369,6 +369,96 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/examinations/{id}/recurrence/:
+    get:
+      operationId: examinations_recurrence_retrieve
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/recurrence/` (api_contract.md §15).
+
+        Resolved inside the caller's own examinations (a missing examination or rule is the
+        same 404). Creation and updates need a planned examination with a scheduled date
+        (ADS-FR-018-01, ADS-FR-039-01); a retained rule stays readable in any status and
+        is never changed by a status change (ADS-FR-039-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurrenceRule'
+          description: ''
+    post:
+      operationId: examinations_recurrence_create
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/recurrence/` (api_contract.md §15).
+
+        Resolved inside the caller's own examinations (a missing examination or rule is the
+        same 404). Creation and updates need a planned examination with a scheduled date
+        (ADS-FR-018-01, ADS-FR-039-01); a retained rule stays readable in any status and
+        is never changed by a status change (ADS-FR-039-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurrenceRuleRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurrenceRule'
+          description: ''
+    patch:
+      operationId: examinations_recurrence_partial_update
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/recurrence/` (api_contract.md §15).
+
+        Resolved inside the caller's own examinations (a missing examination or rule is the
+        same 404). Creation and updates need a planned examination with a scheduled date
+        (ADS-FR-018-01, ADS-FR-039-01); a retained rule stays readable in any status and
+        is never changed by a status change (ADS-FR-039-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRecurrenceRuleRequest'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurrenceRule'
+          description: ''
   /api/v1/examinations/{id}/reminder/:
     get:
       operationId: examinations_reminder_retrieve
@@ -682,6 +772,16 @@ components:
           type: string
       required:
       - status
+    IntervalEnum:
+      enum:
+      - monthly
+      - six_months
+      - yearly
+      type: string
+      description: |-
+        * `monthly` - monthly
+        * `six_months` - six_months
+        * `yearly` - yearly
     LoginRequest:
       type: object
       description: '`POST /api/v1/auth/login/` input. Any credential mismatch is a
@@ -773,6 +873,16 @@ components:
         notes:
           type: string
           nullable: true
+    PatchedRecurrenceRuleRequest:
+      type: object
+      description: |-
+        The recurrence representation (api_contract.md §15).
+
+        `next_due_date` is derived from the examination's current scheduled date with
+        calendar-month arithmetic, and is null while there is none.
+      properties:
+        interval:
+          $ref: '#/components/schemas/IntervalEnum'
     PatchedReminderUpdateRequest:
       type: object
       description: '`PATCH .../reminder/`: change the offset, disable, or re-enable.'
@@ -782,6 +892,54 @@ components:
           minimum: 1
         is_active:
           type: boolean
+    RecurrenceRule:
+      type: object
+      description: |-
+        The recurrence representation (api_contract.md §15).
+
+        `next_due_date` is derived from the examination's current scheduled date with
+        calendar-month arithmetic, and is null while there is none.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        examination:
+          type: integer
+          readOnly: true
+        interval:
+          $ref: '#/components/schemas/IntervalEnum'
+        next_due_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - examination
+      - id
+      - interval
+      - next_due_date
+      - updated_at
+    RecurrenceRuleRequest:
+      type: object
+      description: |-
+        The recurrence representation (api_contract.md §15).
+
+        `next_due_date` is derived from the examination's current scheduled date with
+        calendar-month arithmetic, and is null while there is none.
+      properties:
+        interval:
+          $ref: '#/components/schemas/IntervalEnum'
+      required:
+      - interval
     RegistrationRequest:
       type: object
       description: '`POST /api/v1/auth/register/` (ADS-FR-001-01 … ADS-FR-004-01,

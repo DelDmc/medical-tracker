@@ -5,7 +5,15 @@ from rest_framework import serializers
 
 from config.clock import user_local_now
 
-from .models import ExaminationCategory, ExaminationRecord, ExaminationStatus, Reminder
+from .models import (
+    ExaminationCategory,
+    ExaminationRecord,
+    ExaminationStatus,
+    RecurrenceInterval,
+    RecurrenceRule,
+    Reminder,
+)
+from .recurrence_math import next_due_date
 from .services import update_examination
 from .time_state import COLLECTIONS, OVERDUE, UPCOMING, time_state_for
 from .validators import validate_resulting_record
@@ -183,3 +191,23 @@ class DueReminderQuerySerializer(serializers.Serializer):
     """`GET /api/v1/reminders/` query: `state=due` is the one supported view (§14.4)."""
 
     state = serializers.ChoiceField(choices=["due"])
+
+
+class RecurrenceRuleSerializer(serializers.ModelSerializer):
+    """The recurrence representation (api_contract.md §15).
+
+    `next_due_date` is derived from the examination's current scheduled date with
+    calendar-month arithmetic, and is null while there is none.
+    """
+
+    interval = serializers.ChoiceField(choices=RecurrenceInterval.values)
+    next_due_date = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RecurrenceRule
+        fields = ["id", "examination", "interval", "next_due_date", "created_at", "updated_at"]
+        read_only_fields = ["id", "examination", "created_at", "updated_at"]
+
+    @extend_schema_field(serializers.DateField(allow_null=True, read_only=True))
+    def get_next_due_date(self, rule):
+        return next_due_date(rule.examination.scheduled_date, rule.interval)

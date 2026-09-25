@@ -18,9 +18,9 @@ This file records daily project progress, technical decisions, verification work
 ## Current Project Status
 
 - **Current phase:** Implementation (Phase 3 — Authentication)
-- **Current milestone:** Slice 13 — recurrence rules
+- **Current milestone:** Slice 14 — next occurrence
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 13 — recurrence rules
+- **Next major deliverable:** Slice 14 — next occurrence
 - **Last updated:** 2026-09-25
 
 ---
@@ -53,6 +53,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 - [+] **Slice 10 — derived time states: past, upcoming, overdue (complete).** Past/upcoming/overdue queryset filters beside `time_state_for` in the one time-state module (a supporting check proves they never disagree), `?time_state=` on the list, and the matching list views. `FR-031`–`FR-034` close. Test cases passing: `TC-FR-019-01/02`, `TC-FR-031-01…06`, `TC-FR-032-01…05`, `TC-FR-033-01…05`, `TC-FR-034-01`.
 - [+] **Slice 11 — reminders: configuration and due-date calculation (complete).** `GET`/`POST`/`PATCH /api/v1/examinations/{id}/reminder/` with `due_date = scheduled_date − offset_days` (recalculated on every reminder or examination save, null without a date), the planned-only rule for creation, offset changes and reactivation (disabling always allowed), and the reminder settings on the detail page. `FR-017`, `FR-035`, `FR-036` close. Test cases passing: `TC-FR-017-01/02/03`, `TC-FR-035-01…19`, `TC-FR-036-01…04`, `TC-SEC-001-02`, `TC-SEC-002-04`.
 - [+] **Slice 12 — reminder lifecycle and the due-reminders view (complete).** Leaving `planned` deactivates the reminder in the same transaction (returning to `planned` does not reactivate it), `GET /api/v1/reminders/?state=due`, and the dashboard's due-reminders area. `RF-19`'s trigger fired and is escalated below. `FR-037`, `FR-038` close. Test cases passing: `TC-FR-037-01/02`, `TC-FR-038-01…05`.
+- [+] **Slice 13 — recurrence rules (complete).** `GET`/`POST`/`PATCH /api/v1/examinations/{id}/recurrence/` (three intervals, planned-only create and update, retained across status changes), the single calendar-month arithmetic with last-valid-day clamping, and the recurrence settings on the detail page. `FR-018`, `FR-039`, `FR-040`, `SEC-002` close. Test cases passing: `TC-FR-018-01/02`, `TC-FR-039-01…10`, `TC-FR-040-01…06`, `TC-SEC-001-03`, `TC-SEC-002-05`.
 
 ### Files Created or Modified
 
@@ -77,7 +78,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 
 | Test, command, or manual check | Result | Notes |
 |---|---|---|
-| `cd backend && pytest` | Passed | 164 tests |
+| `cd backend && pytest` | Passed | 184 tests |
 | `cd frontend && npm run test && npm run lint && npm run build` | Passed | 36 tests |
 | `bash scripts/secret-scan.sh` | Passed | A planted key fails it in the tree and, in a scratch clone, when present only in history |
 | README followed verbatim in a fresh clone | Passed | Backend and frontend installed, migrated, tested, and both dev servers answered |

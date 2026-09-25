@@ -73,3 +73,15 @@ export type Reminder = {
   created_at: string
   updated_at: string
 }
+
+export type RecurrenceInterval = 'monthly' | 'six_months' | 'yearly'
+
+/** api_contract.md §15 */
+export type RecurrenceRule = {
+  id: number
+  examination: number
+  interval: RecurrenceInterval
+  next_due_date: string | null
+  created_at: string
+  updated_at: string
+}
