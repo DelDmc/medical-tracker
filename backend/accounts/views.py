@@ -16,6 +16,7 @@ from .serializers import (
     AccountSerializer,
     AccountUpdateSerializer,
     LoginSerializer,
+    PasswordChangeSerializer,
     RegistrationSerializer,
 )
 from .throttles import LoginRateThrottle, RefreshRateThrottle, RegisterRateThrottle
@@ -175,3 +176,17 @@ class AccountView(generics.RetrieveUpdateAPIView):
     @extend_schema(request=AccountUpdateSerializer, responses={200: AccountSerializer})
     def patch(self, request, *args, **kwargs):
         return super().patch(request, *args, **kwargs)
+
+
+class PasswordChangeView(APIView):
+    """`POST /api/v1/account/password/` — bearer-authenticated, no CSRF (ADS-FR-048-01).
+
+    Success is `200 OK` with an empty body; neither password is ever returned.
+    """
+
+    @extend_schema(request=PasswordChangeSerializer, responses={200: None})
+    def post(self, request):
+        serializer = PasswordChangeSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_200_OK)

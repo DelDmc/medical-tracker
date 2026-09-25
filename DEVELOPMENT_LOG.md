@@ -18,9 +18,9 @@ This file records daily project progress, technical decisions, verification work
 ## Current Project Status
 
 - **Current phase:** Implementation (Phase 3 — Authentication)
-- **Current milestone:** Slice 6 — password change
+- **Current milestone:** Slice 7 — categories, examination model, creation and list
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 6 — password change
+- **Next major deliverable:** Slice 7 — categories, examination model, creation and list
 - **Last updated:** 2026-09-25
 
 ---
@@ -46,6 +46,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 - [+] **Slice 3 — refresh, rotation, absolute session lifetime, session restore (complete).** `POST /api/v1/auth/refresh/` rotates the cookie token (revoking the old `jti`, copying `session_start`, 30/min per IP), the frontend refreshes at most once per 401 with one replay and a single in-flight refresh, and a reload restores the session with one refresh unless the logout-intent marker exists. `FR-007`, `FR-008` and `SEC-007` close. Test cases passing: `TC-FR-007-01…11`, `TC-FR-008-01…04`, `TC-SEC-001-10`, `TC-SEC-007-04`.
 - [+] **Slice 4 — logout (complete).** `POST /api/v1/auth/logout/` revokes a valid refresh token and always answers an empty 204 with a cleared cookie; the frontend writes the logout-intent marker, clears in-memory state before sending, and opens the login page whatever the outcome. `FR-006` closes. Test cases passing: `TC-FR-006-01…14`, `TC-SEC-005-11`.
 - [+] **Slice 5 — account timezone and shared presentation (complete).** `GET`/`PATCH /api/v1/account/` (only `timezone` writable), the account settings page, the session loading the account after login and restore, and `src/format/datetime.ts` with separate instant and calendar-date paths. `FR-009` and `UX-007` close. Test cases passing: `TC-FR-009-01/02`, `TC-SEC-001-06`, `TC-UX-007-01/02`.
+- [+] **Slice 6 — password change (complete).** `POST /api/v1/account/password/` verifies the current password and applies the registration policy before `set_password`, and the account page has a change-password form that clears both values on success. `FR-048` closes; Phase 3 (Authentication) is complete. Test cases passing: `TC-FR-048-01/02/03`.
 
 ### Files Created or Modified
 
@@ -70,7 +71,7 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 
 | Test, command, or manual check | Result | Notes |
 |---|---|---|
-| `cd backend && pytest` | Passed | 64 tests |
+| `cd backend && pytest` | Passed | 67 tests |
 | `cd frontend && npm run test && npm run lint && npm run build` | Passed | 25 tests |
 | `bash scripts/secret-scan.sh` | Passed | A planted key fails it in the tree and, in a scratch clone, when present only in history |
 | README followed verbatim in a fresh clone | Passed | Backend and frontend installed, migrated, tested, and both dev servers answered |
@@ -436,7 +437,7 @@ Update this table when a phase changes status.
 |---|---|---|---|---|
 | 1. Product Definition | In progress | 2026-07-18 | — | Core product definition, requirements, and specification suite exist; active review findings are being resolved before implementation |
 | 2. Architecture and Repository Setup | Completed | 2026-07-18 | 2026-09-25 | Slice 0: backend and frontend projects, settings, health check, test stacks, secret scan, OpenAPI generation |
-| 3. Authentication | In progress | 2026-09-25 | — | Slice 1 (registration) complete |
+| 3. Authentication | Completed | 2026-09-25 | 2026-09-25 | Slices 1–6: registration, login, refresh and session restore, logout, account timezone, password change |
 | 4. Examination Records | Not started | — | — | Behavior is documented; implementation has not started |
 | 5. Planning and Recurrence | Not started | — | — | Behavior is documented; implementation has not started |
 | 6. Calendar and Dashboard | Not started | — | — | Behavior is documented; implementation has not started |

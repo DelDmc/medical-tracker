@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
-import { getAccount, updateTimezone } from '../api/account'
+import { changePassword, getAccount, updateTimezone } from '../api/account'
 import type { Account } from '../api/types'
 import { session } from '../auth/session'
+import type { FieldErrors } from '../forms/errors'
 import { FormAlert, FormField } from '../forms/FormField'
 import { TimeZoneSelect } from '../forms/TimeZoneSelect'
 import { useFormErrors } from '../forms/useFormErrors'
@@ -82,6 +83,103 @@ function TimezoneForm({ account }: { account: Account }) {
   )
 }
 
+const EMPTY_PASSWORDS = { current: '', next: '' }
+
+/** Change password (user_flows.md §25). Both values leave client state after success. */
+function PasswordForm() {
+  const [passwords, setPasswords] = useState(EMPTY_PASSWORDS)
+  const [changed, setChanged] = useState(false)
+  const { errors, nonFieldErrors, setErrors, setErrorsFromFailure, clearErrors, formRef } =
+    useFormErrors()
+
+  const mutation = useMutation({
+    mutationFn: ({ current, next }: typeof EMPTY_PASSWORDS) => changePassword(current, next),
+    onSuccess: () => {
+      setPasswords(EMPTY_PASSWORDS)
+      setChanged(true)
+    },
+    onError: setErrorsFromFailure,
+  })
+
+  function onSubmit(event: FormEvent) {
+    event.preventDefault()
+    setChanged(false)
+    const clientErrors: FieldErrors = {}
+    if (!passwords.current) clientErrors.current_password = ['Enter your current password.']
+    if (!passwords.next) clientErrors.new_password = ['Enter a new password.']
+    else if (passwords.next.length < 8) clientErrors.new_password = ['Use at least 8 characters.']
+    if (Object.keys(clientErrors).length) {
+      setErrors(clientErrors)
+      return
+    }
+    clearErrors()
+    mutation.mutate(passwords, {
+      // The submitted values are not kept once the request has settled.
+      onSettled: () => mutation.reset(),
+    })
+  }
+
+  return (
+    <form ref={formRef} className="card form" noValidate onSubmit={onSubmit}>
+      <h2>Change password</h2>
+      <FormAlert messages={nonFieldErrors} />
+      {changed ? (
+        <div className="alert alert-success" role="status">
+          <p>Your password has been changed.</p>
+        </div>
+      ) : null}
+      <FormField
+        id="current-password"
+        name="current_password"
+        label="Current password"
+        required
+        errors={errors.current_password}
+      >
+        {(control) => (
+          <input
+            {...control}
+            className="input"
+            type="password"
+            autoComplete="current-password"
+            value={passwords.current}
+            onChange={(event) => {
+              const current = event.target.value
+              setPasswords((values) => ({ ...values, current }))
+            }}
+          />
+        )}
+      </FormField>
+      <FormField
+        id="new-password"
+        name="new_password"
+        label="New password"
+        required
+        hint="At least 8 characters. Avoid common or all-number passwords."
+        errors={errors.new_password}
+      >
+        {(control) => (
+          <input
+            {...control}
+            className="input"
+            type="password"
+            autoComplete="new-password"
+            value={passwords.next}
+            onChange={(event) => {
+              const next = event.target.value
+              setPasswords((values) => ({ ...values, next }))
+            }}
+          />
+        )}
+      </FormField>
+      <div className="button-row">
+        <button className="button button-primary" type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Changing…' : 'Change password'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
 export function AccountPage() {
   const query = useQuery({ queryKey: ACCOUNT_QUERY_KEY, queryFn: getAccount })
 
@@ -104,6 +202,7 @@ export function AccountPage() {
             </p>
           </div>
           <TimezoneForm key={query.data.timezone} account={query.data} />
+          <PasswordForm />
         </>
       )}
     </section>

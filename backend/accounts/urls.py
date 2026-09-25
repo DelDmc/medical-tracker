@@ -12,4 +12,5 @@ auth_patterns = [
 
 account_patterns = [
     path("", views.AccountView.as_view(), name="account"),
+    path("password/", views.PasswordChangeView.as_view(), name="account-password"),
 ]

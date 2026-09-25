@@ -61,6 +61,34 @@ class AccountUpdateSerializer(serializers.ModelSerializer):
         return validate_supported_timezone(value)
 
 
+class PasswordChangeSerializer(serializers.Serializer):
+    """`POST /api/v1/account/password/` (ADS-FR-048-01).
+
+    The current password must match the stored hash and the new one must pass the
+    registration policy; if either check fails nothing is saved.
+    """
+
+    current_password = serializers.CharField(
+        write_only=True, max_length=PASSWORD_MAX_LENGTH, trim_whitespace=False
+    )
+    new_password = password_field()
+
+    def validate_current_password(self, value):
+        if not self.context["request"].user.check_password(value):
+            raise serializers.ValidationError("Your current password is incorrect.")
+        return value
+
+    def validate_new_password(self, value):
+        validate_new_password(value, self.context["request"].user)
+        return value
+
+    def save(self):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save(update_fields=["password"])
+        return user
+
+
 class RegistrationSerializer(serializers.Serializer):
     """`POST /api/v1/auth/register/` (ADS-FR-001-01 … ADS-FR-004-01, ADS-SEC-003-01)."""
 

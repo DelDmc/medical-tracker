@@ -46,6 +46,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/Account'
           description: ''
+  /api/v1/account/password/:
+    post:
+      operationId: account_password_create
+      description: |-
+        `POST /api/v1/account/password/` — bearer-authenticated, no CSRF (ADS-FR-048-01).
+
+        Success is `200 OK` with an empty body; neither password is ever returned.
+      tags:
+      - account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/v1/auth/csrf/:
     get:
       operationId: auth_csrf_retrieve
@@ -214,6 +234,27 @@ components:
       required:
       - email
       - password
+    PasswordChangeRequest:
+      type: object
+      description: |-
+        `POST /api/v1/account/password/` (ADS-FR-048-01).
+
+        The current password must match the stored hash and the new one must pass the
+        registration policy; if either check fails nothing is saved.
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+          maxLength: 128
+      required:
+      - current_password
+      - new_password
     PatchedAccountUpdateRequest:
       type: object
       description: '`PATCH /api/v1/account/`: only `timezone` is writable (api_contract.md
