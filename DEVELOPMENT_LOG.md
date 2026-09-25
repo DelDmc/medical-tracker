@@ -17,11 +17,11 @@ This file records daily project progress, technical decisions, verification work
 
 ## Current Project Status
 
-- **Current phase:** Documentation hardening complete; preparing for the implementation phase
-- **Current milestone:** Independent documentation review (owner), then implementation kickoff
-- **Current branch:** `main`
-- **Next major deliverable:** Decide the implementation branching workflow, then begin backend/frontend implementation on non-`main` branches
-- **Last updated:** 2026-08-05
+- **Current phase:** Implementation (Phase 2 — Architecture and Repository Setup)
+- **Current milestone:** Slice 0 — walking skeleton
+- **Current branch:** `project/mvp`
+- **Next major deliverable:** Slice 0 — walking skeleton
+- **Last updated:** 2026-09-25
 
 ---
 

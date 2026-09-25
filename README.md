@@ -14,7 +14,9 @@ Progress is tracked day-by-day in [`DEVELOPMENT_LOG.md`](DEVELOPMENT_LOG.md).
 
 ## Branching
 
-`main` holds the documentation snapshot and, once implementation begins, only the completed MVP. All implementation work happens on other branches.
+`main` holds the documentation snapshot and receives implementation code only once, when the MVP is complete.
+
+Each project gets one finite project branch cut from `main` — for this MVP, `project/mvp`. Work for each implementation slice happens on a `feature/<slice-id>-<slug>` branch cut from the project branch and is squash-merged back into it when that slice's Definition of Done passes. At project completion the project branch merges into `main` once and is then deleted; a later project cuts a fresh project branch from `main`.
 
 ## Documentation
 
@@ -32,6 +34,8 @@ Supporting documents:
 
 - [`docs/traceability_matrix.md`](docs/traceability_matrix.md) — administrative mapping from requirement IDs to design-decision IDs to API operations; defines no behavior itself.
 - [`docs/review_findings.md`](docs/review_findings.md) — non-normative tracking log for open specification inconsistencies and design gaps found during review.
+- [`docs/technology_decisions.md`](docs/technology_decisions.md) — non-normative record of technology selections and repository-workflow decisions; defines no behavior.
+- [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) — non-normative implementation task sequence; outranked by every document in the hierarchy above.
 
 ## Diagrams
 
