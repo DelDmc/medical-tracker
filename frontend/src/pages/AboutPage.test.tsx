@@ -19,7 +19,7 @@ describe('non-clinical purpose page', () => {
 
   it('TC-PRV-003-02 — The informational page is reachable from unauthenticated navigation', async () => {
     const user = userEvent.setup()
-    renderApp('/')
+    renderApp('/login')
 
     const nav = screen.getByRole('navigation', { name: 'Primary' })
     const aboutLink = within(nav).getByRole('link', { name: 'About' })

@@ -4,4 +4,6 @@ from . import views
 
 auth_patterns = [
     path("register/", views.RegisterView.as_view(), name="auth-register"),
+    path("csrf/", views.CsrfBootstrapView.as_view(), name="auth-csrf"),
+    path("login/", views.LoginView.as_view(), name="auth-login"),
 ]

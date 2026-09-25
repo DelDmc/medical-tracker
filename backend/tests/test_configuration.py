@@ -3,16 +3,10 @@
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 
+from tests.helpers import PRODUCTION_ENV
+
 DEVELOPMENT = "config.settings.development"
 PRODUCTION = "config.settings.production"
-
-PRODUCTION_ENV = {
-    "DJANGO_SECRET_KEY": "production-signing-value-for-tests-only",  # pragma: allowlist secret
-    "JWT_SIGNING_KEY": "production-jwt-value-for-tests-only",  # pragma: allowlist secret
-    "DJANGO_ALLOWED_HOSTS": "api.example.com",
-    "DATABASE_URL": "postgres://tracker@db.example.com:5432/tracker?sslmode=require",
-    "FRONTEND_ORIGINS": "https://app.example.com",
-}
 
 
 def test_tc_tech_003_01_development_env_values_apply_development_settings(settings_env):

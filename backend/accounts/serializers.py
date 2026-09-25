@@ -83,3 +83,14 @@ class RegistrationSerializer(serializers.Serializer):
                 return User.objects.create_user(**validated_data)
         except IntegrityError:
             raise serializers.ValidationError({"email": [DUPLICATE_EMAIL]}) from None
+
+
+class LoginSerializer(serializers.Serializer):
+    """`POST /api/v1/auth/login/` input. Any credential mismatch is a generic 401."""
+
+    email = serializers.CharField(max_length=254)
+    password = serializers.CharField(max_length=PASSWORD_MAX_LENGTH, trim_whitespace=False)
+
+
+class AccessTokenSerializer(serializers.Serializer):
+    access_token = serializers.CharField()

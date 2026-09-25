@@ -32,4 +32,8 @@ CSRF_TRUSTED_ORIGINS = FRONTEND_ORIGINS
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_SAMESITE = "Lax"
 
+# ADS-SEC-005-04: the refresh-token cookie, likewise.
+REFRESH_COOKIE_SECURE = False
+REFRESH_COOKIE_SAMESITE = "Lax"
+
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}

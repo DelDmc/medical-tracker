@@ -42,3 +42,29 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.email
+
+
+class RevokedRefreshToken(models.Model):
+    """A refresh token invalidated by logout or superseded by rotation (ADS-FR-007-09).
+
+    `expires_at` is copied from the token's own `exp`; a row past it carries no
+    meaning and may be purged.
+    """
+
+    jti = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField()
+
+    def __str__(self):
+        return self.jti
+
+
+def revoke_refresh_token(payload: dict) -> None:
+    from .tokens import IssuedToken
+
+    RevokedRefreshToken.objects.get_or_create(
+        jti=payload["jti"], defaults={"expires_at": IssuedToken("", payload).expires_at}
+    )
+
+
+def is_refresh_token_revoked(jti: str) -> bool:
+    return RevokedRefreshToken.objects.filter(jti=jti).exists()

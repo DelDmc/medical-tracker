@@ -29,6 +29,10 @@ CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_SECURE = True
 
+# ADS-SEC-005-04: the refresh-token cookie, likewise.
+REFRESH_COOKIE_SECURE = True
+REFRESH_COOKIE_SAMESITE = "None"
+
 # ADS-TECH-006-01: trust only the platform's HTTPS header, and redirect plain HTTP.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)

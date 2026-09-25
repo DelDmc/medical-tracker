@@ -2,10 +2,10 @@
 
 import pytest
 from django.conf import global_settings
-from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password
 
 from accounts.models import User
+from tests.helpers import login
 
 REGISTER_URL = "/api/v1/auth/register/"
 VALID = {
@@ -41,8 +41,9 @@ def test_tc_fr_001_01_registration_with_all_required_fields_creates_an_account(a
     assert body["email"] == VALID["email"]
     assert body["timezone"] == VALID["timezone"]
     assert "password" not in body
-    user = authenticate(email=VALID["email"], password=VALID["password"])
-    assert user is not None and user.pk == body["id"]
+    login_response = login(api_client, VALID["email"], VALID["password"])
+    assert login_response.status_code == 200
+    assert login_response.json()["access_token"]
 
 
 def test_tc_fr_002_01_registration_rejects_a_missing_email(api_client):

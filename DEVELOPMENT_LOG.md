@@ -18,9 +18,9 @@ This file records daily project progress, technical decisions, verification work
 ## Current Project Status
 
 - **Current phase:** Implementation (Phase 3 — Authentication)
-- **Current milestone:** Slice 1 — registration end to end
+- **Current milestone:** Slice 3 — refresh, rotation, absolute session lifetime, session restore
 - **Current branch:** `project/mvp`
-- **Next major deliverable:** Slice 1 — registration end to end
+- **Next major deliverable:** Slice 3 — refresh, rotation, absolute session lifetime, session restore
 - **Last updated:** 2026-09-25
 
 ---
@@ -41,6 +41,8 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 
 - [+] Task 0.1 — recorded the confirmed branching workflow and decisions D1–D12 in the new non-normative `docs/technology_decisions.md`; `README.md` points at it and at `IMPLEMENTATION_PLAN.md`. `CLAUDE.md` was not edited: it is deleted in the owner's working tree.
 - [+] **Slice 0 — walking skeleton (complete).** Django project with a typed environment reader and separate development/production settings (production fails fast and rejects wildcard origins), `GET /api/v1/health/`, the clock service, repository secret scanning, OpenAPI generation (`backend/openapi.yaml`), the React/Vite app shell with its test stack, the non-clinical purpose page, and README setup/test instructions. Test cases passing: `TC-TECH-003-01/02/03`, `TC-TECH-004-01`, `TC-TECH-005-01`, `TC-SEC-001-11`, `TC-SEC-005-03`, `TC-SEC-004-01`, `TC-PRV-003-01`, `TC-PRV-003-02`.
+- [+] **Slice 1 — registration (complete).** Custom email-login user model with case-insensitive uniqueness, `POST /api/v1/auth/register/` with the ADS-SEC-003-01 password validators and a 10/min per-IP limit, the shared accessible field-error component, and the registration page. Test cases passing: `TC-FR-001-01`, `TC-FR-002-01/02/03`, `TC-FR-003-01/02/03`, `TC-FR-004-01`, `TC-SEC-003-01/02/03/04`, `TC-SEC-001-07`, `TC-SEC-007-03`, `TC-UX-002-01/02/03`, `TC-UX-003-01/02`, `TC-UX-004-01/02`.
+- [+] **Slice 2 — login, CSRF bootstrap, authenticated API client (complete).** HS256 token service with the revocation table and bearer authentication, `GET /api/v1/auth/csrf/` with explicit CSRF enforcement, `POST /api/v1/auth/login/` (refresh token only in its HttpOnly cookie, identical 401 for both failure reasons, 10/min per IP), the in-memory frontend session, the login page, and route guards. `PRV-003` closes. Test cases passing: `TC-FR-005-01/02/03/04/05/06/07`, `TC-SEC-001-08/09`, `TC-SEC-005-08/09/10/12/13/14/15`, `TC-SEC-006-02`, `TC-SEC-007-01/02`, `TC-PRV-003-03`.
 
 ### Files Created or Modified
 
@@ -65,8 +67,8 @@ Start the implementation phase on `project/mvp`, following `IMPLEMENTATION_PLAN.
 
 | Test, command, or manual check | Result | Notes |
 |---|---|---|
-| `cd backend && pytest` | Passed | 9 tests |
-| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 2 tests |
+| `cd backend && pytest` | Passed | 41 tests |
+| `cd frontend && npm run test && npm run lint && npm run build` | Passed | 11 tests |
 | `bash scripts/secret-scan.sh` | Passed | A planted key fails it in the tree and, in a scratch clone, when present only in history |
 | README followed verbatim in a fresh clone | Passed | Backend and frontend installed, migrated, tested, and both dev servers answered |
 
@@ -431,7 +433,7 @@ Update this table when a phase changes status.
 |---|---|---|---|---|
 | 1. Product Definition | In progress | 2026-07-18 | — | Core product definition, requirements, and specification suite exist; active review findings are being resolved before implementation |
 | 2. Architecture and Repository Setup | Completed | 2026-07-18 | 2026-09-25 | Slice 0: backend and frontend projects, settings, health check, test stacks, secret scan, OpenAPI generation |
-| 3. Authentication | Not started | — | — | Behavior is documented; implementation has not started |
+| 3. Authentication | In progress | 2026-09-25 | — | Slice 1 (registration) complete |
 | 4. Examination Records | Not started | — | — | Behavior is documented; implementation has not started |
 | 5. Planning and Recurrence | Not started | — | — | Behavior is documented; implementation has not started |
 | 6. Calendar and Dashboard | Not started | — | — | Behavior is documented; implementation has not started |
