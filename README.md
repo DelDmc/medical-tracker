@@ -6,7 +6,7 @@ Stack: Django REST Framework backend (JSON API under `/api/v1/`) + React fronten
 
 ## Project Status
 
-**Implementation in progress** on the `project/mvp` branch, slice by slice, following [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md). `backend/` holds the Django REST Framework project and `frontend/` the React application; both have runnable test suites (see [Running the Tests](#running-the-tests)).
+**MVP complete** and merged into `main`. It was built on the `project/mvp` branch, slice by slice, following [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md), and is deployed as described in [Deployment](#deployment). `backend/` holds the Django REST Framework project and `frontend/` the React application; both have runnable test suites (see [Running the Tests](#running-the-tests)).
 
 The `docs/` suite below is a complete, decision-level specification: functional requirements, accepted design decisions, domain model, API contract, and user flows for the application described above. It is the plan the implementation follows.
 

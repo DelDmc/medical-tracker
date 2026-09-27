@@ -17,10 +17,10 @@ This file records daily project progress, technical decisions, verification work
 
 ## Current Project Status
 
-- **Current phase:** Implementation (Phase 8 — Deployment)
-- **Current milestone:** Slice 19 — deployed and the eight deployment tests pass; the owner's browser walk of the deployed app remains, then squash-merge and close Phase 8
-- **Current branch:** `feature/s19-deployment`
-- **Next major deliverable:** Slice 19 squash-merge into `project/mvp`, then `project/mvp` into `main`
+- **Current phase:** Implementation complete (Phase 8 — Deployment, completed)
+- **Current milestone:** MVP complete — deployed, the eight deployment tests and the owner's browser walk pass, `project/mvp` merged into `main`
+- **Current branch:** `main`; `project/mvp` is kept until Render and Vercel deploy from `main`, then deleted (D1)
+- **Next major deliverable:** Point Render and Vercel at `main` and delete `project/mvp`; owner decisions on `RF-15`, `RF-28`, `RF-16`, `RF-19`
 - **Last updated:** 2026-09-27
 
 ---
@@ -46,7 +46,8 @@ Deploy `project/mvp` following README "Deployment" steps 1–5 and run the eight
 - [+] **Defect found by the owner's first browser login: "CSRF verification failed."** Reproduced in the owner's Chrome: from the Vercel origin the CSRF bootstrap succeeded but an empty login `POST` got 403, while the same two requests from the API's own origin passed CSRF (400 validation). The server configuration was correct; the browser blocks third-party cookies, and the two deployed origins are different sites (`vercel.app` and `onrender.com` are public suffixes), so it refused the `SameSite=None` cookies. The eight deployment tests could not catch this: they send cookies by hand, as no browser does.
 - [+] **Fix — `ADS-SEC-005-09`:** in production the CSRF and `refresh_token` cookies also carry `Partitioned` (CHIPS), which browsers accept even with third-party cookies blocked. Django 5.2 and Python 3.12 cannot emit it, so `accounts.middleware.PartitionedCookieMiddleware` appends it, clearing cookies included; local development is unchanged. `TC-SEC-005-16/17` added; `api_contract.md` §5.3/§5.7, the traceability matrix and the plan updated. The deployment tests strip the attribute before parsing, since Python 3.12's cookie parser drops any line that carries it.
 - [+] Slice 19 squash-merged into `project/mvp` so the fix deploys; the handoff condition (all eight deployment tests passing) was met.
-- [ ] README step 5.2, the browser walk from the Vercel origin (register → log in → create an examination showing the eight categories → dashboard), is owner-run: creating an account with a password on a public host is outside what the agent may do. It is to be repeated against the fixed deployment.
+- [+] README step 5.2, the browser walk from the Vercel origin (register → log in → create an examination showing the eight categories → dashboard), repeated by the owner against the fixed deployment: passed. It is owner-run because creating an account with a password on a public host is outside what the agent may do.
+- [+] **Slice 19 complete, Phase 8 closed. MVP complete:** `project/mvp` merged into `main` (D1) and pushed. The project branch stays until Render and Vercel are switched to `main`, since both still deploy from it.
 
 ### Files Created or Modified
 
@@ -72,6 +73,7 @@ Deploy `project/mvp` following README "Deployment" steps 1–5 and run the eight
 | `DEPLOYMENT_BASE_URL=… DEPLOYMENT_FRONTEND_ORIGIN=… pytest -m deployment -v` | 8 passed | Registers two throwaway `example.com` accounts per run |
 | README step 5.2 browser walk | Failed: "CSRF verification failed." at login | Owner's Chrome blocks third-party cookies; fixed by `ADS-SEC-005-09`, walk to be repeated |
 | CSRF bootstrap + empty login `POST` in the owner's Chrome | 403 from the Vercel origin, 400 from the API origin | Isolates the failure to the cross-site cookie |
+| README step 5.2 browser walk, repeated after `ADS-SEC-005-09` deployed | Passed | Owner-run; the owner confirmed it before the merge into `main` |
 
 ### Problems and Blockers
 
@@ -84,7 +86,7 @@ Deploy `project/mvp` following README "Deployment" steps 1–5 and run the eight
 
 ### Development Record
 
-- **Branch:** `feature/s19-deployment`; deployed from `project/mvp` at `820ec82`
+- **Branch:** `feature/s19-deployment`; deployed from `project/mvp` at `820ec82`, then at `ad25307` with the fix; `project/mvp` merged into `main`
 - **Pull request:** `Not created`
 
 ---
@@ -528,6 +530,6 @@ Update this table when a phase changes status.
 | 5. Planning and Recurrence | Completed | 2026-09-25 | 2026-09-25 | Slices 11–14: reminders, reminder lifecycle, recurrence, next occurrence |
 | 6. Calendar and Dashboard | Completed | 2026-09-25 | 2026-09-25 | Slices 15–16: monthly calendar, dashboard |
 | 7. Testing and Documentation | Completed | 2026-08-04 | 2026-09-25 | Slices 17–18: cross-cutting UX reviews, repository operating documentation with a clean-environment review, OpenAPI contract test |
-| 8. Deployment | In progress | 2026-09-25 | — | Slice 19: settings reviewed, deployment procedure documented, deployment tests written and rehearsed locally; the deploy itself and its verification are owner-run |
+| 8. Deployment | Completed | 2026-09-25 | 2026-09-27 | Slice 19: deployed on Render, Neon and Vercel; the eight deployment tests and the owner's browser walk pass; `project/mvp` merged into `main` |
 
 Allowed statuses: `Not started`, `In progress`, `Blocked`, `Completed`, `Deferred`.
