@@ -31,6 +31,7 @@ It is an administrative mapping document. It does not define product behavior, d
 | Frontend CSRF-token handling | SEC-005 | ADS-SEC-005-06 |
 | CSRF-cookie `HttpOnly` attribute | SEC-005 | ADS-SEC-005-07 |
 | CSRF-cookie environment attributes | SEC-005 | ADS-SEC-005-08 |
+| Partitioned authentication cookies | SEC-005 | ADS-SEC-005-09 |
 | Uniform not-found response | SEC-006 | ADS-SEC-006-01 |
 | Rate limiting on unauthenticated auth endpoints | SEC-007 | ADS-SEC-007-01 |
 | Date, time, and timestamp representations | TECH-002 | ADS-TECH-002-01 |
@@ -39,18 +40,18 @@ It is an administrative mapping document. It does not define product behavior, d
 | Registration email validation | FR-002 | ADS-FR-002-01 |
 | Registration password validation | FR-003, SEC-003 | ADS-FR-003-01, ADS-SEC-003-01 |
 | Registration timezone validation | FR-004 | ADS-FR-004-01 |
-| `GET /api/v1/auth/csrf/` | SEC-005 | ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-05, ADS-SEC-005-07, ADS-SEC-005-08 |
+| `GET /api/v1/auth/csrf/` | SEC-005 | ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-05, ADS-SEC-005-07, ADS-SEC-005-08, ADS-SEC-005-09 |
 | `POST /api/v1/auth/login/` request contract | FR-005, SEC-005 | ADS-FR-005-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-06 |
 | Login access-token response | FR-005 | ADS-FR-005-02 |
 | Access-token lifetime | FR-005 | ADS-FR-005-06 |
 | Access-token signing algorithm and claims | FR-005 | ADS-FR-005-07 |
-| Login refresh-token cookie | FR-005, SEC-005 | ADS-FR-005-03, ADS-SEC-005-04 |
+| Login refresh-token cookie | FR-005, SEC-005 | ADS-FR-005-03, ADS-SEC-005-04, ADS-SEC-005-09 |
 | Frontend access-token storage and bearer transport | FR-005 | ADS-FR-005-04 |
 | Generic invalid-credentials response | SEC-006 | ADS-SEC-006-02 |
 | `POST /api/v1/auth/logout/` request contract | FR-006, SEC-005 | ADS-FR-006-01, ADS-SEC-005-02, ADS-SEC-005-03, ADS-SEC-005-06 |
 | Logout refresh-token invalidation | FR-006 | ADS-FR-006-02 |
 | Access-token validity survives logout | FR-006 | ADS-FR-006-09 |
-| Logout refresh-cookie clearing | FR-006, SEC-005 | ADS-FR-006-03, ADS-SEC-005-04 |
+| Logout refresh-cookie clearing | FR-006, SEC-005 | ADS-FR-006-03, ADS-SEC-005-04, ADS-SEC-005-09 |
 | Idempotent logout response | FR-006 | ADS-FR-006-04 |
 | Immediate local session-state clearing | FR-006 | ADS-FR-006-05 |
 | Persistent logout-intent marker and restoration suppression | FR-006 | ADS-FR-006-06 |
@@ -62,9 +63,9 @@ It is an administrative mapping document. It does not define product behavior, d
 | Refresh-token session-start and expiry encoding | FR-007 | ADS-FR-007-08 |
 | Refresh-token revocation state | FR-007 | ADS-FR-007-09 |
 | Refresh-token signing algorithm and claims | FR-007 | ADS-FR-007-10 |
-| Replacement refresh-token cookie | FR-007, SEC-005 | ADS-FR-007-03, ADS-SEC-005-04 |
+| Replacement refresh-token cookie | FR-007, SEC-005 | ADS-FR-007-03, ADS-SEC-005-04, ADS-SEC-005-09 |
 | Refreshed access-token response | FR-007 | ADS-FR-007-04 |
-| Invalid refresh-token response and stale-cookie clearing | FR-007, SEC-005 | ADS-FR-007-05, ADS-SEC-005-04 |
+| Invalid refresh-token response and stale-cookie clearing | FR-007, SEC-005 | ADS-FR-007-05, ADS-SEC-005-04, ADS-SEC-005-09 |
 | Session restoration after page reload | FR-007 | ADS-FR-007-06 |
 | Active-session access-token recovery | FR-008 | ADS-FR-008-01 |
 | Failed active-session refresh outcome | FR-008 | ADS-FR-008-02 |

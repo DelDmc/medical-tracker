@@ -1,0 +1,1670 @@
+openapi: 3.0.3
+info:
+  title: Medical Tracker API
+  version: 1.0.0
+  description: JSON REST API for the Medical Tracker Application MVP (api_contract.md).
+paths:
+  /api/v1/account/:
+    get:
+      operationId: account_retrieve
+      description: |-
+        `GET` / `PATCH /api/v1/account/` — always the authenticated user's own account.
+
+        There is no identifier in the path, so no other account can be addressed
+        (ADS-FR-009-01). Changing the timezone leaves stored instants untouched.
+      tags:
+      - account
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+    patch:
+      operationId: account_partial_update
+      description: |-
+        `GET` / `PATCH /api/v1/account/` — always the authenticated user's own account.
+
+        There is no identifier in the path, so no other account can be addressed
+        (ADS-FR-009-01). Changing the timezone leaves stored instants untouched.
+      tags:
+      - account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAccountUpdateRequest'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+  /api/v1/account/password/:
+    post:
+      operationId: account_password_create
+      description: |-
+        `POST /api/v1/account/password/` — bearer-authenticated, no CSRF (ADS-FR-048-01).
+
+        Success is `200 OK` with an empty body; neither password is ever returned.
+      tags:
+      - account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+  /api/v1/auth/csrf/:
+    get:
+      operationId: auth_csrf_retrieve
+      description: |-
+        `GET /api/v1/auth/csrf/` — sets or renews the CSRF cookie and returns its token.
+
+        The cookie is HttpOnly (ADS-SEC-005-07), so this response body is the only way the
+        frontend obtains the token, which it then holds in memory (ADS-SEC-005-06).
+      tags:
+      - auth
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CsrfToken'
+          description: ''
+  /api/v1/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: |-
+        `POST /api/v1/auth/login/` — CSRF-protected; no bearer token (ADS-FR-005-01…03).
+
+        Success returns only `access_token` and sets the refresh token in its HttpOnly
+        cookie. An unknown email and a wrong password get the identical 401
+        (ADS-SEC-006-02).
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Invalid credentials: the same response for an unknown email
+            and a wrong password (api_contract.md §5.4).'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'CSRF failure (api_contract.md §3.2): `X-CSRFToken` is missing
+            or does not match the CSRF cookie. No credentials are issued.'
+        '429':
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until the rate-limit window resets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Rate limit exceeded (api_contract.md §3.5).
+  /api/v1/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: |-
+        `POST /api/v1/auth/logout/` — CSRF-protected; reads the refresh cookie if present.
+
+        A valid refresh token is revoked (ADS-FR-006-02). Whatever the token's state —
+        valid, expired, revoked, invalid or missing — the response is the same empty 204
+        and the cookie is cleared (ADS-FR-006-03, ADS-FR-006-04). Access tokens already
+        issued stay valid until their own expiry (ADS-FR-006-09).
+      tags:
+      - auth
+      responses:
+        '204':
+          description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'CSRF failure (api_contract.md §3.2): `X-CSRFToken` is missing
+            or does not match the CSRF cookie. No credentials are issued.'
+  /api/v1/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: |-
+        `POST /api/v1/auth/refresh/` — rotate the refresh token (ADS-FR-007-01…10).
+
+        The token is read only from the `refresh_token` cookie; there is no JSON body. On
+        success the submitted token is revoked and replaced by one carrying the same
+        `session_start` (so the seven-day session is never extended). Every invalid,
+        expired, revoked, malformed or missing token gets the same 401, no credentials,
+        and a cleared cookie.
+      tags:
+      - auth
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: The refresh token is expired, revoked, malformed, missing or
+            otherwise invalid; the cookie is cleared (api_contract.md §5.5).
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'CSRF failure (api_contract.md §3.2): `X-CSRFToken` is missing
+            or does not match the CSRF cookie. No credentials are issued.'
+        '429':
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until the rate-limit window resets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Rate limit exceeded (api_contract.md §3.5).
+  /api/v1/auth/register/:
+    post:
+      operationId: auth_register_create
+      description: '`POST /api/v1/auth/register/` — no bearer token, browser credentials,
+        or CSRF.'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '429':
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until the rate-limit window resets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Rate limit exceeded (api_contract.md §3.5).
+  /api/v1/calendar/:
+    get:
+      operationId: calendar_list
+      description: |-
+        `GET /api/v1/calendar/?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD` (§17).
+
+        The caller's examinations placed on their status-specific date within the
+        inclusive range, as a JSON array of entries.
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: Last date of the range, YYYY-MM-DD, inclusive.
+        required: true
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: First date of the range, YYYY-MM-DD, inclusive.
+        required: true
+      tags:
+      - calendar
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CalendarEntry'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+  /api/v1/categories/:
+    get:
+      operationId: categories_list
+      description: '`GET /api/v1/categories/` — read-only; no create, update or delete
+        route exists.'
+      tags:
+      - categories
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+  /api/v1/dashboard/:
+    get:
+      operationId: dashboard_retrieve
+      description: '`GET /api/v1/dashboard/` — the caller''s collections and counts
+        in one response.'
+      tags:
+      - dashboard
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+  /api/v1/examinations/:
+    get:
+      operationId: examinations_list
+      description: |-
+        `GET` / `POST /api/v1/examinations/` — only the caller's records; a JSON array.
+
+        The list accepts `search`, `status`, `category`, `ordering` and `time_state`; all
+        supplied filters apply together (ADS-FR-028-01 … ADS-FR-032-01). `time_state`
+        selects the past, upcoming or overdue collection through examinations/time_state.py.
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: A category identifier.
+      - in: query
+        name: ordering
+        schema:
+          enum:
+          - scheduled_date
+          - -scheduled_date
+          type: string
+          minLength: 1
+        description: |-
+          * `scheduled_date` - scheduled_date
+          * `-scheduled_date` - -scheduled_date
+      - in: query
+        name: search
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description: Case-insensitive containment on the title.
+      - in: query
+        name: status
+        schema:
+          enum:
+          - draft
+          - planned
+          - completed
+          - cancelled
+          - missed
+          type: string
+          minLength: 1
+        description: |-
+          * `draft` - draft
+          * `planned` - planned
+          * `completed` - completed
+          * `cancelled` - cancelled
+          * `missed` - missed
+      - in: query
+        name: time_state
+        schema:
+          enum:
+          - past
+          - upcoming
+          - overdue
+          type: string
+          minLength: 1
+        description: |-
+          A derived collection: past, upcoming or overdue. Distinct from the time_state response field, whose values are upcoming, overdue or null.
+
+          * `past` - past
+          * `upcoming` - upcoming
+          * `overdue` - overdue
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Examination'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+    post:
+      operationId: examinations_create
+      description: |-
+        `GET` / `POST /api/v1/examinations/` — only the caller's records; a JSON array.
+
+        The list accepts `search`, `status`, `category`, `ordering` and `time_state`; all
+        supplied filters apply together (ADS-FR-028-01 … ADS-FR-032-01). `time_state`
+        selects the past, upcoming or overdue collection through examinations/time_state.py.
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExaminationRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Examination'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+  /api/v1/examinations/{id}/:
+    get:
+      operationId: examinations_retrieve
+      description: |-
+        `GET` / `PATCH` / `DELETE /api/v1/examinations/{id}/`.
+
+        The record is looked up only among the caller's own examinations, so a missing
+        record and another user's record get the same 404 (ADS-SEC-006-01). `PATCH` is
+        partial, but the complete resulting record is validated (ADS-FR-022-01); `PUT` is
+        not offered (api_contract.md §12). Deleting cascades to the reminder and the
+        recurrence rule and nulls `source_occurrence` on generated occurrences
+        (ADS-FR-023-01, ADS-FR-023-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Examination'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Not found (api_contract.md §3.3): the record does not exist
+            or belongs to another user.'
+    patch:
+      operationId: examinations_partial_update
+      description: |-
+        `GET` / `PATCH` / `DELETE /api/v1/examinations/{id}/`.
+
+        The record is looked up only among the caller's own examinations, so a missing
+        record and another user's record get the same 404 (ADS-SEC-006-01). `PATCH` is
+        partial, but the complete resulting record is validated (ADS-FR-022-01); `PUT` is
+        not offered (api_contract.md §12). Deleting cascades to the reminder and the
+        recurrence rule and nulls `source_occurrence` on generated occurrences
+        (ADS-FR-023-01, ADS-FR-023-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedExaminationRequest'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Examination'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Not found (api_contract.md §3.3): the record does not exist
+            or belongs to another user.'
+    delete:
+      operationId: examinations_destroy
+      description: |-
+        `GET` / `PATCH` / `DELETE /api/v1/examinations/{id}/`.
+
+        The record is looked up only among the caller's own examinations, so a missing
+        record and another user's record get the same 404 (ADS-SEC-006-01). `PATCH` is
+        partial, but the complete resulting record is validated (ADS-FR-022-01); `PUT` is
+        not offered (api_contract.md §12). Deleting cascades to the reminder and the
+        recurrence rule and nulls `source_occurrence` on generated occurrences
+        (ADS-FR-023-01, ADS-FR-023-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: No response body
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Not found (api_contract.md §3.3): the record does not exist
+            or belongs to another user.'
+  /api/v1/examinations/{id}/next-occurrence/:
+    post:
+      operationId: examinations_next_occurrence_create
+      description: |-
+        `POST /api/v1/examinations/{id}/next-occurrence/` (api_contract.md §16).
+
+        `201 Created` with the new planned occurrence, or `200 OK` with the occurrence
+        already generated for the same source and calculated date. A draft source, or one
+        without a scheduled date or recurrence rule, is a 400.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Examination'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Examination'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Not found (api_contract.md §3.3): the record does not exist
+            or belongs to another user.'
+  /api/v1/examinations/{id}/recurrence/:
+    get:
+      operationId: examinations_recurrence_retrieve
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/recurrence/` (api_contract.md §15).
+
+        Resolved inside the caller's own examinations (a missing examination or rule is the
+        same 404). Creation and updates need a planned examination with a scheduled date
+        (ADS-FR-018-01, ADS-FR-039-01); a retained rule stays readable in any status and
+        is never changed by a status change (ADS-FR-039-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurrenceRule'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Not found (api_contract.md §3.3): the record does not exist
+            or belongs to another user.'
+    post:
+      operationId: examinations_recurrence_create
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/recurrence/` (api_contract.md §15).
+
+        Resolved inside the caller's own examinations (a missing examination or rule is the
+        same 404). Creation and updates need a planned examination with a scheduled date
+        (ADS-FR-018-01, ADS-FR-039-01); a retained rule stays readable in any status and
+        is never changed by a status change (ADS-FR-039-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurrenceRuleRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurrenceRule'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Not found (api_contract.md §3.3): the record does not exist
+            or belongs to another user.'
+    patch:
+      operationId: examinations_recurrence_partial_update
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/recurrence/` (api_contract.md §15).
+
+        Resolved inside the caller's own examinations (a missing examination or rule is the
+        same 404). Creation and updates need a planned examination with a scheduled date
+        (ADS-FR-018-01, ADS-FR-039-01); a retained rule stays readable in any status and
+        is never changed by a status change (ADS-FR-039-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRecurrenceRuleRequest'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurrenceRule'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Not found (api_contract.md §3.3): the record does not exist
+            or belongs to another user.'
+  /api/v1/examinations/{id}/reminder/:
+    get:
+      operationId: examinations_reminder_retrieve
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/reminder/` (api_contract.md §14).
+
+        The examination is resolved only among the caller's own, so another user's
+        examination and a missing one — or a missing reminder — are the same 404.
+        Creation, offset changes and reactivation need a planned examination; disabling
+        does not (ADS-FR-035-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Not found (api_contract.md §3.3): the record does not exist
+            or belongs to another user.'
+    post:
+      operationId: examinations_reminder_create
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/reminder/` (api_contract.md §14).
+
+        The examination is resolved only among the caller's own, so another user's
+        examination and a missing one — or a missing reminder — are the same 404.
+        Creation, offset changes and reactivation need a planned examination; disabling
+        does not (ADS-FR-035-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderCreateRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Not found (api_contract.md §3.3): the record does not exist
+            or belongs to another user.'
+    patch:
+      operationId: examinations_reminder_partial_update
+      description: |-
+        `GET` / `POST` / `PATCH /api/v1/examinations/{id}/reminder/` (api_contract.md §14).
+
+        The examination is resolved only among the caller's own, so another user's
+        examination and a missing one — or a missing reminder — are the same 404.
+        Creation, offset changes and reactivation need a planned examination; disabling
+        does not (ADS-FR-035-02).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - examinations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReminderUpdateRequest'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: 'Not found (api_contract.md §3.3): the record does not exist
+            or belongs to another user.'
+  /api/v1/health/:
+    get:
+      operationId: health_retrieve
+      description: '`GET /api/v1/health/` — ADS-TECH-004-01. Exposes no configuration
+        or secret value.'
+      tags:
+      - health
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          description: ''
+  /api/v1/reminders/:
+    get:
+      operationId: reminders_list
+      description: |-
+        `GET /api/v1/reminders/?state=due` (ADS-FR-037-01, domain_model.md §6.6).
+
+        Active reminders due on or before the user's current local date, on the user's own
+        examinations only. The backend is the single definition of "due".
+      parameters:
+      - in: query
+        name: state
+        schema:
+          enum:
+          - due
+          type: string
+          minLength: 1
+        description: '* `due` - due'
+        required: true
+      tags:
+      - reminders
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reminder'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          description: 'Validation failure (api_contract.md §3.4): each field name,
+            or `non_field_errors`, maps to its messages.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: Authentication failure (api_contract.md §3.1).
+components:
+  schemas:
+    AccessToken:
+      type: object
+      properties:
+        access_token:
+          type: string
+      required:
+      - access_token
+    Account:
+      type: object
+      description: 'The account representation: `id`, `email`, `timezone` (api_contract.md
+        §6.1).'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        timezone:
+          type: string
+          readOnly: true
+      required:
+      - email
+      - id
+      - timezone
+    CalendarEntry:
+      type: object
+      properties:
+        calendar_date:
+          type: string
+          format: date
+        state:
+          $ref: '#/components/schemas/StateEnum'
+        examination:
+          $ref: '#/components/schemas/CalendarExamination'
+      required:
+      - calendar_date
+      - examination
+      - state
+    CalendarExamination:
+      type: object
+      description: The examination subset carried by a calendar entry (api_contract.md
+        §17).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        category:
+          allOf:
+          - $ref: '#/components/schemas/Category'
+          readOnly: true
+          nullable: true
+        scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        scheduled_time:
+          type: string
+          format: time
+          nullable: true
+        completed_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        time_state:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TimeStateEnum'
+          - $ref: '#/components/schemas/NullEnum'
+      required:
+      - category
+      - id
+      - status
+      - time_state
+      - title
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - id
+      - name
+      - slug
+    CategoryCount:
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/Category'
+        count:
+          type: integer
+      required:
+      - category
+      - count
+    CsrfToken:
+      type: object
+      properties:
+        csrf_token:
+          type: string
+      required:
+      - csrf_token
+    Dashboard:
+      type: object
+      description: '`GET /api/v1/dashboard/` (api_contract.md §18).'
+      properties:
+        upcoming:
+          type: array
+          items:
+            $ref: '#/components/schemas/Examination'
+        overdue:
+          type: array
+          items:
+            $ref: '#/components/schemas/Examination'
+        recently_completed:
+          type: array
+          items:
+            $ref: '#/components/schemas/Examination'
+        status_counts:
+          $ref: '#/components/schemas/StatusCounts'
+        category_counts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryCount'
+        uncategorized_count:
+          type: integer
+        overdue_count:
+          type: integer
+      required:
+      - category_counts
+      - overdue
+      - overdue_count
+      - recently_completed
+      - status_counts
+      - uncategorized_count
+      - upcoming
+    ErrorDetail:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    Examination:
+      type: object
+      description: |-
+        The examination representation and its create/update input (api_contract.md §8).
+
+        Ownership, the source occurrence, the derived time state and the audit instants
+        are never accepted from a client (§10); a request that sends one is rejected.
+        Every create and update validates the complete resulting record (§8.2).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user_id:
+          type: integer
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/Category'
+          readOnly: true
+          nullable: true
+        title:
+          type: string
+          maxLength: 200
+        medical_specialty:
+          type: string
+          nullable: true
+          maxLength: 200
+        scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        scheduled_time:
+          type: string
+          format: time
+          nullable: true
+        completed_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        location:
+          type: string
+          nullable: true
+          maxLength: 255
+        notes:
+          type: string
+          nullable: true
+        source_occurrence:
+          type: integer
+          readOnly: true
+          nullable: true
+        time_state:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TimeStateEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - created_at
+      - id
+      - source_occurrence
+      - status
+      - time_state
+      - title
+      - updated_at
+      - user_id
+    ExaminationRequest:
+      type: object
+      description: |-
+        The examination representation and its create/update input (api_contract.md §8).
+
+        Ownership, the source occurrence, the derived time state and the audit instants
+        are never accepted from a client (§10); a request that sends one is rejected.
+        Every create and update validates the complete resulting record (§8.2).
+      properties:
+        category_id:
+          type: integer
+          writeOnly: true
+          nullable: true
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        medical_specialty:
+          type: string
+          nullable: true
+          maxLength: 200
+        scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        scheduled_time:
+          type: string
+          format: time
+          nullable: true
+        completed_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        location:
+          type: string
+          nullable: true
+          maxLength: 255
+        notes:
+          type: string
+          nullable: true
+      required:
+      - status
+      - title
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+      - status
+    IntervalEnum:
+      enum:
+      - monthly
+      - six_months
+      - yearly
+      type: string
+      description: |-
+        * `monthly` - monthly
+        * `six_months` - six_months
+        * `yearly` - yearly
+    LoginRequest:
+      type: object
+      description: '`POST /api/v1/auth/login/` input. Any credential mismatch is a
+        generic 401.'
+      properties:
+        email:
+          type: string
+          minLength: 1
+          maxLength: 254
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+      required:
+      - email
+      - password
+    NullEnum:
+      enum:
+      - null
+    PasswordChangeRequest:
+      type: object
+      description: |-
+        `POST /api/v1/account/password/` (ADS-FR-048-01).
+
+        The current password must match the stored hash and the new one must pass the
+        registration policy; if either check fails nothing is saved.
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+          maxLength: 128
+      required:
+      - current_password
+      - new_password
+    PatchedAccountUpdateRequest:
+      type: object
+      description: '`PATCH /api/v1/account/`: only `timezone` is writable (api_contract.md
+        §6.2).'
+      properties:
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+    PatchedExaminationRequest:
+      type: object
+      description: |-
+        The examination representation and its create/update input (api_contract.md §8).
+
+        Ownership, the source occurrence, the derived time state and the audit instants
+        are never accepted from a client (§10); a request that sends one is rejected.
+        Every create and update validates the complete resulting record (§8.2).
+      properties:
+        category_id:
+          type: integer
+          writeOnly: true
+          nullable: true
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        medical_specialty:
+          type: string
+          nullable: true
+          maxLength: 200
+        scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        scheduled_time:
+          type: string
+          format: time
+          nullable: true
+        completed_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        location:
+          type: string
+          nullable: true
+          maxLength: 255
+        notes:
+          type: string
+          nullable: true
+    PatchedRecurrenceRuleRequest:
+      type: object
+      description: |-
+        The recurrence representation (api_contract.md §15).
+
+        `next_due_date` is derived from the examination's current scheduled date with
+        calendar-month arithmetic, and is null while there is none.
+      properties:
+        interval:
+          $ref: '#/components/schemas/IntervalEnum'
+    PatchedReminderUpdateRequest:
+      type: object
+      description: '`PATCH .../reminder/`: change the offset, disable, or re-enable.'
+      properties:
+        offset_days:
+          type: integer
+          minimum: 1
+        is_active:
+          type: boolean
+    RecurrenceRule:
+      type: object
+      description: |-
+        The recurrence representation (api_contract.md §15).
+
+        `next_due_date` is derived from the examination's current scheduled date with
+        calendar-month arithmetic, and is null while there is none.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        examination:
+          type: integer
+          readOnly: true
+        interval:
+          $ref: '#/components/schemas/IntervalEnum'
+        next_due_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - examination
+      - id
+      - interval
+      - next_due_date
+      - updated_at
+    RecurrenceRuleRequest:
+      type: object
+      description: |-
+        The recurrence representation (api_contract.md §15).
+
+        `next_due_date` is derived from the examination's current scheduled date with
+        calendar-month arithmetic, and is null while there is none.
+      properties:
+        interval:
+          $ref: '#/components/schemas/IntervalEnum'
+      required:
+      - interval
+    RegistrationRequest:
+      type: object
+      description: '`POST /api/v1/auth/register/` (ADS-FR-001-01 … ADS-FR-004-01,
+        ADS-SEC-003-01).'
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+          maxLength: 128
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+      required:
+      - email
+      - password
+      - timezone
+    Reminder:
+      type: object
+      description: The reminder representation (api_contract.md §14).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        examination:
+          type: integer
+          readOnly: true
+        offset_days:
+          type: integer
+          minimum: 1
+          description: Whole days before the scheduled date; greater than zero.
+        due_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - due_date
+      - examination
+      - id
+      - offset_days
+      - updated_at
+    ReminderCreateRequest:
+      type: object
+      description: '`POST .../reminder/`: an offset only; a new reminder is active.'
+      properties:
+        offset_days:
+          type: integer
+          minimum: 1
+          description: Whole days before the scheduled date; greater than zero.
+      required:
+      - offset_days
+    StateEnum:
+      enum:
+      - planned
+      - completed
+      - cancelled
+      - missed
+      - overdue
+      type: string
+      description: |-
+        * `planned` - planned
+        * `completed` - completed
+        * `cancelled` - cancelled
+        * `missed` - missed
+        * `overdue` - overdue
+    StatusCounts:
+      type: object
+      properties:
+        draft:
+          type: integer
+        planned:
+          type: integer
+        completed:
+          type: integer
+        cancelled:
+          type: integer
+        missed:
+          type: integer
+      required:
+      - cancelled
+      - completed
+      - draft
+      - missed
+      - planned
+    StatusEnum:
+      enum:
+      - draft
+      - planned
+      - completed
+      - cancelled
+      - missed
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `planned` - Planned
+        * `completed` - Completed
+        * `cancelled` - Cancelled
+        * `missed` - Missed
+    TimeStateEnum:
+      enum:
+      - upcoming
+      - overdue
+      type: string
+      description: |-
+        * `upcoming` - upcoming
+        * `overdue` - overdue
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

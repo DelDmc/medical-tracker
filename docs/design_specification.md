@@ -836,6 +836,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-UX-001-02 — Approved responsive review viewport widths
+**Status:** Accepted  
+**Requirement reference:** UX-001  
+**Decision:** It is decided that the approved viewport widths are 320 CSS pixels for phone, 768 CSS pixels for tablet, and 1280 CSS pixels for desktop. The phone width is the narrowest supported viewport rather than a representative one; no narrower viewport is supported.  
+**Rationale:** Reviewing at 320 CSS pixels exposes horizontal overflow that a representative phone width conceals, and a layout correct at the narrowest supported width is correct above it. Naming the three widths gives the review a fixed, repeatable basis instead of a reviewer-chosen one, and matches the three recorded review scenarios one to one.  
+**Verification impact:** Each documented review is performed at one of the three named widths and records the width it used, so review artifacts are directly comparable between reviews.
+
+---
+
 #### ADS-UX-002-01 — Email field-level error presentation
 **Status:** Accepted  
 **Requirement reference:** UX-002  
@@ -1009,6 +1018,15 @@ Each design decision contains:
 
 ---
 
+#### ADS-SEC-005-09 — Partitioned authentication cookies
+**Status:** Accepted  
+**Requirement reference:** SEC-005  
+**Decision:** It is decided that in production the Django CSRF cookie and the `refresh_token` cookie will also carry the `Partitioned` attribute, on creation, replacement, and clearing. Local HTTP development will not use `Partitioned`.  
+**Rationale:** The separately deployed frontend and backend are different sites, so the browser treats both cookies as third-party cookies. Browsers that block third-party cookies, by default or by user setting, refuse unpartitioned ones, which makes every CSRF-protected request fail; they still store and send a partitioned cookie, keyed to the frontend's site. A partitioned cookie must be `Secure`, which local HTTP development is not, and a same-site local setup does not need one.  
+**Verification impact:** Authentication integration tests will verify that the production CSRF and refresh-token cookies, including the clearing cookie, carry `Partitioned`, and that the local-development cookies do not.
+
+---
+
 #### ADS-SEC-006-01 — Uniform not-found behavior
 **Status:** Accepted  
 **Requirement reference:** SEC-006  
@@ -1147,11 +1165,11 @@ When a design decision changes:
 ## 10. Traceability Summary
 
 - Requirement references represented: **73**
-- Design decisions recorded: **119**
-- Accepted design decisions: **119**
+- Design decisions recorded: **121**
+- Accepted design decisions: **121**
 - Draft design decisions: **0**
 - Rejected design decisions: **0**
 - Obsolete design decisions: **0**
-- Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-042, FR-044, SEC-005, SEC-006**
+- Requirements with multiple design decisions: **FR-005, FR-006, FR-007, FR-008, FR-014, FR-023, FR-033, FR-035, FR-039, FR-040, FR-041, FR-042, FR-044, UX-001, SEC-005, SEC-006**
 - Design decisions linked to more than one requirement: **0**
 - Requirement statements duplicated from `requirements_specification.md`: **0**

@@ -329,6 +329,7 @@ The MVP is complete when:
 
 - users can register, log in, refresh a session, and log out;
 - authenticated users can view and update their account timezone;
+- authenticated users can change their password;
 - authenticated users can create, view, edit, and permanently delete examination records;
 - users can save drafts and planned records with the required and optional fields defined by the requirements;
 - users can manage the five supported examination statuses;

@@ -1,0 +1,111 @@
+.entry {
+  display: grid;
+  grid-template-areas:
+    'icon label'
+    'title title';
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.1rem 0.4rem;
+  min-height: var(--touch-target);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  color: var(--color-text);
+  text-decoration: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left-width: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.entry:hover {
+  background: var(--color-surface-muted);
+}
+
+.icon {
+  grid-area: icon;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.label {
+  grid-area: label;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.title {
+  grid-area: title;
+  min-width: 0;
+  hyphens: auto;
+}
+
+.planned {
+  border-left-color: var(--color-info);
+}
+
+.planned .icon,
+.planned .label {
+  color: var(--color-info);
+}
+
+.completed {
+  border-left-color: var(--color-success);
+}
+
+.completed .icon,
+.completed .label {
+  color: var(--color-success);
+}
+
+.cancelled {
+  border-left-color: var(--color-neutral);
+  border-left-style: dotted;
+}
+
+.cancelled .title {
+  text-decoration: line-through;
+}
+
+.cancelled .icon,
+.cancelled .label {
+  color: var(--color-neutral);
+}
+
+.missed {
+  border-left-color: var(--color-warning);
+  border-left-style: dashed;
+}
+
+.missed .icon,
+.missed .label {
+  color: var(--color-warning);
+}
+
+.overdue {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger);
+  border-left-width: 6px;
+}
+
+.overdue .icon,
+.overdue .label {
+  color: var(--color-danger);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}

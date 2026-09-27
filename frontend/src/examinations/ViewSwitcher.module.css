@@ -1,0 +1,30 @@
+.views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--color-surface-muted);
+  border-radius: var(--radius);
+}
+
+.view {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-3);
+  font-weight: 600;
+  color: var(--color-text);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.view:hover {
+  background: var(--color-surface);
+}
+
+.view[aria-current='page'] {
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+}
