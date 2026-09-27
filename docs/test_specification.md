@@ -2327,6 +2327,24 @@ When a test case is implemented in code, the test's name or docstring must inclu
 
 ---
 
+#### TC-SEC-005-16 — The production CSRF and refresh-token cookies are partitioned
+**Requirement reference:** SEC-005  
+**Layer:** API integration test  
+**Given** production configuration  
+**When** the CSRF bootstrap issues the CSRF cookie, a login issues the `refresh_token` cookie, and a logout clears it  
+**Then** each of those `Set-Cookie` headers carries `Partitioned` together with `Secure` and `SameSite=None`.
+
+---
+
+#### TC-SEC-005-17 — The local-development CSRF and refresh-token cookies are not partitioned
+**Requirement reference:** SEC-005  
+**Layer:** API integration test  
+**Given** local-development configuration  
+**When** the CSRF bootstrap issues the CSRF cookie and a login issues the `refresh_token` cookie  
+**Then** neither `Set-Cookie` header carries `Partitioned`.
+
+---
+
 #### TC-SEC-006-01 — A missing examination and another user's examination return identical not-found responses
 **Requirement reference:** SEC-006  
 **Layer:** API integration test  
@@ -2552,7 +2570,7 @@ When a test case changes:
 ## 11. Traceability Summary
 
 - Requirement references represented: **73**
-- Test cases recorded: **274**
+- Test cases recorded: **276**
 - Requirements verified by more than one test case: **FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-023, FR-024, FR-029, FR-030, FR-031, FR-032, FR-033, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042, FR-043, FR-044, FR-046, FR-048, UX-001, UX-002, UX-003, UX-004, UX-005, UX-007, UX-008, SEC-001, SEC-002, SEC-003, SEC-005, SEC-006, SEC-007, PRV-003, TECH-002, TECH-003, TECH-006**
 - Requirements verified by exactly one test case: all remaining requirement identifiers.
 - Test cases linked to more than one requirement: **0**

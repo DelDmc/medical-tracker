@@ -48,15 +48,20 @@ Maintenance rules:
 **Disposition:** Deferred
 **Finding:** A reminder offset must be a positive whole number, with no maximum. A very large offset produces a `due_date` far in the past, which is immediately due and stays due. Trigger: revisit when the due-reminder view is implemented.
 
+#### RF-28 — The client IP address behind the deployment proxy is undefined
+**Documents:** `design_specification.md (1039-1044)`, `design_specification.md (1124-1129)`, `backend/accounts/throttles.py`
+**Disposition:** Needs decision
+**Finding:** `ADS-SEC-007-01` limits register, login and refresh "per client IP address", but no decision says how that address is determined behind the platform's reverse proxy, and `ADS-TECH-006-01` lets the backend trust only the proxy's HTTPS header. Behind Render every request reaches the backend from the proxy, so `REMOTE_ADDR` is the proxy's address and the client's address arrives only in `X-Forwarded-For`. With Django REST Framework's default (`NUM_PROXIES` unset), which the implementation uses, the throttle keys on the whole `X-Forwarded-For` value. So unless the platform discards a client-supplied `X-Forwarded-For`, a client can change its throttle identity at will and avoid the limits. Keying on `REMOTE_ADDR` alone would make each limit one budget shared by every user. Keying on the platform-appended entry (`NUM_PROXIES`) trusts a second proxy header, which `ADS-TECH-006-01` currently excludes. Raised at Task 19.1, before the first production deployment.
+
 ## 4. Repository Artifacts Outside `docs/`
 
 No open findings.
 
 ## 5. Summary
 
-- Findings open: **3**
+- Findings open: **4**
 - Fix now: **0**
-- Needs decision: **0**
+- Needs decision: **1** — RF-28
 - In progress: **0**
 - Deferred: **3** — RF-15, RF-16, RF-19
 - Accepted: **0**

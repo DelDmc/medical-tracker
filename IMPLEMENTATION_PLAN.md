@@ -49,7 +49,7 @@ Every item below was open when this plan was written. `requirements_specificatio
 | D9 | **Technology decisions are recorded in a new non-normative `docs/technology_decisions.md`,** sitting outside the source-of-truth hierarchy exactly as `review_findings.md` does. The task that introduces a technology writes its entry. | *Confirmed by owner* |
 | D10 | **Deployment is in scope now** — Slice 19 closes `TECH-006` and the deployment-layer `SEC-005` cases. | *Confirmed by owner* |
 | D11 | **Accepted-status gating applies.** A task skips any requirement, decision, or test case not marked `Accepted`. All 73 requirements, 120 decisions and 274 test cases are `Accepted` today, so nothing is skipped; an item that later moves to `Draft` blocks its task and is escalated. | *Confirmed by owner* |
-| D12 | **Deployment platform:** backend web service plus managed PostgreSQL on **Render**; frontend static site on **Vercel**. Frontend and backend stay on separate origins — the frontend must not proxy `/api/` through its own origin, which would contradict the production `SameSite=None` cookies `ADS-SEC-005-04` and `ADS-SEC-005-08` require. Render terminates HTTPS and sets `X-Forwarded-Proto`, the single reverse-proxy header `ADS-TECH-006-01` permits the backend to trust. Use a paid Render instance type and a paid PostgreSQL plan: free web services sleep and free databases expire, which makes `TC-TECH-006-01/02` and the six deployment-layer `TC-SEC-005-*` cases cold-start flaky. | *Confirmed by owner* |
+| D12 | **Deployment platform:** backend web service on **Render**, PostgreSQL on **Neon**; frontend static site on **Vercel**. Frontend and backend stay on separate origins — the frontend must not proxy `/api/` through its own origin, which would contradict the production `SameSite=None` cookies `ADS-SEC-005-04` and `ADS-SEC-005-08` require. Render terminates HTTPS and sets `X-Forwarded-Proto`, the single reverse-proxy header `ADS-TECH-006-01` permits the backend to trust. Originally a paid Render instance type and a paid Render PostgreSQL plan. **Changed by the owner on 2026-09-27** to a free Render web service with PostgreSQL on Neon's free plan, which does not expire: the free web service spins down after 15 idle minutes, which the deployment tests' 120-second client timeout absorbs, and it cannot run a pre-deploy command, so its start command applies migrations. | *Confirmed by owner* |
 
 ### 2.1 Assumptions (owner did not specify; labelled, not hidden)
 
@@ -128,9 +128,9 @@ A slice delivers **one user-visible capability end to end** — migration → mo
 | 16 | Dashboard | 10, 15 | FR-044, FR-045, FR-046, FR-047, SEC-001 | — | 15 |
 | 17 | Cross-cutting UX review | 16 | UX-001, UX-008 | — | 6 |
 | 18 | Repository documentation + OpenAPI contract | 17 | TECH-001, TECH-007 | — | 2 |
-| 19 | Deployment | 18 | SEC-005, TECH-006 | — | 8 |
+| 19 | Deployment | 18 | SEC-005, TECH-006 | — | 10 |
 
-**Total: 20 slices, 274 test cases.**
+**Total: 20 slices, 276 test cases.**
 
 ### 4.1 Deviations from the proposed sequence, and why
 
@@ -1903,7 +1903,7 @@ These six cases are `Documented review` — manual, recorded reviews, not automa
 
 **Capability delivered:** the application is reachable over HTTPS at public URLs, the backend accepts browser requests only from the configured frontend origin, and the main integration flow is verified against the deployment.
 
-**Platform: Render** (backend web service plus managed PostgreSQL) **and Vercel** (frontend static site) — D12. Several steps here are owner-run: `curl`, `wget` and `docker` are denied by `.claude/settings.local.json` (assumption A2), so anything that reaches the deployment over the network is the owner's to run; confirm who runs the deploy commands at kickoff.
+**Platform: Render** (backend web service), **Neon** (PostgreSQL) **and Vercel** (frontend static site) — D12. Several steps here are owner-run: `curl`, `wget` and `docker` are denied by `.claude/settings.local.json` (assumption A2), so anything that reaches the deployment over the network is the owner's to run; confirm who runs the deploy commands at kickoff.
 
 **Definition of Done:** both halves deployed; the 8 cases below pass against the deployment; the full suite is green.
 
@@ -1935,13 +1935,13 @@ These six cases are `Documented review` — manual, recorded reviews, not automa
 - `README.md` (the deployment procedure you are about to execute and correct)
 - `docs/product_definition.md` §11, second-to-last bullet (deployed **and** the main integration flow verified)
 **Do:**
-1. Confirm with the owner who runs the deploy commands (assumption A2). The hosts are settled by D12: Render for the backend and its managed PostgreSQL, Vercel for the frontend.
-2. Provision Render PostgreSQL on a paid plan and run the backend on a paid instance type (D12 — a free instance sleeps and a free database expires, which makes the deployment cases below flaky). Set every required environment variable as a Render environment variable, and the frontend's as Vercel environment variables. Never commit a real value; `.env.example` stays placeholder-only per `ADS-SEC-004-01`.
+1. Confirm with the owner who runs the deploy commands (assumption A2). The hosts are settled by D12: Render for the backend, Neon for PostgreSQL, Vercel for the frontend.
+2. Provision PostgreSQL on Neon's free plan and run the backend on a free Render web service whose start command applies migrations (D12, as changed on 2026-09-27). Set every required environment variable as a Render environment variable, and the frontend's as Vercel environment variables. Never commit a real value; `.env.example` stays placeholder-only per `ADS-SEC-004-01`.
 3. Deploy the backend, run migrations (including the category seed data migration from Task 7.1) against the production database, and confirm `GET /api/v1/health/` over HTTPS.
 4. Build and deploy the frontend to Vercel with `VITE_API_BASE_URL` pointed at the deployed Render backend origin. **Do not add a Vercel rewrite that proxies `/api/` through the frontend origin.** That would make the two same-origin and contradict the production `SameSite=None` cookies `ADS-SEC-005-04` and `ADS-SEC-005-08` require — separate origins are the design, not an accident of hosting.
 5. Set the backend's CORS and CSRF origin variables to the deployed Vercel production origin, with scheme, host and port. Add a preview-deployment origin only if previews are meant to reach the API, and never a wildcard — `ADS-SEC-005-01` and `ADS-SEC-005-03` forbid one in production.
 6. Update the README's deployment section with what you actually did, and re-run the Task 18.1 clean-environment check over that section.
-**Test cases to implement:** none in this task (see 19.3 and 19.4).
+**Test cases to implement:** `TC-SEC-005-16/17` (added on 2026-09-27 with `ADS-SEC-005-09`, after the first deployment showed that browsers blocking third-party cookies refuse the unpartitioned cross-site cookies); the deployment cases are in 19.3 and 19.4.
 **Acceptance criteria:** both URLs are HTTPS and reachable; the eight seeded categories exist in production; a real registration → login → create examination → dashboard flow completes against the deployment.
 **Verify with:** owner-run: request the public Render health URL over HTTPS, then walk the flow in a browser from the Vercel origin.
 **Out of scope for this task:** the deployment test cases themselves (19.3, 19.4).
@@ -1979,7 +1979,7 @@ These six cases are `Documented review` — manual, recorded reviews, not automa
 **Out of scope for this task:** anything in `product_definition.md` §12 (future features).
 **On finishing:** commit. **Slice 19 complete:** squash-merge into `project/mvp`, `DEVELOPMENT_LOG.md` entry, set Phase 8 to `Completed`. `SEC-005` and `TECH-006` close here.
 
-**MVP complete.** All 73 requirements are closed and all 274 test cases pass. Merge `project/mvp` into `main` — the first implementation code `main` receives, per D1 and `CLAUDE.md`'s Branching section — then delete the project branch. A later project cuts a fresh one from `main`.
+**MVP complete.** All 73 requirements are closed and all 276 test cases pass. Merge `project/mvp` into `main` — the first implementation code `main` receives, per D1 and `CLAUDE.md`'s Branching section — then delete the project branch. A later project cuts a fresh one from `main`.
 
 ---
 
@@ -2071,7 +2071,7 @@ Requirement counts by category: **48 `FR-`, 8 `UX-`, 7 `SEC-`, 3 `PRV-`, 7 `TECH
 
 ## 7. Test-Case Coverage
 
-All **274** `TC-*` identifiers, grouped by requirement, with layer and assigning task. Layer abbreviations: `API-I` API integration, `API-V` API validation, `API-A` API authorization, `BE-M` backend model, `FE-I` frontend integration, `FE-C` frontend component, `CFG` configuration, `DEP-I` deployment integration, `DEP-S` deployment smoke, `SCAN` repository secret scan, `REV-DM` data-model review, `REV-DOC` documented review, `CONTRACT` contract test.
+All **276** `TC-*` identifiers, grouped by requirement, with layer and assigning task. Layer abbreviations: `API-I` API integration, `API-V` API validation, `API-A` API authorization, `BE-M` backend model, `FE-I` frontend integration, `FE-C` frontend component, `CFG` configuration, `DEP-I` deployment integration, `DEP-S` deployment smoke, `SCAN` repository secret scan, `REV-DM` data-model review, `REV-DOC` documented review, `CONTRACT` contract test.
 
 The eight manual cases (`REV-DOC` ×7, `REV-DM` ×1) are assigned to tasks that produce a recorded artifact — Tasks 7.9, 17.1, 17.2, 18.1 — not dropped.
 
@@ -2163,11 +2163,12 @@ The eight manual cases (`REV-DOC` ×7, `REV-DM` ×1) are assigned to tasks that 
 | **SEC-003** (4) | `TC-SEC-003-`01 | BE-M | 1.3 |
 |  | `TC-SEC-003-`02–04 | API-V | 1.3 |
 | **SEC-004** (1) | `TC-SEC-004-`01 | SCAN | 0.5 |
-| **SEC-005** (15) | `TC-SEC-005-`03 | CFG | 0.4 |
+| **SEC-005** (17) | `TC-SEC-005-`03 | CFG | 0.4 |
 |  | `TC-SEC-005-`08–10,12–13 | API-I | 2.4 |
 |  | `TC-SEC-005-`14–15 | CFG | 2.4 |
 |  | `TC-SEC-005-`11 | FE-I | 4.4 |
 |  | `TC-SEC-005-`01–02,04–07 | DEP-I | 19.3 |
+|  | `TC-SEC-005-`16–17 | API-I | 19.2 |
 | **SEC-006** (2) | `TC-SEC-006-`02 | API-I | 2.4 |
 |  | `TC-SEC-006-`01 | API-I | 8.2 |
 | **SEC-007** (4) | `TC-SEC-007-`03 | API-I | 1.3 |
@@ -2192,7 +2193,7 @@ The eight manual cases (`REV-DOC` ×7, `REV-DM` ×1) are assigned to tasks that 
 
 | Layer | Count |
 |---|---:|
-| API integration test | 135 |
+| API integration test | 137 |
 | API validation test | 59 |
 | Frontend integration test | 39 |
 | Frontend component test | 7 |
@@ -2205,7 +2206,7 @@ The eight manual cases (`REV-DOC` ×7, `REV-DM` ×1) are assigned to tasks that 
 | Repository secret scan | 1 |
 | Data-model review | 1 |
 | Contract test | 1 |
-| **Total** | **274** |
+| **Total** | **276** |
 
 ### 7.2 Reconciliation with the source documents
 

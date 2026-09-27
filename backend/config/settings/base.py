@@ -26,6 +26,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    # Above CsrfViewMiddleware, so it sees the CSRF cookie that middleware sets.
+    "accounts.middleware.PartitionedCookieMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
 ]
 

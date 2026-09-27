@@ -15,6 +15,7 @@ from tests.conftest import DEFAULT_PASSWORD
 from tests.helpers import (
     CSRF_URL,
     LOGIN_URL,
+    LOGOUT_URL,
     bootstrap_csrf,
     decode_unverified,
     login,
@@ -240,6 +241,49 @@ def test_tc_sec_005_15_csrf_cookie_uses_its_documented_local_development_attribu
     assert cookie["path"] == "/api/v1/"
     assert not cookie["secure"]
     assert cookie["samesite"] == "Lax"
+
+
+def set_cookie_attributes(morsel):
+    """The attribute names of the `Set-Cookie` line the response sends for `morsel`."""
+    return {part.split("=")[0].strip().lower() for part in morsel.output(header="").split(";")[1:]}
+
+
+def test_tc_sec_005_16_production_auth_cookies_are_partitioned(api_client, user, settings):
+    """TC-SEC-005-16 — The production CSRF and refresh-token cookies are partitioned."""
+    use_cookie_settings_of(settings, PRODUCTION)
+
+    csrf = api_client.get(CSRF_URL)
+    response = login(api_client, user.email, csrf_token=csrf.json()["csrf_token"])
+    cleared = api_client.post(
+        LOGOUT_URL, HTTP_X_CSRFTOKEN=bootstrap_csrf(api_client), format="json"
+    )
+
+    assert response.status_code == 200
+    assert cleared.status_code == 204
+    for morsel in (
+        csrf.cookies[django_settings.CSRF_COOKIE_NAME],
+        response.cookies["refresh_token"],
+        cleared.cookies["refresh_token"],
+    ):
+        assert {"partitioned", "secure"} <= set_cookie_attributes(morsel)
+        assert morsel["samesite"] == "None"
+
+
+def test_tc_sec_005_17_local_development_auth_cookies_are_not_partitioned(
+    api_client, user, settings
+):
+    """TC-SEC-005-17 — The local-development CSRF and refresh-token cookies are not partitioned."""
+    use_cookie_settings_of(settings, DEVELOPMENT, {})
+
+    csrf = api_client.get(CSRF_URL)
+    response = login(api_client, user.email, csrf_token=csrf.json()["csrf_token"])
+
+    assert response.status_code == 200
+    for morsel in (
+        csrf.cookies[django_settings.CSRF_COOKIE_NAME],
+        response.cookies["refresh_token"],
+    ):
+        assert "partitioned" not in set_cookie_attributes(morsel)
 
 
 def test_tc_sec_006_02_unknown_email_and_wrong_password_return_identical_failures(api_client, user):

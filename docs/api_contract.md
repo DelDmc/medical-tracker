@@ -211,10 +211,10 @@ The response sets or renews the Django CSRF cookie. The returned `csrf_token` co
 
 CSRF cookie attributes:
 
-| Environment | `HttpOnly` | `Secure` | `SameSite` | Path |
-|---|---:|---:|---|---|
-| Production | `true` | `true` | `None` | `/api/v1/` |
-| Local HTTP development | `true` | `false` | `Lax` | `/api/v1/` |
+| Environment | `HttpOnly` | `Secure` | `SameSite` | `Partitioned` | Path |
+|---|---:|---:|---|---:|---|
+| Production | `true` | `true` | `None` | `true` | `/api/v1/` |
+| Local HTTP development | `true` | `false` | `Lax` | `false` | `/api/v1/` |
 
 ### 5.4 Log in
 
@@ -337,12 +337,12 @@ A missing or mismatched CSRF token returns the common `403 Forbidden` CSRF failu
 
 The backend creates, replaces, and clears the `refresh_token` cookie using the following attributes:
 
-| Environment | `HttpOnly` | Host-only | `Secure` | `SameSite` | Path | Expiration |
-|---|---:|---:|---:|---|---|---|
-| Production | `true` | `true` | `true` | `None` | `/api/v1/auth/` | Aligned with refresh-token expiry |
-| Local HTTP development | `true` | `true` | `false` | `Lax` | `/api/v1/auth/` | Aligned with refresh-token expiry |
+| Environment | `HttpOnly` | Host-only | `Secure` | `SameSite` | `Partitioned` | Path | Expiration |
+|---|---:|---:|---:|---|---:|---|---|
+| Production | `true` | `true` | `true` | `None` | `true` | `/api/v1/auth/` | Aligned with refresh-token expiry |
+| Local HTTP development | `true` | `true` | `false` | `Lax` | `false` | `/api/v1/auth/` | Aligned with refresh-token expiry |
 
-Cookie clearing uses the same cookie name, path, host-only scope, and applicable `Secure` and `SameSite` values as cookie creation. The refresh token is never returned in a JSON response and is not readable by frontend JavaScript.
+Cookie clearing uses the same cookie name, path, host-only scope, and applicable `Secure`, `SameSite`, and `Partitioned` values as cookie creation. The refresh token is never returned in a JSON response and is not readable by frontend JavaScript.
 
 The refresh-token session has an absolute maximum lifetime of seven days from successful login; rotation replaces the token but does not extend this lifetime (`ADS-FR-007-07`). The `access_token` returned in the login and refresh response bodies expires ten minutes after issuance (`ADS-FR-005-06`).
 

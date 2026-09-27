@@ -36,4 +36,9 @@ CSRF_COOKIE_SAMESITE = "Lax"
 REFRESH_COOKIE_SECURE = False
 REFRESH_COOKIE_SAMESITE = "Lax"
 
+# ADS-SEC-005-09: localhost frontend and backend are one site, and a partitioned
+# cookie must be Secure, so neither cookie is partitioned here.
+CSRF_COOKIE_PARTITIONED = False
+REFRESH_COOKIE_PARTITIONED = False
+
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}

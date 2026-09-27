@@ -116,6 +116,8 @@ pytest -k tc_tech_004_01    # one test case
 ruff check . && ruff format --check .
 ```
 
+The deployment tests in `tests/test_deployment.py` are skipped here; they run only against a deployed environment (see [Verify the deployment](#5-verify-the-deployment)).
+
 ### Frontend
 
 ```bash
@@ -165,13 +167,13 @@ python manage.py makemigrations
 python manage.py makemigrations --check --dry-run
 ```
 
-In production the same `migrate` command runs automatically before every deploy (see [Deployment](#deployment)), followed by `python manage.py createcachetable`, which creates the `django_cache` table the production settings use to share rate-limit counters between worker processes.
+In production the same `migrate` command runs automatically each time the web service starts (see [Deployment](#deployment)), followed by `python manage.py createcachetable`, which creates the `django_cache` table the production settings use to share rate-limit counters between worker processes.
 
 ## Production Builds
 
 ### Backend
 
-The backend has no build output: the API serves JSON only, so there are no static files to collect. A production install is the runtime dependencies alone, and the process is served by Gunicorn through `config/wsgi.py`, which selects `config.settings.production` by default. These are the commands Render runs in [Deployment](#deployment) step 2, where the platform sets `PORT` and the production environment variables; they are not part of local setup:
+The backend has no build output: the API serves JSON only, so there are no static files to collect. A production install is the runtime dependencies alone, and the process is served by Gunicorn through `config/wsgi.py`, which selects `config.settings.production` by default. These are the build and serve commands Render runs in [Deployment](#deployment) step 2, where the platform sets `PORT` and the production environment variables and the start command applies migrations before Gunicorn starts; they are not part of local setup:
 
 ```bash
 cd backend
@@ -179,7 +181,7 @@ pip install -r requirements.txt
 gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
 ```
 
-Production settings refuse to start unless `DJANGO_SECRET_KEY`, `JWT_SIGNING_KEY`, `DJANGO_ALLOWED_HOSTS`, `DATABASE_URL` and `FRONTEND_ORIGINS` are all set, and they reject a wildcard origin. Debug mode is always off, authentication cookies are `Secure` and `SameSite=None`, and plain-HTTP requests are redirected to HTTPS based on the platform's `X-Forwarded-Proto` header.
+Production settings refuse to start unless `DJANGO_SECRET_KEY`, `JWT_SIGNING_KEY`, `DJANGO_ALLOWED_HOSTS`, `DATABASE_URL` and `FRONTEND_ORIGINS` are all set, and they reject a wildcard origin. Debug mode is always off, authentication cookies are `Secure`, `SameSite=None` and `Partitioned` — the frontend and backend are different sites, and browsers that block third-party cookies accept only partitioned ones — and plain-HTTP requests are redirected to HTTPS based on the platform's `X-Forwarded-Proto` header.
 
 ### Frontend
 
@@ -195,28 +197,29 @@ VITE_API_BASE_URL=https://<backend-host> npm run build
 
 ## Deployment
 
-The backend and its PostgreSQL database run on [Render](https://render.com); the frontend is a static site on [Vercel](https://vercel.com) (decision D12 in [`docs/technology_decisions.md`](docs/technology_decisions.md)). Both platforms terminate HTTPS. The two halves stay on **separate origins**: the browser calls the Render origin directly, the production cookies are `SameSite=None; Secure` for exactly that reason, and the frontend must never proxy `/api/` through its own origin. Use paid Render plans — a free web service sleeps and a free database expires.
+The backend runs as a web service on [Render](https://render.com), its PostgreSQL database on [Neon](https://neon.tech), and the frontend is a static site on [Vercel](https://vercel.com) (decision D12 in [`docs/technology_decisions.md`](docs/technology_decisions.md)). Render and Vercel terminate HTTPS, and the backend reaches Neon over TLS. The two halves stay on **separate origins**: the browser calls the Render origin directly, the production cookies are `SameSite=None; Secure` for exactly that reason, and the frontend must never proxy `/api/` through its own origin.
+
+All three run on free plans. A free Render web service spins down after 15 minutes without traffic, and the next request waits about a minute while it starts again; a Neon free database does not expire. Moving the web service to a paid instance type removes the spin-down and needs no other change.
 
 Deploy from the branch that holds the release: `project/mvp` until the MVP is merged, `main` afterwards. Each platform deploys again automatically on every push to that branch.
 
 ### 1. Create the database
 
-In the Render dashboard choose **New → Postgres**, pick a paid instance type and a region, and create it. From its **Connections** section copy the **Internal Database URL**.
+In the Neon console create a project with the default Postgres version, in the region closest to the Render region you will pick in step 2 — **AWS Europe Central 1 (Frankfurt)** pairs with Render's **Frankfurt**. On the project dashboard choose **Connect**, switch **Connection pooling** off, and copy the connection string (`postgresql://…?sslmode=require&channel_binding=require`). Use the direct connection, not the pooled one: Django keeps its own persistent connections, and the pooler's transaction mode does not keep the session state Django relies on.
 
 ### 2. Create the backend web service
 
-Choose **New → Web Service**, connect the repository, and set:
+Choose **New → Web Service**, connect the repository (authorize Render's GitHub app for this repository only), and set:
 
 | Setting | Value |
 |---|---|
 | Language | Python 3 |
 | Branch | The release branch (see above) |
-| Region | The database's region, so the internal URL resolves |
+| Region | The region matching the database's (Frankfurt for Neon's Europe Central 1) |
 | Root Directory | `backend` |
 | Build Command | `pip install -r requirements.txt` |
-| Pre-Deploy Command | `python manage.py migrate --noinput && python manage.py createcachetable` |
-| Start Command | `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT` |
-| Instance Type | A paid type |
+| Start Command | `python manage.py migrate --noinput && python manage.py createcachetable && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT` |
+| Instance Type | Free |
 | Health Check Path (under **Advanced**) | `/api/v1/health/` |
 
 Environment variables — secrets live only here, never in the repository:
@@ -224,14 +227,16 @@ Environment variables — secrets live only here, never in the repository:
 | Variable | Value |
 |---|---|
 | `PYTHON_VERSION` | `3.12.3` |
-| `DJANGO_SETTINGS_MODULE` | `config.settings.production` — required: `manage.py` in the pre-deploy command would otherwise load the development settings |
+| `DJANGO_SETTINGS_MODULE` | `config.settings.production` — required: `manage.py` in the start command would otherwise load the development settings |
 | `DJANGO_SECRET_KEY` | Click **Generate** |
 | `JWT_SIGNING_KEY` | Click **Generate** — a different value |
 | `DJANGO_ALLOWED_HOSTS` | The service's host name, e.g. `medical-tracker-api.onrender.com` — shown under the service name once it exists |
-| `DATABASE_URL` | The Internal Database URL from step 1 |
+| `DATABASE_URL` | The Neon connection string from step 1 |
 | `FRONTEND_ORIGINS` | The Vercel production origin, e.g. `https://medical-tracker.vercel.app` — use the project name you will give Vercel in step 3; correct it in step 4 if Vercel assigns a different domain |
 
-Create the service. When the deploy finishes, `https://<service-host>/api/v1/health/` answers `{"status": "ok"}`. The deploy log shows the migrations, including `examinations.0002_seed_categories`.
+Free instances cannot run a pre-deploy command, so the start command applies pending migrations and creates the cache table before Gunicorn starts; both are no-ops when there is nothing to do. On a paid instance type they may move to a **Pre-Deploy Command** instead.
+
+Create the service. Render asks for a card before it creates any service, even a free one; it places a temporary $1 authorization to verify it, and a free instance is not billed unless the workspace exceeds its monthly included bandwidth or build minutes. When the deploy finishes, `https://<service-host>/api/v1/health/` answers `{"status": "ok"}`. The first deploy's log shows the migrations, including `examinations.0002_seed_categories`.
 
 ### 3. Create the frontend project
 
@@ -247,14 +252,23 @@ In the Vercel dashboard choose **Add New → Project**, import the repository, a
 | Output Directory | `dist` |
 | Environment variable `VITE_API_BASE_URL` | `https://<service-host>` — the Render origin from step 2, no trailing slash, no `/api/v1` |
 
-Create the project. Vercel builds the repository's default branch on import; if the release branch is a different one, set it as the project's production branch in the project settings and redeploy from it. Vercel takes the Node.js version from `engines` in `frontend/package.json`. `frontend/vercel.json` only sends unknown paths to `index.html` so that deep links such as `/examinations/12` load; it contains no `/api` rewrite, and none may be added. Because `VITE_API_BASE_URL` is compiled in, changing it takes a redeploy.
+Create the project. Vercel builds the repository's default branch on import, and its **Root Directory** picker lists only that branch's directories. While the release branch is not the default one — `main` has no `frontend/` until the MVP is merged — leave Root Directory at `./` and create the project anyway; that first build fails. Then set **Settings → Build and Deployment → Root Directory** to `frontend`, set the branch under **Settings → Environments → Production → Branch Tracking** to the release branch, and deploy it with **Deployments → ⋯ → Create Deployment**, entering the release branch and choosing **Deploy to Production**. Later pushes to that branch deploy automatically. Vercel takes the Node.js version from `engines` in `frontend/package.json`. `frontend/vercel.json` only sends unknown paths to `index.html` so that deep links such as `/examinations/12` load; it contains no `/api` rewrite, and none may be added. Because `VITE_API_BASE_URL` is compiled in, changing it takes a redeploy.
 
 ### 4. Allow the frontend origin
 
-Copy the production domain Vercel shows for the project. If it differs from the `FRONTEND_ORIGINS` value set in step 2, update that variable on Render with **Save, rebuild, and deploy**. The value is the exact origin — `https://`, the host, a port only if one is used, no trailing slash and no wildcard. List several origins comma-separated only when each is meant to reach the API, such as a custom domain; Vercel preview deployments are rejected unless their origins are listed.
+Copy the production domain Vercel shows for the project (under **Settings → Environments → Production → Domains**); when the project name is already taken on `vercel.app`, Vercel adds a suffix, such as `medical-tracker-opal.vercel.app`. If it differs from the `FRONTEND_ORIGINS` value set in step 2, update that variable on Render with **Save, rebuild, and deploy**. The value is the exact origin — `https://`, the host, a port only if one is used, no trailing slash and no wildcard. List several origins comma-separated only when each is meant to reach the API, such as a custom domain; Vercel preview deployments are rejected unless their origins are listed.
 
 ### 5. Verify the deployment
 
 1. Open `https://<service-host>/api/v1/health/` and confirm `{"status": "ok"}`; open `http://<service-host>/api/v1/health/` and confirm it redirects to HTTPS.
 2. From the Vercel origin, register an account, log in, create an examination — the category list shows the eight seeded categories — and confirm it appears on the dashboard.
 3. Reload a deep link such as `/examinations` and confirm the page loads rather than a 404.
+4. Run the deployment tests from a local checkout, with the backend virtualenv from [Local Setup](#backend) active. They make HTTPS requests to both origins, and each run registers two throwaway accounts under `example.com` with random passwords:
+
+   ```bash
+   cd backend
+   . .venv/bin/activate
+   DEPLOYMENT_BASE_URL=https://<service-host> DEPLOYMENT_FRONTEND_ORIGIN=https://<vercel-domain> pytest -m deployment -v
+   ```
+
+   All eight must pass: the CORS and CSRF cases `TC-SEC-005-01/02/04/05/06/07` and the HTTPS cases `TC-TECH-006-01/02`.

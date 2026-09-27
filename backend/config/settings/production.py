@@ -33,6 +33,11 @@ SESSION_COOKIE_SECURE = True
 REFRESH_COOKIE_SECURE = True
 REFRESH_COOKIE_SAMESITE = "None"
 
+# ADS-SEC-005-09: both cookies are third-party cookies in the browser, so they are
+# partitioned to survive third-party-cookie blocking.
+CSRF_COOKIE_PARTITIONED = True
+REFRESH_COOKIE_PARTITIONED = True
+
 # ADS-TECH-006-01: trust only the platform's HTTPS header, and redirect plain HTTP.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
